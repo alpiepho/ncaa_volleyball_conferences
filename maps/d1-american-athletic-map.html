@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>American Athletic (D1) Volleyball Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root{
+    color-scheme: light;
+    --page-bg:#f9f9f7; --surface:#fcfcfb; --surface-raised:#ffffff;
+    --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#898781;
+    --border:rgba(11,11,11,0.10);
+    --series-1:#2a78d6; --series-2:#eb6834; --series-3:#1baf7a;
+    --status-good:#0ca30c; --status-warning:#fab219;
+    --marker-ring:#ffffff;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --page-bg:#0d0d0d; --surface:#1a1a19; --surface-raised:#232322;
+      --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#898781;
+      --border:rgba(255,255,255,0.10);
+      --series-1:#3987e5; --series-2:#d95926; --series-3:#199e70;
+      --marker-ring:#1a1a19;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --page-bg:#0d0d0d; --surface:#1a1a19; --surface-raised:#232322;
+    --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#898781;
+    --border:rgba(255,255,255,0.10);
+    --series-1:#3987e5; --series-2:#d95926; --series-3:#199e70;
+    --marker-ring:#1a1a19;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--page-bg); color:var(--text-primary);
+    font-family:"Work Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    display:flex; flex-direction:column;
+  }
+  h1,h2,h3{font-family:"Oswald", system-ui, sans-serif; letter-spacing:.01em; margin:0;}
+  header.top{border-bottom:1px solid var(--border); padding:12px 16px; display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;}
+  header.top h1{font-size:20px; font-weight:700; text-transform:uppercase; letter-spacing:.03em;}
+  header.top .tag{font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.08em;}
+  header.top nav{margin-left:auto; display:flex; gap:6px; flex-wrap:wrap;}
+  header.top nav a, header.top nav button{
+    font:600 12px "Work Sans", system-ui, sans-serif; color:var(--text-secondary);
+    background:none; text-decoration:none; padding:6px 10px; border-radius:999px;
+    border:1px solid var(--border); cursor:pointer;
+  }
+  header.top nav a:hover, header.top nav button:hover{color:var(--text-primary);}
+  .layout{flex:1; display:flex; min-height:0;}
+  #map{flex:1; min-height:320px; background:var(--surface);}
+  aside{
+    width:320px; flex:0 0 auto; overflow-y:auto; border-left:1px solid var(--border);
+    background:var(--page-bg); padding:12px;
+  }
+  aside .legend{font-size:12px; color:var(--text-secondary); display:flex; gap:14px; flex-wrap:wrap; margin-bottom:10px;}
+  aside .legend span{display:inline-flex; align-items:center; gap:6px;}
+  .dotkey{width:12px; height:12px; border-radius:50%; display:inline-block;}
+  ul.schools{list-style:none; margin:0; padding:0;}
+  ul.schools li{margin:0 0 6px;}
+  ul.schools button{
+    width:100%; text-align:left; cursor:pointer; color:var(--text-primary);
+    background:var(--surface); border:1px solid var(--border); border-radius:8px;
+    padding:8px 10px; font:inherit; display:flex; gap:10px; align-items:center;
+  }
+  ul.schools button:hover, ul.schools button:focus-visible{border-color:var(--series-1); outline:none;}
+  ul.schools .badge{
+    flex:0 0 26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700; color:#fff; background:var(--series-1);
+  }
+  ul.schools .current .badge{background:var(--series-2);}
+  ul.schools .nm{font-weight:600; font-size:14px; display:block;}
+  ul.schools .sub{font-size:12px; color:var(--text-muted); display:block;}
+  aside .note{font-size:11px; color:var(--text-muted); line-height:1.5; margin-top:12px;}
+
+  /* markers */
+  .pin{
+    width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font:700 12px "Work Sans", system-ui, sans-serif; color:#fff; background:var(--series-1);
+    border:2px solid var(--marker-ring); box-shadow:0 1px 4px rgba(0,0,0,.35);
+  }
+  .pin.current{background:var(--series-2);}
+  /* home: a square pin standing on a short tail, so its point (the tail tip)
+     sits on the location and the body clears a nearby campus pin */
+  .pin.home{background:var(--series-3); border-radius:6px; font-size:15px; position:relative;}
+  .pin.home::after{
+    content:""; position:absolute; left:50%; bottom:-9px; transform:translateX(-50%);
+    border:6px solid transparent; border-top:7px solid var(--series-3); border-bottom:0;
+  }
+
+  /* popups follow the page theme */
+  .leaflet-popup-content-wrapper, .leaflet-popup-tip{background:var(--surface-raised); color:var(--text-primary);}
+  .leaflet-popup-content{margin:12px 14px; font:13px/1.45 "Work Sans", system-ui, sans-serif;}
+  .pop h3{font-size:17px; margin-bottom:2px;}
+  .pop .where{color:var(--text-muted); font-size:12px; margin-bottom:8px;}
+  .pop dl{display:grid; grid-template-columns:auto 1fr; gap:2px 10px; margin:0 0 8px;}
+  .pop dt{color:var(--text-muted);}
+  .pop dd{margin:0; font-weight:600;}
+  .pop .links{display:flex; flex-wrap:wrap; gap:6px;}
+  .pop .links a{
+    font-size:12px; font-weight:600; color:var(--series-1); text-decoration:none;
+    border:1px solid var(--border); border-radius:999px; padding:3px 9px;
+  }
+  .pop .links a:hover{border-color:var(--series-1);}
+  .leaflet-container a.leaflet-popup-close-button{color:var(--text-muted);}
+
+  @media (max-width: 760px){
+    .layout{flex-direction:column;}
+    #map{flex:0 0 60vh;}
+    aside{width:auto; border-left:none; border-top:1px solid var(--border); padding:12px 16px;}
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>American Athletic Map</h1>
+  <span class="tag">NCAA D1 women&#x27;s volleyball · 13 schools</span>
+  <nav>
+    <a href="../index.html">All conferences</a>
+    <a href="https://masseyratings.com/cvol2026/200137" target="_blank" rel="noopener">Massey standings ↗</a>
+    <button type="button" id="fitAll">Show all</button>
+  </nav>
+</header>
+
+<div class="layout">
+  <div id="map" role="region" aria-label="American Athletic Map"></div>
+  <aside>
+    <div class="legend">
+      <span><span class="dotkey" style="background:var(--series-1)"></span>School (number = order by Massey national rank)</span>
+    </div>
+    <ul class="schools" id="schoolList"></ul>
+    <p class="note">Team list and national ranks are from Massey Ratings (snapshot 2026-10-09). Campus coordinates, city, locale type, and 2024-25 tuition + fees are from U.S. Dept. of Education IPEDS data. Niche and Roster links open a search when no verified direct link exists. Map tiles: Esri; use the layer button at top right to switch to Terrain.</p>
+  </aside>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var HOME = null;
+  var SCHOOLS = [
+ {
+  "id": "tulsa",
+  "name": "University of Tulsa",
+  "current": false,
+  "badge": "1",
+  "sort": 1,
+  "city": "Tulsa",
+  "state": "OK",
+  "locale": "Large city",
+  "lat": 36.152324,
+  "lon": -95.945941,
+  "rows": [
+   [
+    "Massey rank",
+    "#39 in D1 (348 teams)"
+   ],
+   [
+    "In conference",
+    "1 of 13 by Massey rank"
+   ],
+   [
+    "Tuition + fees",
+    "$50,061 in-state \u00b7 $50,061 out-of-state"
+   ]
+  ],
+  "links": [
+   [
+    "Niche",
+    "https://www.niche.com/colleges/the-university-of-tulsa/"
+   ],
+   [
+    "Roster",
+    "https://www.google.com/search?q=University+of+Tulsa+women%27s+volleyball+roster"
+   ]
+  ],
+  "sub": "Massey #39 \u00b7 Tulsa, OK"
+ },
+ {
+  "id": "rice",
+  "name": "Rice University",
+  "current": false,
+  "badge": "2",
+  "sort": 2,
+  "city": "Houston",
+  "state": "TX",
+  "locale": "Large city",
+  "lat": 29.717897,
+  "lon": -95.402035,
+  "rows": [
+   [
+    "Massey rank",
+    "#71 in D1 (348 teams)"
+   ],
+   [
+    "In conference",
+    "2 of 13 by Massey rank"
+   ],
+   [
+    "Tuition + fees",
+    "$64,144 in-state \u00b7 $64,144 out-of-state"
+   ]
+  ],
+  "links": [
+   [
+    "Niche",
+    "https://www.niche.com/colleges/rice-university/"
+   ],
+   [
+    "Roster",
+    "https://www.google.com/search?q=Rice+University+women%27s+volleyball+roster"
+   ]
+  ],
+  "sub": "Massey #71 \u00b7 Houston, TX"
+ },
+ {
+  "id": "tulane",
+  "name": "Tulane University of Louisiana",
+  "current": false,
+  "badge": "3",
+  "sort": 3,
+  "city": "New Orleans",
+  "state": "LA",
+  "locale": "Large city",
+  "lat": 29.940069,
+  "lon": -90.122144,
+  "rows": [
+   [
+    "Massey rank",
+    "#79 in D1 (348 teams)"
+   ],
+   [
+    "In conference",
+    "3 of 13 by Massey rank"
+   ],
+   [
+    "Tuition + fees",
+    "$68,678 in-state \u00b7 $68,678 out-of-state"
+   ]
+  ],
+  "links": [
+   [
+    "Niche",
+    "https://www.niche.com/colleges/tulane-university/"
+   ],
+   [
+    "Roster",
+    "https://www.google.com/search?q=Tulane+University+of+Louisiana+women%27s+volleyball+roster"
+   ]
+  ],
+  "sub": "Massey #79 \u00b7 New Orleans, LA"
+ },
+ {
+  "id": "south-florida",
+  "name": "University of South Florida",
+  "current": false,
+  "badge": "4",
+  "sort": 4,
+  "city": "Tampa",
+  "state": "FL",
+  "locale": "Large city",
+  "lat": 28.061458,
+  "lon": -82.413232,
+  "rows": [
+   [
+    "Massey rank",
+    "#87 in D1 (348 teams)"
+   ],
+   [
+    "In conference",
+    "4 of 13 by Massey rank"
+   ],
+   [
+    "Tuition + fees",
+    "$6,410 in-state \u00b7 $17,324 out-of-state"
+   ]
+  ],
+  "links": [
+   [
+    "Niche",
+    "https://www.niche.com/colleges/university-of-south-florida/"
+   ],
+   [
+    "Roster",
+    "https://www.google.com/search?q=University+of+South+Florida+women%27s+volleyball+roster"
+   ]
+  ],
+  "sub": "Massey #87 \u00b7 Tampa, FL"
+ },
+ {
+  "id": "east-carolina",
+  "name": "East Carolina University",
+  "current": false,
+  "badge": "5",
+  "sort": 5,
+  "city": "Greenville",
+  "state": "NC",
+  "locale": "Small city",
+  "lat": 35.607186,
+  "lon": -77.368291,
+  "rows": [
+   [
+    "Massey rank",
+    "#110 in D1 (348 teams)"
+   ],
+   [
+    "In conference",
+    "5 of 13 by Massey rank"
+   ],
+   [
+    "Tuition + fees",
+    "$7,361 in-state \u00b7 $23,638 out-of-state"
+   ]
+  ],
+  "links": [
+   [
+    "Niche",
+    "https://www.niche.com/colleges/east-carolina-university/"
+   ],
+   [
+    "Roster",
+    "https://www.google.com/search?q=East+Carolina+University+women%27s+volleyball+roster"
+   ]
+  ],
+  "sub": "Massey #110 \u00b7 Greenville, NC"
+ },
+ {
+  "id": "fl-atlantic",
+  "name": "Florida Atlantic University",
+  "current": false,
+  "badge": "6",
+  "sort": 6,
+  "city": "Boca Raton",
+  "state": "FL",
+  "locale": "Small city",
+  "lat": 26.372421,
+  "lon": -80.102978,
+  "rows": [
+   [
+    "Massey rank",
+    "#112 in D1 (348 teams)"
+   ],
+   [
+    "In conference",
+    "6 of 13 by Massey rank"
+   ],
+   [
+    "Tuition + fees",
+    "$4,879 in-state \u00b7 $17,324 out-of-state"
+   ]
+  ],
+  "links": [
+   [
+    "Niche",
+    "https://www.niche.com/colleges/florida-atlantic-university/"
+   ],
+   [
+    "Roster",
+    "https://www.google.com/search?q=Florida+Atlantic+University+women%27s+volleyball+roster"
+   ]
+  ],
+  "sub": "Massey #112 \u00b7 Boca Raton, FL"
+ },
+ {
+  "id": "wichita-st",
+  "name": "Wichita State University",
+  "current": false,
+  "badge": "7",
+  "sort": 7,
+  "city": "Wichita",
+  "state": "KS",
+  "locale": "Large city",
+  "lat": 37.718882,
+  "lon": -97.292361,
+  "rows": [
+   [
+    "Massey rank",
+    "#133 in D1 (348 teams)"
+   ],
+   [
+    "In conference",
+    "7 of 13 by Massey rank"
+   ],
+   [
+    "Tuition + fees",
+    "$9,684 in-state \u00b7 $19,869 out-of-state"
+   ]
+  ],
+  "links": [
+   [
+    "Niche",
+    "https://www.niche.com/colleges/wichita-state-university/"
+   ],
+   [
+    "Roster",
+    "https://www.google.com/search?q=Wichita+State+University+women%27s+volleyball+roster"
+   ]
+  ],
+  "sub": "Massey #133 \u00b7 Wichita, KS"
+ },
+ {
+  "id": "ut-san-antonio",
+  "name": "The University of Texas at San Antonio",
+  "current": false,
+  "badge": "8",
+  "sort": 8,
+  "city": "San Antonio",
+  "state": "TX",
+  "locale": "Large city",
+  "lat": 29.583709,
+  "lon": -98.620657,
+  "rows": [
+   [
+    "Massey rank",
+    "#138 in D1 (348 teams)"
+   ],
+   [
+    "In conference",
+    "8 of 13 by Massey rank"
+   ],
+   [
+    "Tuition + fees",
+    "$9,011 in-state \u00b7 $22,051 out-of-state"
+   ]
+  ],
+  "links": [
+   [
+    "Niche",
+    "https://www.niche.com/colleges/the-university-of-texas-at-san-antonio/"
+   ],
+   [
+    "Roster",
+    "https://www.google.com/search?q=The+University+of+Texas+at+San+Antonio+women%27s+volleyball+roster"
+   ]
+  ],
+  "sub": "Massey #138 \u00b7 San Antonio, TX"
+ },
+ {
+  "id": "north-texas",
+  "name": "University of North Texas",
+  "current": false,
+  "badge": "9",
+  "sort": 9,
+  "city": "Denton",
+  "state": "TX",
+  "locale": "Midsize city",
+  "lat": 33.211178,
+  "lon": -97.148422,
+  "rows": [
+   [
+    "Massey rank",
+    "#148 in D1 (348 teams)"
+   ],
+   [
+    "In conference",
+    "9 of 13 by Massey rank"
+   ],
+   [
+    "Tuition + fees",
+    "$11,309 in-state \u00b7 $21,149 out-of-state"
+   ]
+  ],
+  "links": [
+   [
+    "Niche",
+    "https://www.niche.com/colleges/university-of-north-texas/"
+   ],
+   [
+    "Roster",
+    "https://www.google.com/search?q=University+of+North+Texas+women%27s+volleyball+roster"
+   ]
+  ],
+  "sub": "Massey #148 \u00b7 Denton, TX"
+ },
+ {
+  "id": "temple",
+  "name": "Temple University",
+  "current": false,
+  "badge": "10",
+  "sort": 10,
+  "city": "Philadelphia",
+  "state": "PA",
+  "locale": "Large city",
+  "lat": 39.980546,
+  "lon": -75.156859,
+  "rows": [
+   [
+    "Massey rank",
+    "#170 in D1 (348 teams)"
+   ],
+   [
+    "In conference",
+    "10 of 13 by Massey rank"
+   ],
+   [
+    "Tuition + fees",
+    "$23,011 in-state \u00b7 $38,958 out-of-state"
+   ]
+  ],
+  "links": [
+   [
+    "Niche",
+    "https://www.niche.com/colleges/temple-university/"
+   ],
+   [
+    "Roster",
+    "https://www.google.com/search?q=Temple+University+women%27s+volleyball+roster"
+   ]
+  ],
+  "sub": "Massey #170 \u00b7 Philadelphia, PA"
+ },
+ {
+  "id": "memphis",
+  "name": "University of Memphis",
+  "current": false,
+  "badge": "11",
+  "sort": 11,
+  "city": "Memphis",
+  "state": "TN",
+  "locale": "Large city",
+  "lat": 35.118878,
+  "lon": -89.938068,
+  "rows": [
+   [
+    "Massey rank",
+    "#190 in D1 (348 teams)"
+   ],
+   [
+    "In conference",
+    "11 of 13 by Massey rank"
+   ],
+   [
+    "Tuition + fees",
+    "$10,728 in-state \u00b7 $15,384 out-of-state"
+   ]
+  ],
+  "links": [
+   [
+    "Niche",
+    "https://www.niche.com/colleges/university-of-memphis/"
+   ],
+   [
+    "Roster",
+    "https://www.google.com/search?q=University+of+Memphis+women%27s+volleyball+roster"
+   ]
+  ],
+  "sub": "Massey #190 \u00b7 Memphis, TN"
+ },
+ {
+  "id": "uab",
+  "name": "University of Alabama at Birmingham",
+  "current": false,
+  "badge": "12",
+  "sort": 12,
+  "city": "Birmingham",
+  "state": "AL",
+  "locale": "Midsize city",
+  "lat": 33.505697,
+  "lon": -86.799345,
+  "rows": [
+   [
+    "Massey rank",
+    "#220 in D1 (348 teams)"
+   ],
+   [
+    "In conference",
+    "12 of 13 by Massey rank"
+   ],
+   [
+    "Tuition + fees",
+    "$9,098 in-state \u00b7 $22,562 out-of-state"
+   ]
+  ],
+  "links": [
+   [
+    "Niche",
+    "https://www.google.com/search?q=site%3Aniche.com+University+of+Alabama+at+Birmingham"
+   ],
+   [
+    "Roster",
+    "https://www.google.com/search?q=University+of+Alabama+at+Birmingham+women%27s+volleyball+roster"
+   ]
+  ],
+  "sub": "Massey #220 \u00b7 Birmingham, AL"
+ },
+ {
+  "id": "charlotte",
+  "name": "University of North Carolina at Charlotte",
+  "current": false,
+  "badge": "13",
+  "sort": 13,
+  "city": "Charlotte",
+  "state": "NC",
+  "locale": "Large city",
+  "lat": 35.306022,
+  "lon": -80.730919,
+  "rows": [
+   [
+    "Massey rank",
+    "#252 in D1 (348 teams)"
+   ],
+   [
+    "In conference",
+    "13 of 13 by Massey rank"
+   ],
+   [
+    "Tuition + fees",
+    "$7,239 in-state \u00b7 $22,492 out-of-state"
+   ]
+  ],
+  "links": [
+   [
+    "Niche",
+    "https://www.niche.com/colleges/university-of-north-carolina-at-charlotte/"
+   ],
+   [
+    "Roster",
+    "https://www.google.com/search?q=University+of+North+Carolina+at+Charlotte+women%27s+volleyball+roster"
+   ]
+  ],
+  "sub": "Massey #252 \u00b7 Charlotte, NC"
+ }
+];
+
+  // Each school: {id, name, current, badge, sort, lat, lon, city, state, locale,
+  // rows: [[label, value]], links: [[label, url]], sub}, filled in by the
+  // build scripts.
+  function badge(s){ return s.current ? "S" : s.badge; }
+
+  var map = L.map("map", { scrollWheelZoom:true, worldCopyJump:true });
+  // Basemaps: Esri's public ArcGIS Online tiles (no API key, served the same
+  // with or without a Referer). Not tile.openstreetmap.org (blocks pages opened
+  // from disk, which send no Referer) and not CARTO (now returns an
+  // "API KEY REQUIRED" image for every tile).
+  var ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services/";
+  var ESRI_ATTR = 'Tiles &copy; <a href="https://www.esri.com/" target="_blank" rel="noopener">Esri</a> &mdash; Esri, HERE, Garmin, USGS, NGA, EPA, USDA, NPS, OpenStreetMap contributors, and the GIS User Community';
+  function esri(name){ return L.tileLayer(ESRI + name + "/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19, attribution: ESRI_ATTR }); }
+  var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches &&
+             document.documentElement.getAttribute("data-theme") !== "light";
+  var streets = dark
+    ? L.layerGroup([esri("Canvas/World_Dark_Gray_Base"), esri("Canvas/World_Dark_Gray_Reference")])
+    : esri("World_Street_Map");
+  var terrain = esri("World_Topo_Map");
+  streets.addTo(map);
+  L.control.layers({ "Streets": streets, "Terrain (mountains, forests)": terrain }, null, { position: "topright" }).addTo(map);
+
+  function popupHtml(s){
+    var wrap = document.createElement("div");
+    wrap.className = "pop";
+    var h = document.createElement("h3"); h.textContent = s.name; wrap.appendChild(h);
+    var w = document.createElement("div"); w.className = "where";
+    w.textContent = s.city + ", " + s.state + (s.locale ? " · " + s.locale : "");
+    wrap.appendChild(w);
+    var dl = document.createElement("dl");
+    s.rows.forEach(function(r){
+      var dt = document.createElement("dt"); dt.textContent = r[0];
+      var dd = document.createElement("dd"); dd.textContent = r[1];
+      dl.appendChild(dt); dl.appendChild(dd);
+    });
+    wrap.appendChild(dl);
+    var links = document.createElement("div"); links.className = "links";
+    s.links.forEach(function(p){
+      var a = document.createElement("a");
+      a.href = p[1]; a.target = "_blank"; a.rel = "noopener noreferrer"; a.textContent = p[0] + " ↗";
+      links.appendChild(a);
+    });
+    wrap.appendChild(links);
+    return wrap;
+  }
+
+  var markers = {};
+  var bounds = [];
+  SCHOOLS.forEach(function(s){
+    var icon = L.divIcon({
+      className: "",
+      html: '<div class="pin' + (s.current ? " current" : "") + '">' + badge(s) + "</div>",
+      iconSize: [28,28], iconAnchor: [14,14], popupAnchor: [0,-14]
+    });
+    var m = L.marker([s.lat, s.lon], { icon: icon, title: s.name, alt: s.name, keyboard: true })
+      .bindPopup(popupHtml(s), { maxWidth: 280 })
+      .addTo(map);
+    markers[s.id] = m;
+    bounds.push([s.lat, s.lon]);
+  });
+
+  // home pin (optional; null on public pages): stands above its point and is
+  // drawn under school pins, so a nearby campus stays clickable
+  if(HOME){
+    var homeIcon = L.divIcon({ className: "", html: '<div class="pin home" aria-hidden="true">⌂</div>',
+                               iconSize: [28,28], iconAnchor: [14,37], popupAnchor: [0,-36] });
+    L.marker([HOME.lat, HOME.lon], { icon: homeIcon, title: "Home: " + HOME.city + ", " + HOME.state,
+                                     alt: "Home", keyboard: true, zIndexOffset: -1000 })
+      .bindPopup("<b>Home</b><br>" + HOME.city + ", " + HOME.state)
+      .addTo(map);
+    bounds.push([HOME.lat, HOME.lon]);
+  }
+
+  function fitAll(){ map.fitBounds(bounds, { padding:[40,40] }); }
+  fitAll();
+  document.getElementById("fitAll").addEventListener("click", function(){ map.closePopup(); fitAll(); });
+
+  // side list: current school first, then by the builder's sort order
+  var list = document.getElementById("schoolList");
+  SCHOOLS.slice().sort(function(a,b){
+    if(a.current !== b.current) return a.current ? -1 : 1;
+    return a.sort - b.sort;
+  }).forEach(function(s){
+    var li = document.createElement("li");
+    if(s.current) li.className = "current";
+    var b = document.createElement("button"); b.type = "button";
+    var bd = document.createElement("span"); bd.className = "badge"; bd.textContent = badge(s);
+    var txt = document.createElement("span");
+    var nm = document.createElement("span"); nm.className = "nm"; nm.textContent = s.name;
+    var sub = document.createElement("span"); sub.className = "sub";
+    sub.textContent = s.sub;
+    txt.appendChild(nm); txt.appendChild(sub);
+    b.appendChild(bd); b.appendChild(txt);
+    b.addEventListener("click", function(){
+      map.flyTo([s.lat, s.lon], 9, { duration: 0.8 });
+      map.once("moveend", function(){ markers[s.id].openPopup(); });
+    });
+    li.appendChild(b);
+    list.appendChild(li);
+  });
+})();
+</script>
+</body>
+</html>
