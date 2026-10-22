@@ -137,7 +137,7 @@
       <span><span class="dotkey" style="background:var(--series-1)"></span>School (number = order by Massey national rank)</span>
     </div>
     <ul class="schools" id="schoolList"></ul>
-    <p class="note">Team list and national ranks are from Massey Ratings (snapshot 2026-10-09). Campus coordinates, city, locale type, and 2024-25 tuition + fees are from U.S. Dept. of Education IPEDS data. Niche and Roster links open a search when no verified direct link exists. Map tiles: Esri; use the layer button at top right to switch to Terrain.</p>
+    <p class="note">Team list and national ranks are from Massey Ratings (snapshot 2026-10-22). Campus coordinates, city, locale type, and 2024-25 tuition + fees are from U.S. Dept. of Education IPEDS data. Niche and Roster links open a search when no verified direct link exists. Map tiles: Esri; use the layer button at top right to switch to Terrain.</p>
   </aside>
 </div>
 
@@ -147,48 +147,11 @@
   var HOME = null;
   var SCHOOLS = [
  {
-  "id": "concordia-ca",
-  "name": "Concordia University-Irvine",
-  "current": false,
-  "badge": "1",
-  "sort": 1,
-  "city": "Irvine",
-  "state": "CA",
-  "locale": "Large city",
-  "lat": 33.653665,
-  "lon": -117.812305,
-  "rows": [
-   [
-    "Massey rank",
-    "#15 in D2 (284 teams)"
-   ],
-   [
-    "In conference",
-    "1 of 10 by Massey rank"
-   ],
-   [
-    "Tuition + fees",
-    "$43,480 in-state \u00b7 $43,480 out-of-state"
-   ]
-  ],
-  "links": [
-   [
-    "Niche",
-    "https://www.niche.com/colleges/concordia-university-irvine/"
-   ],
-   [
-    "Roster",
-    "https://www.google.com/search?q=Concordia+University-Irvine+women%27s+volleyball+roster"
-   ]
-  ],
-  "sub": "Massey #15 \u00b7 Irvine, CA"
- },
- {
   "id": "point-loma",
   "name": "Point Loma Nazarene University",
   "current": false,
-  "badge": "2",
-  "sort": 2,
+  "badge": "1",
+  "sort": 1,
   "city": "San Diego",
   "state": "CA",
   "locale": "Large city",
@@ -197,11 +160,11 @@
   "rows": [
    [
     "Massey rank",
-    "#20 in D2 (284 teams)"
+    "#16 in D2 (284 teams)"
    ],
    [
     "In conference",
-    "2 of 10 by Massey rank"
+    "1 of 10 by Massey rank"
    ],
    [
     "Tuition + fees",
@@ -218,51 +181,51 @@
     "https://www.google.com/search?q=Point+Loma+Nazarene+University+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #20 \u00b7 San Diego, CA"
+  "sub": "Massey #16 \u00b7 San Diego, CA"
  },
  {
-  "id": "hawaii-hilo",
-  "name": "University of Hawaii at Hilo",
+  "id": "concordia-ca",
+  "name": "Concordia University-Irvine",
   "current": false,
-  "badge": "3",
-  "sort": 3,
-  "city": "Hilo",
-  "state": "HI",
-  "locale": "Town (remote)",
-  "lat": 19.701189,
-  "lon": -155.080847,
+  "badge": "2",
+  "sort": 2,
+  "city": "Irvine",
+  "state": "CA",
+  "locale": "Large city",
+  "lat": 33.653665,
+  "lon": -117.812305,
   "rows": [
    [
     "Massey rank",
-    "#24 in D2 (284 teams)"
+    "#19 in D2 (284 teams)"
    ],
    [
     "In conference",
-    "3 of 10 by Massey rank"
+    "2 of 10 by Massey rank"
    ],
    [
     "Tuition + fees",
-    "$7,838 in-state \u00b7 $20,798 out-of-state"
+    "$43,480 in-state \u00b7 $43,480 out-of-state"
    ]
   ],
   "links": [
    [
     "Niche",
-    "https://www.niche.com/colleges/university-of-hawaii-at-hilo/"
+    "https://www.niche.com/colleges/concordia-university-irvine/"
    ],
    [
     "Roster",
-    "https://www.google.com/search?q=University+of+Hawaii+at+Hilo+women%27s+volleyball+roster"
+    "https://www.google.com/search?q=Concordia+University-Irvine+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #24 \u00b7 Hilo, HI"
+  "sub": "Massey #19 \u00b7 Irvine, CA"
  },
  {
   "id": "biola",
   "name": "Biola University",
   "current": false,
-  "badge": "4",
-  "sort": 4,
+  "badge": "3",
+  "sort": 3,
   "city": "La Mirada",
   "state": "CA",
   "locale": "Large suburb",
@@ -271,11 +234,11 @@
   "rows": [
    [
     "Massey rank",
-    "#25 in D2 (284 teams)"
+    "#24 in D2 (284 teams)"
    ],
    [
     "In conference",
-    "4 of 10 by Massey rank"
+    "3 of 10 by Massey rank"
    ],
    [
     "Tuition + fees",
@@ -292,7 +255,44 @@
     "https://www.google.com/search?q=Biola+University+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #25 \u00b7 La Mirada, CA"
+  "sub": "Massey #24 \u00b7 La Mirada, CA"
+ },
+ {
+  "id": "hawaii-hilo",
+  "name": "University of Hawaii at Hilo",
+  "current": false,
+  "badge": "4",
+  "sort": 4,
+  "city": "Hilo",
+  "state": "HI",
+  "locale": "Town (remote)",
+  "lat": 19.701189,
+  "lon": -155.080847,
+  "rows": [
+   [
+    "Massey rank",
+    "#27 in D2 (284 teams)"
+   ],
+   [
+    "In conference",
+    "4 of 10 by Massey rank"
+   ],
+   [
+    "Tuition + fees",
+    "$7,838 in-state \u00b7 $20,798 out-of-state"
+   ]
+  ],
+  "links": [
+   [
+    "Niche",
+    "https://www.niche.com/colleges/university-of-hawaii-at-hilo/"
+   ],
+   [
+    "Roster",
+    "https://www.google.com/search?q=University+of+Hawaii+at+Hilo+women%27s+volleyball+roster"
+   ]
+  ],
+  "sub": "Massey #27 \u00b7 Hilo, HI"
  },
  {
   "id": "chaminade",
@@ -308,7 +308,7 @@
   "rows": [
    [
     "Massey rank",
-    "#36 in D2 (284 teams)"
+    "#42 in D2 (284 teams)"
    ],
    [
     "In conference",
@@ -329,7 +329,7 @@
     "https://www.google.com/search?q=Chaminade+University+of+Honolulu+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #36 \u00b7 Honolulu, HI"
+  "sub": "Massey #42 \u00b7 Honolulu, HI"
  },
  {
   "id": "westmont",
@@ -345,7 +345,7 @@
   "rows": [
    [
     "Massey rank",
-    "#64 in D2 (284 teams)"
+    "#51 in D2 (284 teams)"
    ],
    [
     "In conference",
@@ -366,7 +366,7 @@
     "https://www.google.com/search?q=Westmont+College+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #64 \u00b7 Santa Barbara, CA"
+  "sub": "Massey #51 \u00b7 Santa Barbara, CA"
  },
  {
   "id": "vanguard",
@@ -382,7 +382,7 @@
   "rows": [
    [
     "Massey rank",
-    "#110 in D2 (284 teams)"
+    "#111 in D2 (284 teams)"
    ],
    [
     "In conference",
@@ -403,51 +403,14 @@
     "https://www.google.com/search?q=Vanguard+University+of+Southern+California+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #110 \u00b7 Costa Mesa, CA"
- },
- {
-  "id": "dominican-ca",
-  "name": "Dominican University of California",
-  "current": false,
-  "badge": "8",
-  "sort": 8,
-  "city": "San Rafael",
-  "state": "CA",
-  "locale": "Small city",
-  "lat": 37.981279,
-  "lon": -122.512051,
-  "rows": [
-   [
-    "Massey rank",
-    "#141 in D2 (284 teams)"
-   ],
-   [
-    "In conference",
-    "8 of 10 by Massey rank"
-   ],
-   [
-    "Tuition + fees",
-    "$52,161 in-state \u00b7 $52,161 out-of-state"
-   ]
-  ],
-  "links": [
-   [
-    "Niche",
-    "https://www.niche.com/colleges/dominican-university-of-california/"
-   ],
-   [
-    "Roster",
-    "https://www.google.com/search?q=Dominican+University+of+California+women%27s+volleyball+roster"
-   ]
-  ],
-  "sub": "Massey #141 \u00b7 San Rafael, CA"
+  "sub": "Massey #111 \u00b7 Costa Mesa, CA"
  },
  {
   "id": "wm-jessup",
   "name": "William Jessup University",
   "current": false,
-  "badge": "9",
-  "sort": 9,
+  "badge": "8",
+  "sort": 8,
   "city": "Rocklin",
   "state": "CA",
   "locale": "Large suburb",
@@ -456,11 +419,11 @@
   "rows": [
    [
     "Massey rank",
-    "#152 in D2 (284 teams)"
+    "#149 in D2 (284 teams)"
    ],
    [
     "In conference",
-    "9 of 10 by Massey rank"
+    "8 of 10 by Massey rank"
    ],
    [
     "Tuition + fees",
@@ -477,14 +440,14 @@
     "https://www.google.com/search?q=William+Jessup+University+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #152 \u00b7 Rocklin, CA"
+  "sub": "Massey #149 \u00b7 Rocklin, CA"
  },
  {
   "id": "hawaii-pacific",
   "name": "Hawaii Pacific University",
   "current": false,
-  "badge": "10",
-  "sort": 10,
+  "badge": "9",
+  "sort": 9,
   "city": "Honolulu",
   "state": "HI",
   "locale": "Large city",
@@ -493,11 +456,11 @@
   "rows": [
    [
     "Massey rank",
-    "#169 in D2 (284 teams)"
+    "#154 in D2 (284 teams)"
    ],
    [
     "In conference",
-    "10 of 10 by Massey rank"
+    "9 of 10 by Massey rank"
    ],
    [
     "Tuition + fees",
@@ -514,7 +477,44 @@
     "https://www.google.com/search?q=Hawaii+Pacific+University+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #169 \u00b7 Honolulu, HI"
+  "sub": "Massey #154 \u00b7 Honolulu, HI"
+ },
+ {
+  "id": "dominican-ca",
+  "name": "Dominican University of California",
+  "current": false,
+  "badge": "10",
+  "sort": 10,
+  "city": "San Rafael",
+  "state": "CA",
+  "locale": "Small city",
+  "lat": 37.981279,
+  "lon": -122.512051,
+  "rows": [
+   [
+    "Massey rank",
+    "#160 in D2 (284 teams)"
+   ],
+   [
+    "In conference",
+    "10 of 10 by Massey rank"
+   ],
+   [
+    "Tuition + fees",
+    "$52,161 in-state \u00b7 $52,161 out-of-state"
+   ]
+  ],
+  "links": [
+   [
+    "Niche",
+    "https://www.niche.com/colleges/dominican-university-of-california/"
+   ],
+   [
+    "Roster",
+    "https://www.google.com/search?q=Dominican+University+of+California+women%27s+volleyball+roster"
+   ]
+  ],
+  "sub": "Massey #160 \u00b7 San Rafael, CA"
  }
 ];
 

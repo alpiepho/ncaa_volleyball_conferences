@@ -137,7 +137,7 @@
       <span><span class="dotkey" style="background:var(--series-1)"></span>School (number = order by Massey national rank)</span>
     </div>
     <ul class="schools" id="schoolList"></ul>
-    <p class="note">Team list and national ranks are from Massey Ratings (snapshot 2026-10-09). Campus coordinates, city, locale type, and 2024-25 tuition + fees are from U.S. Dept. of Education IPEDS data. Niche and Roster links open a search when no verified direct link exists. Map tiles: Esri; use the layer button at top right to switch to Terrain.</p>
+    <p class="note">Team list and national ranks are from Massey Ratings (snapshot 2026-10-22). Campus coordinates, city, locale type, and 2024-25 tuition + fees are from U.S. Dept. of Education IPEDS data. Niche and Roster links open a search when no verified direct link exists. Map tiles: Esri; use the layer button at top right to switch to Terrain.</p>
   </aside>
 </div>
 
@@ -147,11 +147,48 @@
   var HOME = null;
   var SCHOOLS = [
  {
-  "id": "merchant-marine",
-  "name": "United States Merchant Marine Academy",
+  "id": "sarah-lawrence",
+  "name": "Sarah Lawrence College",
   "current": false,
   "badge": "1",
   "sort": 1,
+  "city": "Bronxville",
+  "state": "NY",
+  "locale": "Large suburb",
+  "lat": 40.9355,
+  "lon": -73.843727,
+  "rows": [
+   [
+    "Massey rank",
+    "#227 in D3 (421 teams)"
+   ],
+   [
+    "In conference",
+    "1 of 12 by Massey rank"
+   ],
+   [
+    "Tuition + fees",
+    "$66,862 in-state \u00b7 $66,862 out-of-state"
+   ]
+  ],
+  "links": [
+   [
+    "Niche",
+    "https://www.niche.com/colleges/sarah-lawrence-college/"
+   ],
+   [
+    "Roster",
+    "https://www.google.com/search?q=Sarah+Lawrence+College+women%27s+volleyball+roster"
+   ]
+  ],
+  "sub": "Massey #227 \u00b7 Bronxville, NY"
+ },
+ {
+  "id": "merchant-marine",
+  "name": "United States Merchant Marine Academy",
+  "current": false,
+  "badge": "2",
+  "sort": 2,
   "city": "Kings Point",
   "state": "NY",
   "locale": "Large suburb",
@@ -164,7 +201,7 @@
    ],
    [
     "In conference",
-    "1 of 12 by Massey rank"
+    "2 of 12 by Massey rank"
    ],
    [
     "Tuition + fees",
@@ -184,85 +221,11 @@
   "sub": "Massey #232 \u00b7 Kings Point, NY"
  },
  {
-  "id": "sarah-lawrence",
-  "name": "Sarah Lawrence College",
-  "current": false,
-  "badge": "2",
-  "sort": 2,
-  "city": "Bronxville",
-  "state": "NY",
-  "locale": "Large suburb",
-  "lat": 40.9355,
-  "lon": -73.843727,
-  "rows": [
-   [
-    "Massey rank",
-    "#251 in D3 (421 teams)"
-   ],
-   [
-    "In conference",
-    "2 of 12 by Massey rank"
-   ],
-   [
-    "Tuition + fees",
-    "$66,862 in-state \u00b7 $66,862 out-of-state"
-   ]
-  ],
-  "links": [
-   [
-    "Niche",
-    "https://www.niche.com/colleges/sarah-lawrence-college/"
-   ],
-   [
-    "Roster",
-    "https://www.google.com/search?q=Sarah+Lawrence+College+women%27s+volleyball+roster"
-   ]
-  ],
-  "sub": "Massey #251 \u00b7 Bronxville, NY"
- },
- {
-  "id": "manhattanville",
-  "name": "Manhattanville University",
-  "current": false,
-  "badge": "3",
-  "sort": 3,
-  "city": "Purchase",
-  "state": "NY",
-  "locale": "Large suburb",
-  "lat": 41.032187,
-  "lon": -73.715645,
-  "rows": [
-   [
-    "Massey rank",
-    "#264 in D3 (421 teams)"
-   ],
-   [
-    "In conference",
-    "3 of 12 by Massey rank"
-   ],
-   [
-    "Tuition + fees",
-    "$44,604 in-state \u00b7 $44,604 out-of-state"
-   ]
-  ],
-  "links": [
-   [
-    "Niche",
-    "https://www.niche.com/colleges/manhattanville-university/"
-   ],
-   [
-    "Roster",
-    "https://www.google.com/search?q=Manhattanville+University+women%27s+volleyball+roster"
-   ]
-  ],
-  "sub": "Massey #264 \u00b7 Purchase, NY"
- },
- {
   "id": "farmingdale",
   "name": "Farmingdale State College",
   "current": false,
-  "badge": "4",
-  "sort": 4,
+  "badge": "3",
+  "sort": 3,
   "city": "Farmingdale",
   "state": "NY",
   "locale": "Large suburb",
@@ -271,11 +234,11 @@
   "rows": [
    [
     "Massey rank",
-    "#284 in D3 (421 teams)"
+    "#260 in D3 (421 teams)"
    ],
    [
     "In conference",
-    "4 of 12 by Massey rank"
+    "3 of 12 by Massey rank"
    ],
    [
     "Tuition + fees",
@@ -292,7 +255,44 @@
     "https://www.google.com/search?q=Farmingdale+State+College+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #284 \u00b7 Farmingdale, NY"
+  "sub": "Massey #260 \u00b7 Farmingdale, NY"
+ },
+ {
+  "id": "manhattanville",
+  "name": "Manhattanville University",
+  "current": false,
+  "badge": "4",
+  "sort": 4,
+  "city": "Purchase",
+  "state": "NY",
+  "locale": "Large suburb",
+  "lat": 41.032187,
+  "lon": -73.715645,
+  "rows": [
+   [
+    "Massey rank",
+    "#276 in D3 (421 teams)"
+   ],
+   [
+    "In conference",
+    "4 of 12 by Massey rank"
+   ],
+   [
+    "Tuition + fees",
+    "$44,604 in-state \u00b7 $44,604 out-of-state"
+   ]
+  ],
+  "links": [
+   [
+    "Niche",
+    "https://www.niche.com/colleges/manhattanville-university/"
+   ],
+   [
+    "Roster",
+    "https://www.google.com/search?q=Manhattanville+University+women%27s+volleyball+roster"
+   ]
+  ],
+  "sub": "Massey #276 \u00b7 Purchase, NY"
  },
  {
   "id": "st-josephs-li",
@@ -308,7 +308,7 @@
   "rows": [
    [
     "Massey rank",
-    "#335 in D3 (421 teams)"
+    "#346 in D3 (421 teams)"
    ],
    [
     "In conference",
@@ -329,7 +329,7 @@
     "https://www.google.com/search?q=St.+Joseph%27s+University-New+York+%28Patchogue+campus%29+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #335 \u00b7 Patchogue, NY"
+  "sub": "Massey #346 \u00b7 Patchogue, NY"
  },
  {
   "id": "mt-st-mary-ny",
@@ -345,7 +345,7 @@
   "rows": [
    [
     "Massey rank",
-    "#342 in D3 (421 teams)"
+    "#349 in D3 (421 teams)"
    ],
    [
     "In conference",
@@ -366,7 +366,7 @@
     "https://www.google.com/search?q=Mount+Saint+Mary+College+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #342 \u00b7 Newburgh, NY"
+  "sub": "Massey #349 \u00b7 Newburgh, NY"
  },
  {
   "id": "st-josephs-ny",
@@ -382,7 +382,7 @@
   "rows": [
    [
     "Massey rank",
-    "#376 in D3 (421 teams)"
+    "#367 in D3 (421 teams)"
    ],
    [
     "In conference",
@@ -403,7 +403,7 @@
     "https://www.google.com/search?q=St.+Joseph%27s+University-New+York+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #376 \u00b7 Brooklyn, NY"
+  "sub": "Massey #367 \u00b7 Brooklyn, NY"
  },
  {
   "id": "mt-st-vincent",
@@ -419,7 +419,7 @@
   "rows": [
    [
     "Massey rank",
-    "#401 in D3 (421 teams)"
+    "#393 in D3 (421 teams)"
    ],
    [
     "In conference",
@@ -440,51 +440,14 @@
     "https://www.google.com/search?q=University+of+Mount+Saint+Vincent+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #401 \u00b7 Bronx, NY"
- },
- {
-  "id": "suny-maritime",
-  "name": "SUNY Maritime College",
-  "current": false,
-  "badge": "9",
-  "sort": 9,
-  "city": "Throggs Neck",
-  "state": "NY",
-  "locale": "Large city",
-  "lat": 40.807217,
-  "lon": -73.795309,
-  "rows": [
-   [
-    "Massey rank",
-    "#405 in D3 (421 teams)"
-   ],
-   [
-    "In conference",
-    "9 of 12 by Massey rank"
-   ],
-   [
-    "Tuition + fees",
-    "$8,589 in-state \u00b7 $19,159 out-of-state"
-   ]
-  ],
-  "links": [
-   [
-    "Niche",
-    "https://www.niche.com/colleges/suny-maritime-college/"
-   ],
-   [
-    "Roster",
-    "https://www.google.com/search?q=SUNY+Maritime+College+women%27s+volleyball+roster"
-   ]
-  ],
-  "sub": "Massey #405 \u00b7 Throggs Neck, NY"
+  "sub": "Massey #393 \u00b7 Bronx, NY"
  },
  {
   "id": "old-westbury",
   "name": "SUNY Old Westbury",
   "current": false,
-  "badge": "10",
-  "sort": 10,
+  "badge": "9",
+  "sort": 9,
   "city": "Old Westbury",
   "state": "NY",
   "locale": "Large suburb",
@@ -493,11 +456,11 @@
   "rows": [
    [
     "Massey rank",
-    "#406 in D3 (421 teams)"
+    "#401 in D3 (421 teams)"
    ],
    [
     "In conference",
-    "10 of 12 by Massey rank"
+    "9 of 12 by Massey rank"
    ],
    [
     "Tuition + fees",
@@ -514,7 +477,44 @@
     "https://www.google.com/search?q=SUNY+Old+Westbury+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #406 \u00b7 Old Westbury, NY"
+  "sub": "Massey #401 \u00b7 Old Westbury, NY"
+ },
+ {
+  "id": "suny-maritime",
+  "name": "SUNY Maritime College",
+  "current": false,
+  "badge": "10",
+  "sort": 10,
+  "city": "Throggs Neck",
+  "state": "NY",
+  "locale": "Large city",
+  "lat": 40.807217,
+  "lon": -73.795309,
+  "rows": [
+   [
+    "Massey rank",
+    "#406 in D3 (421 teams)"
+   ],
+   [
+    "In conference",
+    "10 of 12 by Massey rank"
+   ],
+   [
+    "Tuition + fees",
+    "$8,589 in-state \u00b7 $19,159 out-of-state"
+   ]
+  ],
+  "links": [
+   [
+    "Niche",
+    "https://www.niche.com/colleges/suny-maritime-college/"
+   ],
+   [
+    "Roster",
+    "https://www.google.com/search?q=SUNY+Maritime+College+women%27s+volleyball+roster"
+   ]
+  ],
+  "sub": "Massey #406 \u00b7 Throggs Neck, NY"
  },
  {
   "id": "purchase",
@@ -567,7 +567,7 @@
   "rows": [
    [
     "Massey rank",
-    "#419 in D3 (421 teams)"
+    "#420 in D3 (421 teams)"
    ],
    [
     "In conference",
@@ -588,7 +588,7 @@
     "https://www.google.com/search?q=Yeshiva+University+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #419 \u00b7 New York, NY"
+  "sub": "Massey #420 \u00b7 New York, NY"
  }
 ];
 

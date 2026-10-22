@@ -137,7 +137,7 @@
       <span><span class="dotkey" style="background:var(--series-1)"></span>School (number = order by Massey national rank)</span>
     </div>
     <ul class="schools" id="schoolList"></ul>
-    <p class="note">Team list and national ranks are from Massey Ratings (snapshot 2026-10-09). Campus coordinates, city, locale type, and 2024-25 tuition + fees are from U.S. Dept. of Education IPEDS data. Niche and Roster links open a search when no verified direct link exists. Map tiles: Esri; use the layer button at top right to switch to Terrain.</p>
+    <p class="note">Team list and national ranks are from Massey Ratings (snapshot 2026-10-22). Campus coordinates, city, locale type, and 2024-25 tuition + fees are from U.S. Dept. of Education IPEDS data. Niche and Roster links open a search when no verified direct link exists. Map tiles: Esri; use the layer button at top right to switch to Terrain.</p>
   </aside>
 </div>
 
@@ -147,48 +147,11 @@
   var HOME = null;
   var SCHOOLS = [
  {
-  "id": "kentucky",
-  "name": "University of Kentucky",
-  "current": false,
-  "badge": "1",
-  "sort": 1,
-  "city": "Lexington",
-  "state": "KY",
-  "locale": "Large city",
-  "lat": 38.038911,
-  "lon": -84.504747,
-  "rows": [
-   [
-    "Massey rank",
-    "#4 in D1 (348 teams)"
-   ],
-   [
-    "In conference",
-    "1 of 16 by Massey rank"
-   ],
-   [
-    "Tuition + fees",
-    "$13,502 in-state \u00b7 $34,140 out-of-state"
-   ]
-  ],
-  "links": [
-   [
-    "Niche",
-    "https://www.niche.com/colleges/university-of-kentucky/"
-   ],
-   [
-    "Roster",
-    "https://www.google.com/search?q=University+of+Kentucky+women%27s+volleyball+roster"
-   ]
-  ],
-  "sub": "Massey #4 \u00b7 Lexington, KY"
- },
- {
   "id": "florida",
   "name": "University of Florida",
   "current": false,
-  "badge": "2",
-  "sort": 2,
+  "badge": "1",
+  "sort": 1,
   "city": "Gainesville",
   "state": "FL",
   "locale": "Midsize city",
@@ -197,11 +160,11 @@
   "rows": [
    [
     "Massey rank",
-    "#7 in D1 (348 teams)"
+    "#4 in D1 (348 teams)"
    ],
    [
     "In conference",
-    "2 of 16 by Massey rank"
+    "1 of 16 by Massey rank"
    ],
    [
     "Tuition + fees",
@@ -218,51 +181,51 @@
     "https://www.google.com/search?q=University+of+Florida+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #7 \u00b7 Gainesville, FL"
+  "sub": "Massey #4 \u00b7 Gainesville, FL"
  },
  {
-  "id": "texas",
-  "name": "The University of Texas at Austin",
+  "id": "kentucky",
+  "name": "University of Kentucky",
   "current": false,
-  "badge": "3",
-  "sort": 3,
-  "city": "Austin",
-  "state": "TX",
+  "badge": "2",
+  "sort": 2,
+  "city": "Lexington",
+  "state": "KY",
   "locale": "Large city",
-  "lat": 30.282825,
-  "lon": -97.738273,
+  "lat": 38.038911,
+  "lon": -84.504747,
   "rows": [
    [
     "Massey rank",
-    "#9 in D1 (348 teams)"
+    "#5 in D1 (348 teams)"
    ],
    [
     "In conference",
-    "3 of 16 by Massey rank"
+    "2 of 16 by Massey rank"
    ],
    [
     "Tuition + fees",
-    "$11,688 in-state \u00b7 $44,908 out-of-state"
+    "$13,502 in-state \u00b7 $34,140 out-of-state"
    ]
   ],
   "links": [
    [
     "Niche",
-    "https://www.niche.com/colleges/university-of-texas-austin/"
+    "https://www.niche.com/colleges/university-of-kentucky/"
    ],
    [
     "Roster",
-    "https://www.google.com/search?q=The+University+of+Texas+at+Austin+women%27s+volleyball+roster"
+    "https://www.google.com/search?q=University+of+Kentucky+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #9 \u00b7 Austin, TX"
+  "sub": "Massey #5 \u00b7 Lexington, KY"
  },
  {
   "id": "tennessee",
   "name": "The University of Tennessee-Knoxville",
   "current": false,
-  "badge": "4",
-  "sort": 4,
+  "badge": "3",
+  "sort": 3,
   "city": "Knoxville",
   "state": "TN",
   "locale": "Midsize city",
@@ -271,11 +234,11 @@
   "rows": [
    [
     "Massey rank",
-    "#12 in D1 (348 teams)"
+    "#10 in D1 (348 teams)"
    ],
    [
     "In conference",
-    "4 of 16 by Massey rank"
+    "3 of 16 by Massey rank"
    ],
    [
     "Tuition + fees",
@@ -292,51 +255,51 @@
     "https://www.google.com/search?q=The+University+of+Tennessee-Knoxville+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #12 \u00b7 Knoxville, TN"
+  "sub": "Massey #10 \u00b7 Knoxville, TN"
  },
  {
-  "id": "texas-a-and-m",
-  "name": "Texas A&M University-College Station",
+  "id": "texas",
+  "name": "The University of Texas at Austin",
   "current": false,
-  "badge": "5",
-  "sort": 5,
-  "city": "College Station",
+  "badge": "4",
+  "sort": 4,
+  "city": "Austin",
   "state": "TX",
-  "locale": "Midsize city",
-  "lat": 30.618726,
-  "lon": -96.336475,
+  "locale": "Large city",
+  "lat": 30.282825,
+  "lon": -97.738273,
   "rows": [
    [
     "Massey rank",
-    "#19 in D1 (348 teams)"
+    "#12 in D1 (348 teams)"
    ],
    [
     "In conference",
-    "5 of 16 by Massey rank"
+    "4 of 16 by Massey rank"
    ],
    [
     "Tuition + fees",
-    "$13,154 in-state \u00b7 $40,124 out-of-state"
+    "$11,688 in-state \u00b7 $44,908 out-of-state"
    ]
   ],
   "links": [
    [
     "Niche",
-    "https://www.niche.com/colleges/texas-a-and-m-university/"
+    "https://www.niche.com/colleges/university-of-texas-austin/"
    ],
    [
     "Roster",
-    "https://www.google.com/search?q=Texas+A%26M+University-College+Station+women%27s+volleyball+roster"
+    "https://www.google.com/search?q=The+University+of+Texas+at+Austin+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #19 \u00b7 College Station, TX"
+  "sub": "Massey #12 \u00b7 Austin, TX"
  },
  {
   "id": "vanderbilt",
   "name": "Vanderbilt University",
   "current": false,
-  "badge": "6",
-  "sort": 6,
+  "badge": "5",
+  "sort": 5,
   "city": "Nashville",
   "state": "TN",
   "locale": "Large city",
@@ -345,11 +308,11 @@
   "rows": [
    [
     "Massey rank",
-    "#28 in D1 (348 teams)"
+    "#19 in D1 (348 teams)"
    ],
    [
     "In conference",
-    "6 of 16 by Massey rank"
+    "5 of 16 by Massey rank"
    ],
    [
     "Tuition + fees",
@@ -366,7 +329,44 @@
     "https://www.google.com/search?q=Vanderbilt+University+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #28 \u00b7 Nashville, TN"
+  "sub": "Massey #19 \u00b7 Nashville, TN"
+ },
+ {
+  "id": "texas-a-and-m",
+  "name": "Texas A&M University-College Station",
+  "current": false,
+  "badge": "6",
+  "sort": 6,
+  "city": "College Station",
+  "state": "TX",
+  "locale": "Midsize city",
+  "lat": 30.618726,
+  "lon": -96.336475,
+  "rows": [
+   [
+    "Massey rank",
+    "#25 in D1 (348 teams)"
+   ],
+   [
+    "In conference",
+    "6 of 16 by Massey rank"
+   ],
+   [
+    "Tuition + fees",
+    "$13,154 in-state \u00b7 $40,124 out-of-state"
+   ]
+  ],
+  "links": [
+   [
+    "Niche",
+    "https://www.niche.com/colleges/texas-a-and-m-university/"
+   ],
+   [
+    "Roster",
+    "https://www.google.com/search?q=Texas+A%26M+University-College+Station+women%27s+volleyball+roster"
+   ]
+  ],
+  "sub": "Massey #25 \u00b7 College Station, TX"
  },
  {
   "id": "georgia",
@@ -382,7 +382,7 @@
   "rows": [
    [
     "Massey rank",
-    "#31 in D1 (348 teams)"
+    "#30 in D1 (348 teams)"
    ],
    [
     "In conference",
@@ -403,7 +403,7 @@
     "https://www.google.com/search?q=University+of+Georgia+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #31 \u00b7 Athens, GA"
+  "sub": "Massey #30 \u00b7 Athens, GA"
  },
  {
   "id": "oklahoma",
@@ -456,7 +456,7 @@
   "rows": [
    [
     "Massey rank",
-    "#38 in D1 (348 teams)"
+    "#42 in D1 (348 teams)"
    ],
    [
     "In conference",
@@ -477,7 +477,7 @@
     "https://www.google.com/search?q=Auburn+University+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #38 \u00b7 Auburn, AL"
+  "sub": "Massey #42 \u00b7 Auburn, AL"
  },
  {
   "id": "mississippi-st",
@@ -493,7 +493,7 @@
   "rows": [
    [
     "Massey rank",
-    "#46 in D1 (348 teams)"
+    "#45 in D1 (348 teams)"
    ],
    [
     "In conference",
@@ -514,7 +514,7 @@
     "https://www.google.com/search?q=Mississippi+State+University+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #46 \u00b7 Mississippi State, MS"
+  "sub": "Massey #45 \u00b7 Mississippi State, MS"
  },
  {
   "id": "missouri",
@@ -530,7 +530,7 @@
   "rows": [
    [
     "Massey rank",
-    "#53 in D1 (348 teams)"
+    "#46 in D1 (348 teams)"
    ],
    [
     "In conference",
@@ -551,7 +551,7 @@
     "https://www.google.com/search?q=University+of+Missouri-Columbia+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #53 \u00b7 Columbia, MO"
+  "sub": "Massey #46 \u00b7 Columbia, MO"
  },
  {
   "id": "lsu",
@@ -567,7 +567,7 @@
   "rows": [
    [
     "Massey rank",
-    "#60 in D1 (348 teams)"
+    "#59 in D1 (348 teams)"
    ],
    [
     "In conference",
@@ -588,7 +588,7 @@
     "https://www.google.com/search?q=Louisiana+State+University+and+Agricultural+%26+Mechanical+College+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #60 \u00b7 Baton Rouge, LA"
+  "sub": "Massey #59 \u00b7 Baton Rouge, LA"
  },
  {
   "id": "south-carolina",
@@ -604,7 +604,7 @@
   "rows": [
    [
     "Massey rank",
-    "#69 in D1 (348 teams)"
+    "#72 in D1 (348 teams)"
    ],
    [
     "In conference",
@@ -625,51 +625,14 @@
     "https://www.google.com/search?q=University+of+South+Carolina-Columbia+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #69 \u00b7 Columbia, SC"
- },
- {
-  "id": "mississippi",
-  "name": "University of Mississippi",
-  "current": false,
-  "badge": "14",
-  "sort": 14,
-  "city": "University",
-  "state": "MS",
-  "locale": "Town (remote)",
-  "lat": 34.365529,
-  "lon": -89.537434,
-  "rows": [
-   [
-    "Massey rank",
-    "#76 in D1 (348 teams)"
-   ],
-   [
-    "In conference",
-    "14 of 16 by Massey rank"
-   ],
-   [
-    "Tuition + fees",
-    "$9,772 in-state \u00b7 $28,600 out-of-state"
-   ]
-  ],
-  "links": [
-   [
-    "Niche",
-    "https://www.niche.com/colleges/university-of-mississippi/"
-   ],
-   [
-    "Roster",
-    "https://www.google.com/search?q=University+of+Mississippi+women%27s+volleyball+roster"
-   ]
-  ],
-  "sub": "Massey #76 \u00b7 University, MS"
+  "sub": "Massey #72 \u00b7 Columbia, SC"
  },
  {
   "id": "arkansas",
   "name": "University of Arkansas",
   "current": false,
-  "badge": "15",
-  "sort": 15,
+  "badge": "14",
+  "sort": 14,
   "city": "Fayetteville",
   "state": "AR",
   "locale": "Midsize city",
@@ -678,11 +641,11 @@
   "rows": [
    [
     "Massey rank",
-    "#84 in D1 (348 teams)"
+    "#73 in D1 (348 teams)"
    ],
    [
     "In conference",
-    "15 of 16 by Massey rank"
+    "14 of 16 by Massey rank"
    ],
    [
     "Tuition + fees",
@@ -699,7 +662,44 @@
     "https://www.google.com/search?q=University+of+Arkansas+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #84 \u00b7 Fayetteville, AR"
+  "sub": "Massey #73 \u00b7 Fayetteville, AR"
+ },
+ {
+  "id": "mississippi",
+  "name": "University of Mississippi",
+  "current": false,
+  "badge": "15",
+  "sort": 15,
+  "city": "University",
+  "state": "MS",
+  "locale": "Town (remote)",
+  "lat": 34.365529,
+  "lon": -89.537434,
+  "rows": [
+   [
+    "Massey rank",
+    "#81 in D1 (348 teams)"
+   ],
+   [
+    "In conference",
+    "15 of 16 by Massey rank"
+   ],
+   [
+    "Tuition + fees",
+    "$9,772 in-state \u00b7 $28,600 out-of-state"
+   ]
+  ],
+  "links": [
+   [
+    "Niche",
+    "https://www.niche.com/colleges/university-of-mississippi/"
+   ],
+   [
+    "Roster",
+    "https://www.google.com/search?q=University+of+Mississippi+women%27s+volleyball+roster"
+   ]
+  ],
+  "sub": "Massey #81 \u00b7 University, MS"
  },
  {
   "id": "alabama",
@@ -715,7 +715,7 @@
   "rows": [
    [
     "Massey rank",
-    "#91 in D1 (348 teams)"
+    "#93 in D1 (348 teams)"
    ],
    [
     "In conference",
@@ -736,7 +736,7 @@
     "https://www.google.com/search?q=The+University+of+Alabama+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #91 \u00b7 Tuscaloosa, AL"
+  "sub": "Massey #93 \u00b7 Tuscaloosa, AL"
  }
 ];
 

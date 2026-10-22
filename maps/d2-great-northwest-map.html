@@ -137,7 +137,7 @@
       <span><span class="dotkey" style="background:var(--series-1)"></span>School (number = order by Massey national rank)</span>
     </div>
     <ul class="schools" id="schoolList"></ul>
-    <p class="note">Team list and national ranks are from Massey Ratings (snapshot 2026-10-09). Campus coordinates, city, locale type, and 2024-25 tuition + fees are from U.S. Dept. of Education IPEDS data. Niche and Roster links open a search when no verified direct link exists. Map tiles: Esri; use the layer button at top right to switch to Terrain.</p>
+    <p class="note">Team list and national ranks are from Massey Ratings (snapshot 2026-10-22). Campus coordinates, city, locale type, and 2024-25 tuition + fees are from U.S. Dept. of Education IPEDS data. Niche and Roster links open a search when no verified direct link exists. Map tiles: Esri; use the layer button at top right to switch to Terrain.</p>
   </aside>
 </div>
 
@@ -147,44 +147,11 @@
   var HOME = null;
   var SCHOOLS = [
  {
-  "id": "simon-fraser",
-  "name": "Simon Fraser University",
-  "current": false,
-  "badge": "1",
-  "sort": 1,
-  "city": "Burnaby",
-  "state": "BC",
-  "locale": "Canada (no IPEDS data)",
-  "lat": 49.2781,
-  "lon": -122.9199,
-  "rows": [
-   [
-    "Massey rank",
-    "#12 in D2 (284 teams)"
-   ],
-   [
-    "In conference",
-    "1 of 10 by Massey rank"
-   ]
-  ],
-  "links": [
-   [
-    "Niche",
-    "https://www.google.com/search?q=site%3Aniche.com+Simon+Fraser+University"
-   ],
-   [
-    "Roster",
-    "https://www.google.com/search?q=Simon+Fraser+University+women%27s+volleyball+roster"
-   ]
-  ],
-  "sub": "Massey #12 \u00b7 Burnaby, BC"
- },
- {
   "id": "c-washington",
   "name": "Central Washington University",
   "current": false,
-  "badge": "2",
-  "sort": 2,
+  "badge": "1",
+  "sort": 1,
   "city": "Ellensburg",
   "state": "WA",
   "locale": "Town (distant)",
@@ -193,11 +160,11 @@
   "rows": [
    [
     "Massey rank",
-    "#14 in D2 (284 teams)"
+    "#8 in D2 (284 teams)"
    ],
    [
     "In conference",
-    "2 of 10 by Massey rank"
+    "1 of 10 by Massey rank"
    ],
    [
     "Tuition + fees",
@@ -214,7 +181,40 @@
     "https://www.google.com/search?q=Central+Washington+University+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #14 \u00b7 Ellensburg, WA"
+  "sub": "Massey #8 \u00b7 Ellensburg, WA"
+ },
+ {
+  "id": "simon-fraser",
+  "name": "Simon Fraser University",
+  "current": false,
+  "badge": "2",
+  "sort": 2,
+  "city": "Burnaby",
+  "state": "BC",
+  "locale": "Canada (no IPEDS data)",
+  "lat": 49.2781,
+  "lon": -122.9199,
+  "rows": [
+   [
+    "Massey rank",
+    "#17 in D2 (284 teams)"
+   ],
+   [
+    "In conference",
+    "2 of 10 by Massey rank"
+   ]
+  ],
+  "links": [
+   [
+    "Niche",
+    "https://www.google.com/search?q=site%3Aniche.com+Simon+Fraser+University"
+   ],
+   [
+    "Roster",
+    "https://www.google.com/search?q=Simon+Fraser+University+women%27s+volleyball+roster"
+   ]
+  ],
+  "sub": "Massey #17 \u00b7 Burnaby, BC"
  },
  {
   "id": "seattle-pacific",
@@ -230,7 +230,7 @@
   "rows": [
    [
     "Massey rank",
-    "#23 in D2 (284 teams)"
+    "#21 in D2 (284 teams)"
    ],
    [
     "In conference",
@@ -251,7 +251,7 @@
     "https://www.google.com/search?q=Seattle+Pacific+University+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #23 \u00b7 Seattle, WA"
+  "sub": "Massey #21 \u00b7 Seattle, WA"
  },
  {
   "id": "ak-anchorage",
@@ -267,7 +267,7 @@
   "rows": [
    [
     "Massey rank",
-    "#26 in D2 (284 teams)"
+    "#28 in D2 (284 teams)"
    ],
    [
     "In conference",
@@ -288,51 +288,14 @@
     "https://www.google.com/search?q=University+of+Alaska+Anchorage+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #26 \u00b7 Anchorage, AK"
- },
- {
-  "id": "ak-fairbanks",
-  "name": "University of Alaska Fairbanks",
-  "current": false,
-  "badge": "5",
-  "sort": 5,
-  "city": "Fairbanks",
-  "state": "AK",
-  "locale": "Small city",
-  "lat": 64.85756,
-  "lon": -147.823146,
-  "rows": [
-   [
-    "Massey rank",
-    "#32 in D2 (284 teams)"
-   ],
-   [
-    "In conference",
-    "5 of 10 by Massey rank"
-   ],
-   [
-    "Tuition + fees",
-    "$8,736 in-state \u00b7 $22,320 out-of-state"
-   ]
-  ],
-  "links": [
-   [
-    "Niche",
-    "https://www.niche.com/colleges/university-of-alaska-fairbanks/"
-   ],
-   [
-    "Roster",
-    "https://www.google.com/search?q=University+of+Alaska+Fairbanks+women%27s+volleyball+roster"
-   ]
-  ],
-  "sub": "Massey #32 \u00b7 Fairbanks, AK"
+  "sub": "Massey #28 \u00b7 Anchorage, AK"
  },
  {
   "id": "w-washington",
   "name": "Western Washington University",
   "current": false,
-  "badge": "6",
-  "sort": 6,
+  "badge": "5",
+  "sort": 5,
   "city": "Bellingham",
   "state": "WA",
   "locale": "Small city",
@@ -345,7 +308,7 @@
    ],
    [
     "In conference",
-    "6 of 10 by Massey rank"
+    "5 of 10 by Massey rank"
    ],
    [
     "Tuition + fees",
@@ -368,8 +331,8 @@
   "id": "nw-nazarene",
   "name": "Northwest Nazarene University",
   "current": false,
-  "badge": "7",
-  "sort": 7,
+  "badge": "6",
+  "sort": 6,
   "city": "Nampa",
   "state": "ID",
   "locale": "Midsize suburb",
@@ -378,11 +341,11 @@
   "rows": [
    [
     "Massey rank",
-    "#39 in D2 (284 teams)"
+    "#40 in D2 (284 teams)"
    ],
    [
     "In conference",
-    "7 of 10 by Massey rank"
+    "6 of 10 by Massey rank"
    ],
    [
     "Tuition + fees",
@@ -399,7 +362,44 @@
     "https://www.google.com/search?q=Northwest+Nazarene+University+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #39 \u00b7 Nampa, ID"
+  "sub": "Massey #40 \u00b7 Nampa, ID"
+ },
+ {
+  "id": "ak-fairbanks",
+  "name": "University of Alaska Fairbanks",
+  "current": false,
+  "badge": "7",
+  "sort": 7,
+  "city": "Fairbanks",
+  "state": "AK",
+  "locale": "Small city",
+  "lat": 64.85756,
+  "lon": -147.823146,
+  "rows": [
+   [
+    "Massey rank",
+    "#41 in D2 (284 teams)"
+   ],
+   [
+    "In conference",
+    "7 of 10 by Massey rank"
+   ],
+   [
+    "Tuition + fees",
+    "$8,736 in-state \u00b7 $22,320 out-of-state"
+   ]
+  ],
+  "links": [
+   [
+    "Niche",
+    "https://www.niche.com/colleges/university-of-alaska-fairbanks/"
+   ],
+   [
+    "Roster",
+    "https://www.google.com/search?q=University+of+Alaska+Fairbanks+women%27s+volleyball+roster"
+   ]
+  ],
+  "sub": "Massey #41 \u00b7 Fairbanks, AK"
  },
  {
   "id": "st-martins",
@@ -415,7 +415,7 @@
   "rows": [
    [
     "Massey rank",
-    "#66 in D2 (284 teams)"
+    "#67 in D2 (284 teams)"
    ],
    [
     "In conference",
@@ -436,7 +436,7 @@
     "https://www.google.com/search?q=Saint+Martin%27s+University+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #66 \u00b7 Lacey, WA"
+  "sub": "Massey #67 \u00b7 Lacey, WA"
  },
  {
   "id": "w-oregon",
@@ -452,7 +452,7 @@
   "rows": [
    [
     "Massey rank",
-    "#104 in D2 (284 teams)"
+    "#91 in D2 (284 teams)"
    ],
    [
     "In conference",
@@ -473,7 +473,7 @@
     "https://www.google.com/search?q=Western+Oregon+University+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #104 \u00b7 Monmouth, OR"
+  "sub": "Massey #91 \u00b7 Monmouth, OR"
  },
  {
   "id": "mt-st-billings",
@@ -489,7 +489,7 @@
   "rows": [
    [
     "Massey rank",
-    "#182 in D2 (284 teams)"
+    "#176 in D2 (284 teams)"
    ],
    [
     "In conference",
@@ -510,7 +510,7 @@
     "https://www.google.com/search?q=Montana+State+University+Billings+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #182 \u00b7 Billings, MT"
+  "sub": "Massey #176 \u00b7 Billings, MT"
  }
 ];
 

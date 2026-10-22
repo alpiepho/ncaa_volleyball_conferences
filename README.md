@@ -16,7 +16,7 @@ button to switch between a street map and a terrain map.
 ## Data sources
 
 - **Massey Ratings** (masseyratings.com): conferences, team lists, and
-  national ranks. Snapshot taken 2026-10-09.
+  national ranks. Snapshot taken 2026-10-22.
 - **IPEDS** (U.S. Dept. of Education, nces.ed.gov/ipeds): campus coordinates,
   city, locale type, and 2024-25 tuition + fees. Public-domain federal data.
 - **Map tiles:** Esri World Street Map and World Topo, via Leaflet 1.9.4.

@@ -137,7 +137,7 @@
       <span><span class="dotkey" style="background:var(--series-1)"></span>School (number = order by Massey national rank)</span>
     </div>
     <ul class="schools" id="schoolList"></ul>
-    <p class="note">Team list and national ranks are from Massey Ratings (snapshot 2026-10-09). Campus coordinates, city, locale type, and 2024-25 tuition + fees are from U.S. Dept. of Education IPEDS data. Niche and Roster links open a search when no verified direct link exists. Map tiles: Esri; use the layer button at top right to switch to Terrain.</p>
+    <p class="note">Team list and national ranks are from Massey Ratings (snapshot 2026-10-22). Campus coordinates, city, locale type, and 2024-25 tuition + fees are from U.S. Dept. of Education IPEDS data. Niche and Roster links open a search when no verified direct link exists. Map tiles: Esri; use the layer button at top right to switch to Terrain.</p>
   </aside>
 </div>
 
@@ -147,48 +147,11 @@
   var HOME = null;
   var SCHOOLS = [
  {
-  "id": "rockhurst",
-  "name": "Rockhurst University",
-  "current": false,
-  "badge": "1",
-  "sort": 1,
-  "city": "Kansas City",
-  "state": "MO",
-  "locale": "Large city",
-  "lat": 39.032318,
-  "lon": -94.573003,
-  "rows": [
-   [
-    "Massey rank",
-    "#35 in D2 (284 teams)"
-   ],
-   [
-    "In conference",
-    "1 of 14 by Massey rank"
-   ],
-   [
-    "Tuition + fees",
-    "$44,966 in-state \u00b7 $44,966 out-of-state"
-   ]
-  ],
-  "links": [
-   [
-    "Niche",
-    "https://www.niche.com/colleges/rockhurst-university/"
-   ],
-   [
-    "Roster",
-    "https://www.google.com/search?q=Rockhurst+University+women%27s+volleyball+roster"
-   ]
-  ],
-  "sub": "Massey #35 \u00b7 Kansas City, MO"
- },
- {
   "id": "mo-st-louis",
   "name": "University of Missouri-St Louis",
   "current": false,
-  "badge": "2",
-  "sort": 2,
+  "badge": "1",
+  "sort": 1,
   "city": "Saint Louis",
   "state": "MO",
   "locale": "Large suburb",
@@ -197,11 +160,11 @@
   "rows": [
    [
     "Massey rank",
-    "#37 in D2 (284 teams)"
+    "#29 in D2 (284 teams)"
    ],
    [
     "In conference",
-    "2 of 14 by Massey rank"
+    "1 of 14 by Massey rank"
    ],
    [
     "Tuition + fees",
@@ -218,7 +181,44 @@
     "https://www.google.com/search?q=University+of+Missouri-St+Louis+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #37 \u00b7 Saint Louis, MO"
+  "sub": "Massey #29 \u00b7 Saint Louis, MO"
+ },
+ {
+  "id": "rockhurst",
+  "name": "Rockhurst University",
+  "current": false,
+  "badge": "2",
+  "sort": 2,
+  "city": "Kansas City",
+  "state": "MO",
+  "locale": "Large city",
+  "lat": 39.032318,
+  "lon": -94.573003,
+  "rows": [
+   [
+    "Massey rank",
+    "#37 in D2 (284 teams)"
+   ],
+   [
+    "In conference",
+    "2 of 14 by Massey rank"
+   ],
+   [
+    "Tuition + fees",
+    "$44,966 in-state \u00b7 $44,966 out-of-state"
+   ]
+  ],
+  "links": [
+   [
+    "Niche",
+    "https://www.niche.com/colleges/rockhurst-university/"
+   ],
+   [
+    "Roster",
+    "https://www.google.com/search?q=Rockhurst+University+women%27s+volleyball+roster"
+   ]
+  ],
+  "sub": "Massey #37 \u00b7 Kansas City, MO"
  },
  {
   "id": "indianapolis",
@@ -234,7 +234,7 @@
   "rows": [
    [
     "Massey rank",
-    "#43 in D2 (284 teams)"
+    "#39 in D2 (284 teams)"
    ],
    [
     "In conference",
@@ -255,7 +255,7 @@
     "https://www.google.com/search?q=University+of+Indianapolis+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #43 \u00b7 Indianapolis, IN"
+  "sub": "Massey #39 \u00b7 Indianapolis, IN"
  },
  {
   "id": "lewis",
@@ -271,7 +271,7 @@
   "rows": [
    [
     "Massey rank",
-    "#65 in D2 (284 teams)"
+    "#76 in D2 (284 teams)"
    ],
    [
     "In conference",
@@ -292,7 +292,7 @@
     "https://www.google.com/search?q=Lewis+University+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #65 \u00b7 Romeoville, IL"
+  "sub": "Massey #76 \u00b7 Romeoville, IL"
  },
  {
   "id": "drury",
@@ -308,7 +308,7 @@
   "rows": [
    [
     "Massey rank",
-    "#87 in D2 (284 teams)"
+    "#81 in D2 (284 teams)"
    ],
    [
     "In conference",
@@ -329,7 +329,7 @@
     "https://www.google.com/search?q=Drury+University+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #87 \u00b7 Springfield, MO"
+  "sub": "Massey #81 \u00b7 Springfield, MO"
  },
  {
   "id": "quincy",
@@ -345,7 +345,7 @@
   "rows": [
    [
     "Massey rank",
-    "#96 in D2 (284 teams)"
+    "#86 in D2 (284 teams)"
    ],
    [
     "In conference",
@@ -366,7 +366,7 @@
     "https://www.google.com/search?q=Quincy+University+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #96 \u00b7 Quincy, IL"
+  "sub": "Massey #86 \u00b7 Quincy, IL"
  },
  {
   "id": "maryville-mo",
@@ -382,7 +382,7 @@
   "rows": [
    [
     "Massey rank",
-    "#111 in D2 (284 teams)"
+    "#102 in D2 (284 teams)"
    ],
    [
     "In conference",
@@ -403,7 +403,7 @@
     "https://www.google.com/search?q=Maryville+University+of+Saint+Louis+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #111 \u00b7 Saint Louis, MO"
+  "sub": "Massey #102 \u00b7 Saint Louis, MO"
  },
  {
   "id": "truman-st",
@@ -419,7 +419,7 @@
   "rows": [
    [
     "Massey rank",
-    "#130 in D2 (284 teams)"
+    "#128 in D2 (284 teams)"
    ],
    [
     "In conference",
@@ -440,7 +440,7 @@
     "https://www.google.com/search?q=Truman+State+University+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #130 \u00b7 Kirksville, MO"
+  "sub": "Massey #128 \u00b7 Kirksville, MO"
  },
  {
   "id": "sw-baptist",
@@ -456,7 +456,7 @@
   "rows": [
    [
     "Massey rank",
-    "#148 in D2 (284 teams)"
+    "#132 in D2 (284 teams)"
    ],
    [
     "In conference",
@@ -477,7 +477,7 @@
     "https://www.google.com/search?q=Southwest+Baptist+University+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #148 \u00b7 Bolivar, MO"
+  "sub": "Massey #132 \u00b7 Bolivar, MO"
  },
  {
   "id": "missouri-s-and-t",
@@ -493,7 +493,7 @@
   "rows": [
    [
     "Massey rank",
-    "#150 in D2 (284 teams)"
+    "#136 in D2 (284 teams)"
    ],
    [
     "In conference",
@@ -514,51 +514,14 @@
     "https://www.google.com/search?q=Missouri+University+of+Science+and+Technology+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #150 \u00b7 Rolla, MO"
- },
- {
-  "id": "il-springfield",
-  "name": "University of Illinois Springfield",
-  "current": false,
-  "badge": "11",
-  "sort": 11,
-  "city": "Springfield",
-  "state": "IL",
-  "locale": "Midsize city",
-  "lat": 39.729524,
-  "lon": -89.616796,
-  "rows": [
-   [
-    "Massey rank",
-    "#165 in D2 (284 teams)"
-   ],
-   [
-    "In conference",
-    "11 of 14 by Massey rank"
-   ],
-   [
-    "Tuition + fees",
-    "$12,252 in-state \u00b7 $22,017 out-of-state"
-   ]
-  ],
-  "links": [
-   [
-    "Niche",
-    "https://www.niche.com/colleges/university-of-illinois-springfield/"
-   ],
-   [
-    "Roster",
-    "https://www.google.com/search?q=University+of+Illinois+Springfield+women%27s+volleyball+roster"
-   ]
-  ],
-  "sub": "Massey #165 \u00b7 Springfield, IL"
+  "sub": "Massey #136 \u00b7 Rolla, MO"
  },
  {
   "id": "upper-iowa",
   "name": "Upper Iowa University",
   "current": false,
-  "badge": "12",
-  "sort": 12,
+  "badge": "11",
+  "sort": 11,
   "city": "Fayette",
   "state": "IA",
   "locale": "Rural (remote)",
@@ -567,11 +530,11 @@
   "rows": [
    [
     "Massey rank",
-    "#174 in D2 (284 teams)"
+    "#155 in D2 (284 teams)"
    ],
    [
     "In conference",
-    "12 of 14 by Massey rank"
+    "11 of 14 by Massey rank"
    ],
    [
     "Tuition + fees",
@@ -588,7 +551,44 @@
     "https://www.google.com/search?q=Upper+Iowa+University+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #174 \u00b7 Fayette, IA"
+  "sub": "Massey #155 \u00b7 Fayette, IA"
+ },
+ {
+  "id": "il-springfield",
+  "name": "University of Illinois Springfield",
+  "current": false,
+  "badge": "12",
+  "sort": 12,
+  "city": "Springfield",
+  "state": "IL",
+  "locale": "Midsize city",
+  "lat": 39.729524,
+  "lon": -89.616796,
+  "rows": [
+   [
+    "Massey rank",
+    "#164 in D2 (284 teams)"
+   ],
+   [
+    "In conference",
+    "12 of 14 by Massey rank"
+   ],
+   [
+    "Tuition + fees",
+    "$12,252 in-state \u00b7 $22,017 out-of-state"
+   ]
+  ],
+  "links": [
+   [
+    "Niche",
+    "https://www.niche.com/colleges/university-of-illinois-springfield/"
+   ],
+   [
+    "Roster",
+    "https://www.google.com/search?q=University+of+Illinois+Springfield+women%27s+volleyball+roster"
+   ]
+  ],
+  "sub": "Massey #164 \u00b7 Springfield, IL"
  },
  {
   "id": "wm-jewell",
@@ -604,7 +604,7 @@
   "rows": [
    [
     "Massey rank",
-    "#198 in D2 (284 teams)"
+    "#179 in D2 (284 teams)"
    ],
    [
     "In conference",
@@ -625,7 +625,7 @@
     "https://www.google.com/search?q=William+Jewell+College+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #198 \u00b7 Liberty, MO"
+  "sub": "Massey #179 \u00b7 Liberty, MO"
  },
  {
   "id": "mckendree",
@@ -641,7 +641,7 @@
   "rows": [
    [
     "Massey rank",
-    "#214 in D2 (284 teams)"
+    "#205 in D2 (284 teams)"
    ],
    [
     "In conference",
@@ -662,7 +662,7 @@
     "https://www.google.com/search?q=McKendree+University+women%27s+volleyball+roster"
    ]
   ],
-  "sub": "Massey #214 \u00b7 Lebanon, IL"
+  "sub": "Massey #205 \u00b7 Lebanon, IL"
  }
 ];
 
