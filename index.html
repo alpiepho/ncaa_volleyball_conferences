@@ -232,6 +232,27 @@
     font-size:12px;
     color:var(--text-muted);
   }
+  /* ---------- view options (this browser only; not part of the comparison settings) ---------- */
+  .view-sec{
+    margin:12px 0 0;
+    padding-top:10px;
+    border-top:1px solid var(--grid);
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:6px 14px;
+    font-size:13px;
+    color:var(--text-secondary);
+  }
+  .view-sec .view-title{
+    font:600 11px/1 "Work Sans",sans-serif;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    color:var(--text-muted);
+  }
+  .view-sec label{ display:inline-flex; align-items:center; gap:7px; cursor:pointer; }
+  .view-sec input{ width:15px; height:15px; margin:0; accent-color:var(--accent); cursor:pointer; }
+
   /* ---------- saved schools: settings section + editor (SAVE_SCHOOLS.md §7) ---------- */
   .saved-sec{
     margin:12px 0 0;
@@ -347,6 +368,11 @@
     gap:16px;
   }
   @media (max-width:520px){ .grid, .mini-grid{ grid-template-columns:1fr; } }
+  /* "Single column" view option: one card per row, kept to a readable width */
+  body.single .grid, body.single .mini-grid{ grid-template-columns:minmax(0, 720px); }
+  /* single column: the division after each school name, so a long scroll keeps its place */
+  .div-tag{ display:none; }
+  body.single .div-tag{ display:inline; margin-left:6px; font-size:11px; font-weight:400; color:var(--text-muted); }
   .card{
     background:var(--surface-raised);
     border:1px solid var(--border);
@@ -547,6 +573,10 @@
           <ul class="ta-list" id="f-home-list" role="listbox" hidden></ul>
           <p class="hint" id="f-home-hint"></p>
         </div>
+      </div>
+      <div class="view-sec" role="group" aria-labelledby="view-title">
+        <span class="view-title" id="view-title">Layout</span>
+        <label><input type="checkbox" id="f-single"> Single column (conferences and reports one per row)</label>
       </div>
       <div class="saved-sec" aria-labelledby="saved-title">
         <span class="saved-title" id="saved-title">Saved schools</span>
@@ -828,6 +858,26 @@ $("copy-link").addEventListener("click", function(){
   } else { window.prompt("Copy this link:", url); }
 });
 
+// ---------------------------------------------------------------- view options
+// A per-browser display preference, kept apart from the comparison settings: not in shared
+// links and not cleared by Reset.
+var VIEW_KEY = "ncaaCompare.view.v1";
+function loadView(){
+  try { return JSON.parse(localStorage.getItem(VIEW_KEY)) || {}; } catch (e) { return {}; }
+}
+function applyView(v){
+  document.body.classList.toggle("single", !!v.single);
+  $("f-single").checked = !!v.single;
+}
+$("f-single").addEventListener("change", function(){
+  var v = loadView();
+  v.single = this.checked;
+  try { localStorage.setItem(VIEW_KEY, JSON.stringify(v)); } catch (e) { /* lasts for this page only */ }
+  applyView(v);
+});
+applyView(loadView());
+window.addEventListener("storage", function(e){ if (e.key === VIEW_KEY) applyView(loadView()); });
+
 // ---------------------------------------------------------------- saved schools: section + editor
 // (SAVE_SCHOOLS.md §7). The editor's text box is both the viewer and the importer.
 var dlg = $("saved-dlg"), box = $("saved-text"), checkTimer = null;
@@ -1037,7 +1087,9 @@ function renderReportCard(host, slug){
   var c = D.conferences[slug], base = settings.school ? C.schoolRecord(settings.school) : null;
   var card = el("div", "card");
   var head = el("div", "card-head");
-  head.appendChild(el("h3", null, c.indexTitle || c.title));
+  var h3 = el("h3", null, c.indexTitle || c.title);
+  h3.appendChild(el("span", "div-tag", c.division));
+  head.appendChild(h3);
   head.appendChild(el("span", "count", c.schools.length + " schools"));
   card.appendChild(head);
 
@@ -1060,7 +1112,9 @@ function renderMiniCard(host, div, confName){
   var teams = (TEAMS_BY_CONF[div] || {})[confName] || [];
   var card = el("div", "mini-card" + (teams.indexOf(settings.school) >= 0 ? " has-current" : ""));
   var h4 = el("h4");
-  h4.appendChild(el("span", null, confName));
+  var title = el("span", null, confName);
+  title.appendChild(el("span", "div-tag", div));
+  h4.appendChild(title);
   var n = el("span", "n", teams.length);
   n.appendChild(el("span", "n-saved"));
   h4.appendChild(n);
@@ -1090,6 +1144,7 @@ function renderMiniCard(host, div, confName){
     box.addEventListener("change", function(){ saved = C.setSaved(m, box.checked); refreshSaved(); });
     label.appendChild(box);
     var name = el("span", "mini-school-name", full);
+    name.appendChild(el("span", "div-tag", t.division));
     name.title = full;
     name.appendChild(el("small", null, teamWhere(m) + " · Massey #" + t.rank + (m === settings.school ? " · comparing to" : "")));
     label.appendChild(name);
