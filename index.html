@@ -627,7 +627,7 @@
 <div class="wrap">
   <p class="updated" id="updated"></p>
   <p class="sub">Every NCAA women's volleyball conference, with a map per conference and full comparison
-    reports for the conferences researched so far. Use <b>Edit settings</b> to pick a school to compare against,
+    reports for the conferences <a id="researched-link" href="researched.html">researched</a> so far. Use <b>Edit settings</b> to pick a school to compare against,
     a position, majors, and a home town; the reports and maps use them for cost, majors, and distances.
     Tick the box next to any school to save it to a shortlist, then copy the list from <b>Edit settings</b>
     to send it on. Settings and the list stay in this browser only. Conference and team groupings come from
@@ -1269,6 +1269,7 @@ function openSavedFromHash(){
 // a box ticked in another tab (a map opened from here) shows without a reload
 C.onSavedChange(function(list){ saved = list; refreshSaved(); measureHeader(); });
 
+$("researched-link").href = carry("researched.html");
 fillForm();
 renderUpdated();
 renderFooter();
