@@ -1,0 +1,1272 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>WCC Scouting Report</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ---------- tokens ---------- */
+  :root{
+    color-scheme: light;
+    --page-bg:#f9f9f7;
+    --surface:#fcfcfb;
+    --surface-raised:#ffffff;
+    --text-primary:#0b0b0b;
+    --text-secondary:#52514e;
+    --text-muted:#898781;
+    --grid:#e1e0d9;
+    --baseline:#c3c2b7;
+    --border:rgba(11,11,11,0.10);
+    --series-1:#2a78d6; /* blue   */
+    --series-2:#eb6834; /* orange */
+    --series-3:#1baf7a; /* aqua   */
+    --series-4:#eda100; /* yellow */
+    --series-5:#e87ba4; /* magenta*/
+    --series-6:#008300; /* green  */
+    --series-7:#4a3aa7; /* violet */
+    --series-8:#e34948; /* red    */
+    --status-good:#0ca30c;
+    --status-warning:#fab219;
+    --status-serious:#ec835a;
+    --status-critical:#d03b3b;
+    --diverging-mid:#f0efec;
+    --context-line:#c3c2b7;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --page-bg:#0d0d0d;
+      --surface:#1a1a19;
+      --surface-raised:#232322;
+      --text-primary:#ffffff;
+      --text-secondary:#c3c2b7;
+      --text-muted:#898781;
+      --grid:#2c2c2a;
+      --baseline:#383835;
+      --border:rgba(255,255,255,0.10);
+      --series-1:#3987e5;
+      --series-2:#d95926;
+      --series-3:#199e70;
+      --series-4:#c98500;
+      --series-5:#d55181;
+      --series-6:#008300;
+      --series-7:#9085e9;
+      --series-8:#e66767;
+      --diverging-mid:#383835;
+      --context-line:#383835;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --page-bg:#0d0d0d;
+    --surface:#1a1a19;
+    --surface-raised:#232322;
+    --text-primary:#ffffff;
+    --text-secondary:#c3c2b7;
+    --text-muted:#898781;
+    --grid:#2c2c2a;
+    --baseline:#383835;
+    --border:rgba(255,255,255,0.10);
+    --series-1:#3987e5;
+    --series-2:#d95926;
+    --series-3:#199e70;
+    --series-4:#c98500;
+    --series-5:#d55181;
+    --series-6:#008300;
+    --series-7:#9085e9;
+    --series-8:#e66767;
+    --diverging-mid:#383835;
+    --context-line:#383835;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--page-bg);
+    color:var(--text-primary);
+    font-family:"Work Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  img{max-width:100%;}
+  [hidden]{display:none!important;}
+  h1,h2,h3{font-family:"Oswald", system-ui, sans-serif; letter-spacing:.01em; text-wrap:balance; margin:0;}
+  .num{font-variant-numeric:normal;}
+  .tabular{font-variant-numeric:tabular-nums;}
+
+  /* ---------- shell ---------- */
+  .wrap{max-width:1040px; margin:0 auto; padding-inline:20px;}
+
+  header.top{
+    position:sticky; top:env(safe-area-inset-top,0px); z-index:20;
+    background:var(--page-bg);
+    border-bottom:1px solid var(--border);
+  }
+  .top-inner{
+    max-width:1040px; margin:0 auto; padding:14px 20px 0 20px;
+  }
+  .brand{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; padding-bottom:10px;}
+  .brand h1{font-size:22px; font-weight:700; text-transform:uppercase; letter-spacing:.03em;}
+  .brand .tag{font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.08em;}
+  nav.chips{
+    display:flex; gap:6px; overflow-x:auto; padding-bottom:10px;
+    -ms-overflow-style:none; scrollbar-width:none;
+  }
+  nav.chips::-webkit-scrollbar{display:none;}
+  nav.chips a{
+    flex:0 0 auto;
+    font-size:12px; font-weight:600; color:var(--text-secondary);
+    text-decoration:none; padding:6px 10px; border-radius:999px;
+    border:1px solid var(--border); white-space:nowrap;
+  }
+  nav.chips a:hover{ color:var(--text-primary); }
+  nav.chips a:focus-visible{outline:2px solid var(--series-1); outline-offset:1px;}
+
+  main{padding-bottom:64px;}
+
+  .intro{
+    padding:28px 0 8px;
+  }
+  .intro .kicker{font-size:12px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--series-1);}
+  .intro h2.page-title{font-size:30px; line-height:1.15; margin-top:6px; max-width:30ch;}
+  .intro p{font-size:15px; line-height:1.55; color:var(--text-secondary); max-width:62ch; margin:12px 0 0;}
+  .intro ul.intro-list{font-size:14px; line-height:1.5; color:var(--text-secondary); max-width:78ch; margin:14px 0 0; padding-left:20px;}
+  .intro ul.intro-list li{margin-bottom:6px;}
+  .intro ul.intro-list li:last-child{margin-bottom:0;}
+  .mock-note{
+    display:inline-flex; align-items:center; gap:8px; margin-top:16px;
+    font-size:12px; font-weight:600; color:var(--text-secondary);
+    background:var(--surface); border:1px solid var(--border);
+    padding:7px 12px; border-radius:8px;
+  }
+  .mock-note .dot{width:7px;height:7px;border-radius:50%;background:var(--status-warning);flex:0 0 auto;}
+
+  section.panel{
+    margin-top:40px; padding-top:28px; border-top:1px solid var(--border);
+    scroll-margin-top:96px;
+  }
+  .panel-head{display:flex; gap:16px; align-items:baseline; margin-bottom:6px;}
+  .panel-head .idx{font-family:"Oswald"; font-size:14px; font-weight:600; color:var(--text-muted); letter-spacing:.06em;}
+  .panel-head h2{font-size:21px; font-weight:600;}
+  .panel .question{font-size:14px; color:var(--text-secondary); max-width:58ch; line-height:1.5; margin:6px 0 18px;}
+
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:10px;
+    padding:18px 18px 10px;
+  }
+  figure{margin:0;}
+  figcaption{font-size:11.5px; color:var(--text-muted); margin-top:10px; line-height:1.5;}
+
+  /* legend */
+  .legend{display:flex; flex-wrap:wrap; gap:14px; margin-bottom:14px;}
+  .legend .item{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-secondary); font-weight:500;}
+  .legend .swatch{width:10px; height:10px; border-radius:2px; flex:0 0 auto;}
+  .legend .line-key{width:16px; height:2px; border-radius:1px; flex:0 0 auto;}
+
+  /* bars (horizontal) */
+  .barrow{display:flex; align-items:center; gap:10px; padding:5px 0; position:relative;}
+  .barrow .name{
+    width:150px; flex:0 0 auto; font-size:12.5px; color:var(--text-primary); font-weight:500;
+    text-align:right; line-height:1.3;
+  }
+  .barrow .name.current{color:var(--text-secondary); font-style:italic;}
+  .track{flex:1 1 auto; position:relative; height:24px;}
+  .bar{
+    position:absolute; top:2px; height:20px; border-radius:4px; background:var(--series-1);
+    transition:filter .15s;
+  }
+  .bar.context{background:var(--baseline);}
+  .bar:hover, .bar:focus-visible{filter:brightness(1.08);}
+  .bar-value{
+    position:absolute; top:50%; transform:translateY(-50%);
+    font-size:12px; font-weight:600; color:var(--text-primary); white-space:nowrap;
+  }
+  .stackseg{position:absolute; top:2px; height:20px;}
+  .stackseg:focus-visible{outline:2px solid var(--text-primary); outline-offset:1px;}
+
+  .divergetrack{flex:1 1 auto; height:24px; position:relative;}
+  .divcenter{position:absolute; top:-4px; bottom:-4px; width:1px; background:var(--baseline);}
+
+  /* tooltip */
+  .tt{
+    position:fixed; z-index:50; pointer-events:none;
+    background:var(--surface-raised); border:1px solid var(--border); border-radius:8px;
+    padding:9px 11px; font-size:12px; color:var(--text-secondary);
+    box-shadow:0 6px 20px rgba(0,0,0,.14);
+    max-width:230px; transition:opacity .08s;
+    opacity:0;
+  }
+  .tt.show{opacity:1;}
+  .tt .tt-title{font-weight:700; color:var(--text-primary); margin-bottom:4px; font-size:12.5px;}
+  .tt .tt-row{display:flex; justify-content:space-between; gap:10px; padding:1px 0;}
+  .tt .tt-row .k{display:flex; align-items:center; gap:6px;}
+  .tt .tt-row .k .key{width:10px;height:2px;border-radius:1px;}
+  .tt .tt-row .v{font-weight:700; color:var(--text-primary);}
+
+  details.tview{margin-top:14px;}
+  details.tview summary{
+    cursor:pointer; font-size:12px; font-weight:600; color:var(--series-1);
+    list-style:none; padding:4px 0;
+  }
+  details.tview summary::-webkit-details-marker{display:none;}
+  details.tview summary::before{content:"▸ "; }
+  details.tview[open] summary::before{content:"▾ "; }
+  table.dtable{width:100%; border-collapse:collapse; font-size:12.5px; margin-top:10px;}
+  table.dtable caption{text-align:left; font-size:11px; color:var(--text-muted); margin-bottom:6px;}
+  table.dtable th, table.dtable td{text-align:right; padding:6px 8px; border-bottom:1px solid var(--grid);}
+  table.dtable th:first-child, table.dtable td:first-child{text-align:left;}
+  table.dtable thead th{color:var(--text-muted); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.04em;}
+  table.dtable td{color:var(--text-secondary); font-family:"Work Sans";}
+  table.dtable td.strong{color:var(--text-primary); font-weight:600;}
+  table.dtable tbody tr:hover{background:var(--page-bg);}
+
+  .scroll-x{overflow-x:auto;}
+
+  /* big comparison table */
+  table.maintable{width:100%; border-collapse:collapse; font-size:13px; min-width:760px;}
+  table.maintable caption{display:none;}
+  table.maintable th, table.maintable td{padding:9px 10px; border-bottom:1px solid var(--grid); white-space:nowrap;}
+  table.maintable thead th{
+    text-align:left; font-size:11px; color:var(--text-muted); text-transform:uppercase;
+    letter-spacing:.04em; font-weight:600; border-bottom:1px solid var(--baseline);
+    position:sticky; top:0; background:var(--surface);
+  }
+  table.maintable td{color:var(--text-secondary);}
+  table.maintable td.school{color:var(--text-primary); font-weight:600; position:sticky; left:0; background:var(--surface);}
+  table.maintable tbody tr.current td.school{color:var(--text-secondary); font-style:italic; font-weight:500;}
+  table.maintable td.num, table.maintable th.num{text-align:right; font-variant-numeric:tabular-nums;}
+  table.maintable tbody tr:hover td{background:var(--page-bg);}
+  table.maintable tbody tr.current td{background:color-mix(in srgb, var(--baseline) 16%, var(--surface));}
+  .composite-chip{
+    display:inline-block; min-width:38px; text-align:center; font-weight:700;
+    padding:2px 7px; border-radius:5px; background:color-mix(in srgb, var(--series-1) 16%, var(--surface));
+    color:var(--series-1);
+  }
+
+  /* stat / setter cards */
+  .cardgrid{display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;}
+  @media (max-width:760px){ .cardgrid{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:480px){ .cardgrid{grid-template-columns:1fr;} }
+  .setcard{
+    background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px;
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .setcard.current{border-style:dashed;}
+  .setcard .school{font-size:13px; font-weight:700; color:var(--text-primary);}
+  .setcard .school .region{font-weight:500; color:var(--text-muted); font-size:11px; display:block; margin-top:1px;}
+  .setcard .setter{display:flex; align-items:baseline; gap:6px; margin-top:2px;}
+  .setcard .setter .jersey{
+    font-family:"Work Sans"; font-weight:700; font-size:11px; color:var(--text-secondary);
+    border:1px solid var(--border); border-radius:4px; padding:1px 5px;
+  }
+  .setcard .setter .sname{font-weight:600; font-size:13.5px;}
+  .setcard .meta{display:flex; justify-content:space-between; align-items:center; margin-top:6px;}
+  .setcard .assists{font-size:20px; font-weight:700; font-family:"Work Sans";}
+  .setcard .assists .lbl{display:block; font-size:10.5px; font-weight:500; color:var(--text-muted); text-transform:uppercase; letter-spacing:.04em;}
+  .pill{
+    font-size:11px; font-weight:700; padding:3px 8px; border-radius:999px;
+    border:1px solid var(--border); color:var(--text-secondary); white-space:nowrap;
+  }
+  .ret-tag{font-size:11px; color:var(--text-muted); margin-top:2px;}
+
+  /* source links */
+  a.srclink{color:var(--series-1); text-decoration:none; font-weight:600;}
+  a.srclink:hover, a.srclink:focus-visible{text-decoration:underline;}
+  a.srclink:focus-visible{outline:2px solid var(--series-1); outline-offset:2px; border-radius:2px;}
+  a.srclink::after{content:" \2197"; font-weight:400;}
+  .src-row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+  .src-row.tight{gap:8px; margin-top:6px;}
+  .src-row .srclink{font-size:10.5px; font-weight:600; color:var(--text-muted);}
+  .src-row .srclink:hover, .src-row .srclink:focus-visible{color:var(--series-1);}
+  td.school span.schoolname{font-weight:600;}
+  .sources-note{font-size:12px; color:var(--text-secondary); margin-top:10px; line-height:1.5;}
+  ul.sources-note{ padding-left:18px; margin:10px 0 0; }
+  ul.sources-note li{ margin-bottom:7px; }
+  ul.sources-note li:last-child{ margin-bottom:0; }
+  .sources-note a.srclink{font-size:inherit; font-weight:600;}
+
+  /* flags matrix */
+  table.flags{width:100%; border-collapse:separate; border-spacing:0; font-size:12.5px; min-width:720px;}
+  table.flags th, table.flags td{padding:8px; text-align:center; border-bottom:1px solid var(--grid);}
+  table.flags thead th{
+    font-size:10.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.03em;
+    font-weight:600; vertical-align:bottom; max-width:92px;
+  }
+  table.flags td.school{text-align:left; font-weight:600; color:var(--text-primary); white-space:nowrap;}
+  table.flags tr.current td.school{font-style:italic; color:var(--text-secondary); font-weight:500;}
+  .flag{
+    display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:700;
+    padding:3px 7px; border-radius:6px; justify-content:center; min-width:64px;
+  }
+  .flag.good{background:color-mix(in srgb, var(--status-good) 14%, var(--surface)); color:var(--status-good);}
+  .flag.warning{background:color-mix(in srgb, var(--status-warning) 22%, var(--surface)); color:#8a5a00;}
+  :root:not([data-theme="light"]) .flag.warning{color:var(--status-warning);}
+  :root[data-theme="dark"] .flag.warning{color:var(--status-warning);}
+  .flag.critical{background:color-mix(in srgb, var(--status-critical) 16%, var(--surface)); color:var(--status-critical);}
+  .flag.pending{background:var(--grid); color:var(--text-muted); font-style:italic;}
+  a.flaglink{text-decoration:none;}
+  a.flaglink:hover .flag, a.flaglink:focus-visible .flag{text-decoration:underline;}
+  a.flaglink:focus-visible{outline:2px solid var(--series-1); outline-offset:2px; border-radius:6px;}
+  .flag-detail{display:block; font-size:10.5px; color:var(--text-muted); margin-top:3px; white-space:nowrap;}
+
+  /* profile card */
+  .profile-stack{display:flex; flex-direction:column; gap:16px;}
+  .profile{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:22px;
+    display:grid; gap:20px;
+  }
+  .profile.current{border-style:dashed;}
+  .profile-top{display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; align-items:flex-start;}
+  .profile-top h3{font-size:22px;}
+  .profile-top .loc{font-size:12.5px; color:var(--text-muted); margin-top:4px;}
+  .hero{text-align:right;}
+  .hero .val{font-size:46px; font-weight:700; font-family:"Work Sans"; line-height:1; color:var(--series-1);}
+  .hero .lbl{font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em;}
+  .profile-grid{display:grid; grid-template-columns:1.1fr .9fr; gap:22px;}
+  @media (max-width:680px){ .profile-grid{grid-template-columns:1fr;} }
+  .mini-bars{display:flex; flex-direction:column; gap:9px;}
+  .mini-bar-row{display:grid; grid-template-columns:96px 1fr 34px; align-items:center; gap:8px; font-size:12px;}
+  .mini-bar-row .l{color:var(--text-secondary);}
+  .mini-track{height:8px; background:var(--grid); border-radius:4px; overflow:hidden;}
+  .mini-fill{height:100%; border-radius:4px;}
+  .mini-bar-row .v{text-align:right; font-weight:600; color:var(--text-primary); font-variant-numeric:tabular-nums;}
+  .profile-side{display:flex; flex-direction:column; gap:14px;}
+  .kv{display:flex; justify-content:space-between; font-size:13px; padding:7px 0; border-bottom:1px solid var(--grid);}
+  .kv .k{color:var(--text-muted);}
+  .kv .v{font-weight:600; color:var(--text-primary); text-align:right;}
+  .flagrow{display:flex; gap:6px; flex-wrap:wrap;}
+  .profile .src-row .srclink{font-size:12px;}
+
+  footer.endnote{
+    margin-top:50px; padding-top:20px; border-top:1px solid var(--border);
+    font-size:13px; color:var(--text-secondary); line-height:1.6; padding-bottom:10px;
+  }
+  footer.endnote b{color:var(--text-primary);}
+
+  /* ---------- generic site: settings line, neutral flags, partial rows ---------- */
+  .settings-line{display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px; font-size:12.5px;
+    color:var(--text-secondary); padding-bottom:10px; margin-top:-4px;}
+  .settings-line b{color:var(--text-primary); font-weight:600;}
+  .settings-line a{color:var(--series-1); font-weight:600; text-decoration:none; white-space:nowrap;}
+  .settings-line a:hover{text-decoration:underline;}
+  .flag.info{background:var(--grid); color:var(--text-secondary);}
+  /* a "Yes" fact (Female coach, AiA) reads green like Good; "No" stays grey */
+  .flag.info.yes{background:color-mix(in srgb, var(--status-good) 14%, var(--surface)); color:var(--status-good);}
+  .nolink{color:var(--text-secondary);}
+  .partial-note{font-size:12.5px; color:var(--text-muted); font-style:italic;}
+  .footnote{display:block; font-size:11.5px; color:var(--text-muted); font-weight:400; margin-top:3px;}
+  /* phones: the widest bar's value label sat past the track and widened the page */
+  @media (max-width:520px){
+    .wrap, .top-inner{padding-inline:16px;}
+    .barrow .name{width:104px;}
+    .track{margin-right:48px;}
+  }
+
+  /* ---------- print / save as PDF ---------- */
+  @media print{
+    @page{margin:12mm;}
+    /* bars, chips and flags are background colors, which browsers drop by default */
+    *{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    .wrap, .top-inner{max-width:none; padding-inline:0;}
+    /* header prints once at the top; chips wrap instead of scrolling. In-page (#) links
+       still work inside the PDF; links to other files don't, so hide those. */
+    header.top{position:static; border-bottom:none;}
+    nav.chips{flex-wrap:wrap; overflow:visible;}
+    nav.chips a:not([href^="#"]){display:none;}
+    /* wide tables can't scroll on paper: let them shrink and wrap to the page width */
+    .scroll-x{overflow:visible;}
+    table.maintable, table.flags{min-width:0; font-size:10px;}
+    table.maintable th, table.maintable td{white-space:normal; padding:5px 4px;}
+    table.maintable thead th, table.maintable td.school{position:static;}
+    table.flags th, table.flags td{padding:5px 3px;}
+    table.flags td.school, .flag-detail{white-space:normal;}
+    .flag{min-width:0; padding:2px 4px; font-size:9.5px;}
+    .barrow, tr, .setcard, .profile{break-inside:avoid;}
+    .panel-head{break-after:avoid;}
+    .tt{display:none;}
+  }
+</style>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <h1>Scouting Report</h1>
+      <span class="tag">Full West Coast Conference, built on real pulled data</span>
+    </div>
+    <div class="settings-line"><span id="summary"></span><a id="edit-settings" href="index.html">Edit settings</a></div>
+    <nav class="chips" aria-label="Jump to section">
+      <a id="home-link" href="index.html">00 Home</a>
+      <a href="#table">01 Table</a>
+      <a href="#rank">02 Ranking</a>
+      <a href="#cost">03 Cost</a>
+      <a href="#earnings">04 Earnings</a>
+      <a id="nav-setters" href="#setters">05 Setters</a>
+      <a href="#flags">06 Flags</a>
+      <a href="#profile">07 Profile</a>
+      <a id="map-link" href="wcc-map.html" target="_blank" rel="noopener">08 Map ↗</a>
+      <a id="beach-link" href="wcc-beach.html" target="_blank" rel="noopener">09 Beach ↗</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="intro">
+    <div class="kicker">Conference comparison — West Coast Conference</div>
+    <h2 class="page-title" id="headline"></h2>
+    <ul class="intro-list" id="introList">
+      <li>Sources: Niche, Massey Ratings, the conference's own standings page, WICHE's WUE savings finder, IPEDS, and each school's own athletics site. Full pull log in <code>data/2026/logs/WCC_RESULTS.md</code>.</li>
+      <li><strong>All 10 WCC members are private universities</strong>, so every cost is that school's flat private tuition; no residency or WUE calculation applies.</li>
+      <li>Pepperdine has no engineering program; Saint Mary's and San Francisco offer only a generic "Engineering" major, not Mechanical Engineering by name.</li>
+    </ul>
+    <div class="mock-note"><span class="dot" aria-hidden="true"></span> Ranks, standings, and setter stats as of Oct 25, 2026; Niche grades and coaching staffs as of Oct 7, 2026; costs and majors refreshed from IPEDS on Oct 22, 2026. Links marked <span style="color:var(--series-1); font-weight:600;">↗</span> open the live source page in a new tab.</div>
+  </div>
+
+  <section class="panel" id="table">
+    <div class="panel-head"><span class="idx">01</span><h2>Master comparison table</h2></div>
+    <p class="question">The single reference sheet — every criterion from the README as one row per school, scannable and sortable by eye.</p>
+    <div class="card scroll-x">
+      <table class="maintable" id="mainTableEl">
+        <caption id="mainCaption">Comparison of schools</caption>
+        <thead>
+          <tr>
+            <th>School</th><th>Conference</th><th class="num">Nat'l rank</th><th class="num">Conf rank</th>
+            <th class="num">Academics</th><th class="num">Athletics</th><th class="num">Campus</th>
+            <th class="num">Diversity</th><th class="num">Est. cost / yr</th><th class="num">Composite</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <ul class="sources-note">
+      <li>School name links to its Niche.com profile.</li>
+      <li>Conference links to that conference's live volleyball standings.</li>
+      <li>National rank links to Massey Ratings.</li>
+      <li><strong>Rankings data as of Oct 25, 2026:</strong> national rank from Massey Ratings, conference rank from the conference's standings page, both pulled that day.</li>
+      <li><strong>Sched / Roster / Stats</strong> link to the team's own athletics site.</li>
+      <li>Academics, Athletics, Campus, and Diversity are real Niche letter grades.</li>
+      <li>Composite is computed from those grades plus cost and national rank, using the formula in <code>IDEAS.md</code> §6 with the default weights (25/30/15/20/10). Cost depends on the settings, so the composite does too.</li>
+      <li>Campus and Diversity stand in for Facilities and Culture fit, since no source measures those two directly.</li>
+    </ul>
+  </section>
+
+  <section class="panel" id="rank">
+    <div class="panel-head"><span class="idx">02</span><h2>Composite ranking</h2></div>
+    <p class="question">Which schools score best overall once academics, athletics, facilities, culture, and cost are weighted and summed into one number?</p>
+    <div class="card">
+      <figure>
+        <div class="legend">
+          <span class="item"><span class="swatch" style="background:var(--series-1)"></span>Candidate school</span>
+          <span class="item" id="legendBase"><span class="swatch" style="background:var(--baseline)"></span><span id="legendCurrent"></span></span>
+        </div>
+        <div id="rankChart"></div>
+        <figcaption>Composite score = 25% academics + 30% athletics + 15% facilities + 20% culture fit + 10% affordability. These are the default weights. Schools without Niche grades (not researched yet) have no composite.</figcaption>
+      </figure>
+      <details class="tview">
+        <summary>View as table</summary>
+        <table class="dtable" id="rankTable"><thead><tr><th>School</th><th>Composite score</th><th>Source</th></tr></thead><tbody></tbody></table>
+      </details>
+    </div>
+  </section>
+
+  <section class="panel" id="cost">
+    <div class="panel-head"><span class="idx">03</span><h2>Estimated annual cost</h2></div>
+    <p class="question">What does a year actually cost once residency, WUE eligibility, and private sticker price are factored in?</p>
+    <div class="card">
+      <figure>
+        <div id="costChart"></div>
+        <figcaption>Tuition + fees estimate at the rate that would apply for the home town and majors in the settings (in-state, WUE, or private). Hover a bar for the basis.</figcaption>
+      </figure>
+      <details class="tview">
+        <summary>View as table</summary>
+        <table class="dtable" id="costTable"><thead><tr><th>School</th><th>Basis</th><th>Est. cost / yr</th><th>Source</th></tr></thead><tbody></tbody></table>
+      </details>
+    </div>
+  </section>
+
+  <section class="panel" id="earnings">
+    <div class="panel-head"><span class="idx">04</span><h2>Median earnings, 5 years out</h2></div>
+    <p class="question">Cost is only half the financial picture. What do graduates from each school actually go on to earn?</p>
+    <div class="card">
+      <figure>
+        <div id="earningsChart"></div>
+        <figcaption>Niche's real "Median Earnings 5 Years After Graduation" figure (from IPEDS/College Scorecard data) for each school, regardless of major — a general earnings-potential signal, not specific to any major. Hover a bar for the source.</figcaption>
+      </figure>
+      <details class="tview">
+        <summary>View as table</summary>
+        <table class="dtable" id="earningsTable"><thead><tr><th>School</th><th>Median earnings (5 yrs out)</th><th>Source</th></tr></thead><tbody></tbody></table>
+      </details>
+    </div>
+  </section>
+
+  <section class="panel" id="setters">
+    <div class="panel-head"><span class="idx">05</span><h2>Setter &amp; offense snapshot</h2></div>
+    <p class="question">Who's actually playing setter, how is the offense run (5-1 vs. 6-2), and how likely is that setter to still be there by <span class="target-year"></span>?</p>
+    <div class="cardgrid" id="setterCards"></div>
+    <p class="question" style="margin-top:14px;">5-1: one setter runs the offense full-time. 6-2: two setters rotate, splitting assists roughly evenly.</p>
+  </section>
+
+  <section class="panel" id="flags">
+    <div class="panel-head"><span class="idx">06</span><h2>Flags</h2></div>
+    <p class="question">Which schools miss a listed major or cost too much? Majors, cost, and beach are rated; Female coach and AiA are listed as facts.</p>
+    <div class="card scroll-x">
+      <table class="flags" id="flagsTable">
+        <thead>
+          <tr id="flagsHead">
+            <th style="text-align:left;">School</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <ul class="sources-note" id="flagsNotes"></ul>
+  </section>
+
+  <section class="panel" id="profile">
+    <div class="panel-head"><span class="idx">07</span><h2>Top-candidate profile card</h2></div>
+    <p class="question">For a shortlist, a dense one-page card beats scanning the big table row by row — here's every school, ranked by composite score.</p>
+    <div id="profileCard" class="profile-stack"></div>
+  </section>
+
+  <footer class="endnote">
+    <b>How this page works:</b> the school facts were pulled on the dates above (log: <code>data/2026/logs/WCC_RESULTS.md</code>). The comparison row, costs, flags, distances, and majors are computed in your browser from the settings (Edit settings, at the top), which are saved only in this browser. Built by <code>tools/build_site.py</code>.
+  </footer>
+</main>
+
+<div class="tt" id="tooltip" role="tooltip"></div>
+
+<script src="data/schools.js"></script>
+<script src="compare.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---------------- generic site (REFACTOR_COMPARE.md phase 4) ----------------
+  // tools/build_site.py fills in only this conference's slug and static text.
+  // Every row, cost, flag, and comparison is computed here from SITE_DATA and
+  // the viewer's settings (compare.js). Source: tools/site/report_template.html.
+  var C = window.Compare, D = window.SITE_DATA;
+  var SLUG = "wcc";
+  var CONF = D.conferences[SLUG];
+  var settings = C.load();
+  // a settings link pasted into an open report changes only the hash
+  window.addEventListener("hashchange", function(){ if (C.fromHash()){ C.load(); location.reload(); } });
+  var MAJORS = C.matchMajors(settings.majors);
+  var BASE = settings.school ? C.schoolRecord(settings.school) : null;
+  var SETTER = settings.position === "S";
+  var TARGET = C.targetYear();
+  var WUE_URL = "https://www.wiche.edu/tuition-savings/wue/wue-list-of-schools/";
+  var AIA_URL = "https://athletesinaction.org/campus/campus-list/";
+  var STANDINGS = {};
+  Object.keys(D.conferences).forEach(function(k){ STANDINGS[D.conferences[k].memberName] = D.conferences[k].standingsUrl; });
+  var CONFIG = {
+    home: settings.home, weights: C.DEFAULTS.weights, flagCols: C.flagCols(MAJORS),
+    currentName: BASE ? BASE.name : null, beachHref: "wcc-beach.html", faithShort: "AiA"
+  };
+  var HOME = CONFIG.home;
+  var milesBetween = C.milesBetween;
+  function masseyUrl(s){ return "https://masseyratings.com/cvol/ncaa-" + (s.division || CONF.division).toLowerCase() + "/ratings"; }
+  function carry(href){ return C.withSettings(href, settings); }
+  function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+  // cost basis plus the WUE footnotes (D9)
+  function basisText(s){ return s.costBasis + (s.costFootnotes && s.costFootnotes.length ? " Note: " + s.costFootnotes.join(" ") : ""); }
+  var GRADE_MAP = { "A+":97,"A":95,"A-":92,"B+":88,"B":85,"B-":82,"C+":78,"C":75,"C-":72,"D+":68,"D":65,"D-":62,"F":50 };
+  function gradeNum(g){ return GRADE_MAP[g]; }
+
+  var schools = C.reportRows(SLUG, settings);
+
+  schools.forEach(function(s){ s.links.standings = STANDINGS[s.conf]; });
+
+  function srcLink(url, label, extraClass){
+    if(!url){
+      // no source for this school (not researched): plain text instead of a dead link
+      var sp = document.createElement("span"); sp.className = "nolink"; sp.textContent = label;
+      return sp;
+    }
+    var a = document.createElement("a");
+    a.href = url; a.target = "_blank"; a.rel = "noopener noreferrer";
+    a.className = "srclink" + (extraClass ? " " + extraClass : "");
+    a.textContent = label;
+    return a;
+  }
+
+  // append a source link only when the school has one
+  function addLink(row, url, label){ if(url) row.appendChild(srcLink(url, label)); }
+
+  // school name with its source links (01 Table, 06 Flags)
+  function schoolCell(s){
+    var cell = document.createElement("td"); cell.className = "school";
+    var name = document.createElement("span"); name.className = "schoolname"; name.textContent = s.name;
+    cell.appendChild(name);
+    var chips = document.createElement("div"); chips.className = "src-row tight";
+    addLink(chips, s.links.schedule, "Sched");
+    addLink(chips, s.links.roster, "Roster");
+    addLink(chips, s.links.stats, "Stats");
+    addLink(chips, s.links.niche, "Niche");
+    cell.appendChild(chips);
+    return cell;
+  }
+
+  // ---- composite formula (IDEAS.md §6) ----
+  var WEIGHTS = CONFIG.weights;
+  var CATS = [
+    { key:"academics", label:"Academics", slot:"--series-1" },
+    { key:"athletics", label:"Athletics", slot:"--series-2" },
+    { key:"facilities", label:"Facilities", slot:"--series-3" },
+    { key:"culture",    label:"Culture fit", slot:"--series-4" },
+    { key:"afford",     label:"Affordability", slot:"--series-5" }
+  ];
+
+  // Only rows with Niche grades, a cost, and a rank get a composite; an
+  // unresearched comparison school (D12) is shown with "—" instead.
+  var scored = schools.filter(function(s){ return s.niche && s.cost != null && s.natRank != null; });
+  (function computeScores(){
+    var ranks = scored.map(function(s){ return s.natRank; });
+    var minRank = Math.min.apply(null, ranks), maxRank = Math.max.apply(null, ranks);
+    // All schools (including the current one) use the same sticker-price
+    // basis for affordability, so no special-casing is needed — see
+    // TEST_LINKS.md §9 for why the current school uses its sticker price
+    // here rather than the player's actual cost.
+    var costs = scored.map(function(s){ return s.cost; });
+    var minCost = Math.min.apply(null, costs), maxCost = Math.max.apply(null, costs);
+
+    scored.forEach(function(s){
+      var volleyballScore = 100 * (maxRank - s.natRank) / (maxRank - minRank);
+      var affordScore = 100 * (maxCost - s.cost) / (maxCost - minCost);
+      var academics = gradeNum(s.niche.academics);
+      var athletics = 0.7 * volleyballScore + 0.3 * gradeNum(s.niche.athletics);
+      var facilities = gradeNum(s.niche.campus); // proxy only — see TEST_LINKS.md
+      var culture = (gradeNum(s.niche.diversity) + gradeNum(s.niche.campus)) / 2; // proxy only
+      s.scores = { academics:academics, athletics:athletics, facilities:facilities, culture:culture, afford:affordScore };
+    });
+  })();
+
+  schools.forEach(function(s){
+    if(!s.scores){ s.composite = null; s.parts = null; return; }
+    var parts = {};
+    var total = 0;
+    CATS.forEach(function(c){
+      var v = s.scores[c.key] * WEIGHTS[c.key];
+      parts[c.key] = v;
+      total += v;
+    });
+    s.parts = parts;
+    s.composite = Math.round(total * 10) / 10;
+  });
+
+  var sac = schools.filter(function(s){ return s.current; })[0];
+  var candidates = schools.filter(function(s){ return !s.current; });
+  // by composite; a row without one goes first when it's the comparison school, else last
+  function compKey(s){ return s.composite == null ? (s.current ? Infinity : -Infinity) : s.composite; }
+  var byComposite = schools.slice().sort(function(a,b){ var ka = compKey(a), kb = compKey(b); return ka === kb ? 0 : (kb > ka ? 1 : -1); });
+  function compText(s){ return s.composite == null ? "—" : s.composite.toFixed(1); }
+
+  function fmtMoney(v){
+    if(v == null) return "—";
+    return "$" + (v/1000).toFixed(1).replace(/\.0$/,"") + "K";
+  }
+  function css(varName){
+    return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+  }
+
+  // ---------------- tooltip ----------------
+  var ttEl = document.getElementById("tooltip");
+  function showTT(x, y, html){
+    ttEl.innerHTML = "";
+    html.forEach(function(row){ ttEl.appendChild(row); });
+    ttEl.classList.add("show");
+    var r = ttEl.getBoundingClientRect();
+    var left = x + 14, top = y - r.height/2;
+    if(left + r.width > window.innerWidth - 10) left = x - r.width - 14;
+    top = Math.max(10, Math.min(top, window.innerHeight - r.height - 10));
+    ttEl.style.left = left + "px";
+    ttEl.style.top = top + "px";
+  }
+  function hideTT(){ ttEl.classList.remove("show"); }
+  function ttTitle(text){
+    var d = document.createElement("div");
+    d.className = "tt-title";
+    d.textContent = text;
+    return d;
+  }
+  function ttRow(label, value, color){
+    var row = document.createElement("div");
+    row.className = "tt-row";
+    var k = document.createElement("div"); k.className = "k";
+    if(color){
+      var key = document.createElement("span");
+      key.className = "key";
+      key.style.background = color;
+      k.appendChild(key);
+    }
+    var kt = document.createElement("span"); kt.textContent = label;
+    k.appendChild(kt);
+    var v = document.createElement("div"); v.className = "v"; v.textContent = value;
+    row.appendChild(k); row.appendChild(v);
+    return row;
+  }
+  function wireTooltip(el, build){
+    el.addEventListener("pointerenter", function(e){ showTT(e.clientX, e.clientY, build()); });
+    el.addEventListener("pointermove", function(e){
+      var r = ttEl.getBoundingClientRect();
+      var left = e.clientX + 14, top = e.clientY - r.height/2;
+      if(left + r.width > window.innerWidth - 10) left = e.clientX - r.width - 14;
+      top = Math.max(10, Math.min(top, window.innerHeight - r.height - 10));
+      ttEl.style.left = left + "px"; ttEl.style.top = top + "px";
+    });
+    el.addEventListener("pointerleave", hideTT);
+    el.addEventListener("focus", function(){
+      var r = el.getBoundingClientRect();
+      showTT(r.right, r.top + r.height/2, build());
+    });
+    el.addEventListener("blur", hideTT);
+  }
+
+  // ================= settings-dependent text =================
+  (function(){
+    function a_or_an(w){ return /^[AEIOU]/i.test(w) || /^RMAC/.test(w) ? "an" : "a"; }
+    function list(items){ return C.join(items.map(esc)); }
+    var cands = schools.filter(function(s){ return !s.current; }), n = cands.length;
+    var members = CONF.schools.length;
+    var baseConf = BASE ? (BASE.confSlug ? D.conferences[BASE.confSlug].memberName : BASE.masseyConf) : null;
+
+    document.title = document.title;  // set by the build
+    document.getElementById("summary").textContent = C.summary(settings) + " · ";
+    ["edit-settings", "home-link"].forEach(function(id){ document.getElementById(id).href = carry("index.html"); });
+    document.getElementById("map-link").href = carry(document.getElementById("map-link").getAttribute("href"));
+    document.getElementById("beach-link").href = carry(CONFIG.beachHref);
+    document.getElementById("headline").textContent = "All " + members + " " + CONF.short + " schools" +
+      (BASE ? ", compared to " + BASE.name : "");
+    document.getElementById("mainCaption").textContent = BASE ? "Comparison of schools against " + BASE.name : "Comparison of schools";
+    if (BASE) document.getElementById("legendCurrent").textContent = BASE.name + " (comparing to)";
+    else document.getElementById("legendBase").hidden = true;
+    Array.prototype.forEach.call(document.querySelectorAll(".target-year"), function(e){ e.textContent = TARGET; });
+    if (!SETTER){
+      document.getElementById("setters").hidden = true;
+      document.getElementById("nav-setters").hidden = true;
+    }
+
+    // intro: these bullets go around the build's static ones (sources, conference facts)
+    var before = [], after = [];
+    if (!BASE){
+      before.push("All " + members + " " + esc(CONF.short) + " women's volleyball programs. Pick a school to compare under " +
+        '<a class="srclink" href="' + esc(carry("index.html")) + '">Edit settings</a> to add it as a baseline row.');
+    } else if (BASE.confSlug === SLUG){
+      before.push("This is " + esc(BASE.name) + "'s own conference: all " + members + " " + esc(CONF.short) + " women's volleyball programs.");
+    } else {
+      before.push(esc(BASE.name) + " is not " + a_or_an(CONF.memberName) + " " + esc(CONF.memberName) +
+        " volleyball member; its conference is " + esc(baseConf) + ". This is a \"what if\" comparison.");
+      if (BASE.division !== CONF.division){
+        before.push(esc(BASE.name) + " plays " + BASE.division + ", so this is a hypothetical about changing divisions " +
+          "(and NCAA transfer rules between divisions), not just conferences.");
+      }
+    }
+    if (BASE && !BASE.researched){
+      before.push(esc(BASE.name) + " hasn't been researched yet, so its row shows only IPEDS and Massey data " +
+        "(cost, majors, national rank, location), with — for the rest and no composite score.");
+    }
+
+    var active = C.activeMajors(MAJORS);
+    active.forEach(function(m){
+      var have = cands.filter(function(s){ return s.offeredMajors[m.key]; }).map(function(s){ return s.name; });
+      if (have.length === n) after.push("<strong>All " + n + " schools offer " + esc(m.label) + ".</strong>");
+      else if (have.length) after.push(have.length + " of " + n + " offer " + esc(m.label) + ": " + list(have) + ".");
+      else after.push("None of the " + n + " offer " + esc(m.label) + ".");
+    });
+    MAJORS.filter(function(m){ return !m.cips.length; }).forEach(function(m){
+      after.push("No IPEDS program matches the major “" + esc(m.term) + "”, so it has no column. Try the program's official name.");
+    });
+    if (!MAJORS.length) after.push("No majors set, so there are no major columns. Add majors under Edit settings.");
+
+    var groups = {};
+    cands.forEach(function(s){ (groups[s.costKind] = groups[s.costKind] || []).push(s); });
+    function priced(arr){ return C.join(arr.map(function(s){ return esc(s.name) + " (" + fmtMoney(s.cost).replace(".0K", "K") + ")"; })); }
+    var parts = [HOME
+      ? "Costs use <strong>" + esc(C.STATE_NAMES[HOME.state] || HOME.state) + " residency</strong> (home town " + esc(HOME.city + ", " + HOME.state) + ")."
+      : "No home town set, so public schools show out-of-state rates."];
+    if (groups.instate) parts.push("In-state: " + priced(groups.instate) + ".");
+    if (groups.wue) parts.push("WUE rates (details on each profile card): " + priced(groups.wue) + ".");
+    if (groups.oos) parts.push("Full out-of-state at " + groups.oos.length + " school" + (groups.oos.length !== 1 ? "s" : "") + " (reason on each profile card).");
+    var pv = (groups["private"] || []).concat(groups.flat || []);
+    if (pv.length) parts.push("Private or flat-rate tuition at " + pv.length + ".");
+    if (groups.academy) parts.push("Service academy ($0, with a service commitment): " + list(groups.academy.map(function(s){ return s.name; })) + ".");
+    if (groups.unknown) parts.push("No IPEDS tuition for " + list(groups.unknown.map(function(s){ return s.name; })) + ".");
+    after.push(parts.join(" "));
+    if (BASE) after.push(esc(BASE.name) + " is shown at its sticker price for a fair comparison; actual aid varies.");
+
+    if (SETTER){
+      var opens = C.setterOpenings(schools);
+      if (opens.length){
+        after.push("<strong>Setter openings for " + TARGET + ":</strong> the primary setter is a senior or grad student at " +
+          C.join(opens.map(function(s){ return esc(s.name) + " (" + esc(s.setter.cls) + ")"; })) + ".");
+      }
+    }
+
+    var ul = document.getElementById("introList"), first = ul.firstChild;
+    function li(html){ var e = document.createElement("li"); e.innerHTML = html; return e; }
+    before.forEach(function(h){ ul.insertBefore(li(h), first); });
+    after.forEach(function(h){ ul.appendChild(li(h)); });
+
+    // 06 flags: header row and notes
+    var head = document.getElementById("flagsHead");
+    CONFIG.flagCols.forEach(function(c){ var th = document.createElement("th"); th.textContent = c.label; head.appendChild(th); });
+    var notes = [];
+    if (active.length){
+      notes.push("Majors come from IPEDS 2025 completions data (bachelor's programs): " +
+        active.map(function(m){ return esc(m.label) + " = CIP " + m.cips.join(", "); }).join("; ") +
+        ". Each profile card shows graduates per year as a rough measure of program size; \"new program\" means it's listed but hasn't graduated anyone yet. A missing major is Watch.");
+    }
+    var b = C.DEFAULTS.budget;
+    notes.push("Affordability uses the rate that would apply: in-state for a public school in the home town's state, " +
+      "WUE where the school's WUE program takes transfers and covers at least one listed major, otherwise out-of-state; " +
+      "private schools at their flat rate. In-state, out-of-state, and private prices are IPEDS 2024-25 tuition + fees; WUE rates are " +
+      '<a class="srclink" href="' + WUE_URL + '" target="_blank" rel="noopener noreferrer">WICHE\'s own</a>. ' +
+      "Good = " + fmtMoney(b.goodAtOrBelow).replace(".0K", "K") + " or less (or a public school in the home state); Watch = up to " +
+      fmtMoney(b.watchAtOrBelow).replace(".0K", "K") + "; Dealbreaker above that.");
+    if (BASE) notes.push(esc(BASE.name) + " is shown at its sticker price too, for a fair comparison; actual aid varies.");
+    var fc = cands.filter(function(s){ return s.flagDetail.coach === "Yes"; }).length;
+    notes.push("Female coach comes from each team's own roster/coaches page: \"Yes\" means at least one coach with a clearly female " +
+      "first name was found, judging by name alone (not verified by bio or pronouns). " + fc + " of " + n + ".");
+    var prog = cands.filter(function(s){ return s.beach && s.beach.program; });
+    var cross = prog.filter(function(s){ return s.beach.share !== "none"; });
+    var todo = cands.filter(function(s){ return !s.beach; }).map(function(s){ return s.name; });
+    notes.push("Beach volleyball: whether the school has an NCAA women's beach team, and how many of its fall court players were also " +
+      "on its spring beach roster (both from the school's athletics site; same first and last name plus the same hometown). " +
+      "Good = Most (at least half the court roster) or Some; Watch = a separate beach team (None) or no program. " +
+      prog.length + " of " + n + " have a program; court players crossed over at " + cross.length +
+      (cross.length ? ": " + C.join(cross.map(function(s){ return esc(s.name) + " (" + esc(s.flagDetail.beach) + ")"; })) : "") + ". " +
+      (todo.length ? "Not researched: " + list(todo) + ". " : "") +
+      '<a class="srclink" href="' + esc(carry(CONFIG.beachHref)) + '" target="_blank" rel="noopener">Compare the rosters</a>.');
+    var aia = cands.filter(function(s){ return s.flagDetail.aia === "Yes"; }).map(function(s){ return s.name; });
+    notes.push("AiA (Athletes in Action) is checked against the official campus list at " +
+      '<a class="srclink" href="' + AIA_URL + '" target="_blank" rel="noopener noreferrer">athletesinaction.org/campus/campus-list</a>. ' +
+      (aia.length ? "Listed: " + list(aia) + ". " : "No school here is listed. ") +
+      "\"No\" means the school isn't on the official list, which doesn't rule out an unlisted or student-led chapter.");
+    var fn = document.getElementById("flagsNotes");
+    notes.forEach(function(h){ fn.appendChild(li(h)); });
+  })();
+
+  // ================= 01 master table =================
+  (function(){
+    var tbody = document.querySelector("#mainTableEl tbody");
+    byComposite.forEach(function(s){
+      var tr = document.createElement("tr");
+      if(s.current) tr.className = "current";
+      function td(text, isNum, isSchool){
+        var el = document.createElement("td");
+        if(isNum) el.className = "num";
+        if(isSchool) el.className = "school";
+        el.textContent = text;
+        return el;
+      }
+
+      tr.appendChild(schoolCell(s));
+
+      var confTd = document.createElement("td");
+      confTd.appendChild(srcLink(s.links.standings, s.conf));
+      tr.appendChild(confTd);
+
+      var rankTd = document.createElement("td"); rankTd.className = "num";
+      rankTd.appendChild(srcLink(masseyUrl(s), "#" + s.natRank));
+      tr.appendChild(rankTd);
+
+      tr.appendChild(td(s.confRank, true));
+      ["academics", "athletics", "campus", "diversity"].forEach(function(k){
+        tr.appendChild(td(s.niche ? s.niche[k] : "—", true));
+      });
+      tr.appendChild(td(fmtMoney(s.cost), true));
+      var compTd = document.createElement("td");
+      compTd.className = "num";
+      var chip = document.createElement("span");
+      chip.className = "composite-chip";
+      chip.textContent = compText(s);
+      compTd.appendChild(chip);
+      tr.appendChild(compTd);
+      tbody.appendChild(tr);
+    });
+  })();
+
+  // ================= 02 ranking bar =================
+  (function(){
+    var host = document.getElementById("rankChart");
+    var max = Math.ceil(Math.max.apply(null, scored.map(function(s){return s.composite;})) / 10) * 10;
+    byComposite.filter(function(s){ return s.composite != null; }).forEach(function(s){
+      var row = document.createElement("div"); row.className = "barrow";
+      var name = document.createElement("div");
+      name.className = "name" + (s.current ? " current" : "");
+      name.textContent = s.name;
+      var track = document.createElement("div"); track.className = "track";
+      var bar = document.createElement("div");
+      bar.className = "bar" + (s.current ? " context" : "");
+      bar.style.left = "0%";
+      bar.style.width = (s.composite/max*100) + "%";
+      bar.tabIndex = 0;
+      var val = document.createElement("div");
+      val.className = "bar-value";
+      val.style.left = "calc(" + (s.composite/max*100) + "% + 8px)";
+      val.textContent = s.composite.toFixed(1);
+      wireTooltip(bar, function(){
+        return [ttTitle(s.name), ttRow("Composite score", s.composite.toFixed(1), s.current ? css("--baseline") : css("--series-1"))];
+      });
+      track.appendChild(bar); track.appendChild(val);
+      row.appendChild(name); row.appendChild(track);
+      host.appendChild(row);
+    });
+
+    var tbody = document.querySelector("#rankTable tbody");
+    byComposite.forEach(function(s){
+      var tr = document.createElement("tr");
+      var td1 = document.createElement("td"); td1.textContent = s.name + (s.current ? " (comparing to)" : "");
+      var td2 = document.createElement("td"); td2.className="strong"; td2.textContent = compText(s);
+      var td3 = document.createElement("td"); addLink(td3, s.links.niche, "Niche");
+      tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+      tbody.appendChild(tr);
+    });
+  })();
+
+  // ================= 03 cost bar =================
+  (function(){
+    var host = document.getElementById("costChart");
+    var sorted = schools.filter(function(s){ return s.cost != null; }).sort(function(a,b){ return a.cost - b.cost; });
+    var max = Math.ceil(Math.max.apply(null, sorted.map(function(s){return s.cost;})) / 10000) * 10000;
+    sorted.forEach(function(s){
+      var row = document.createElement("div"); row.className = "barrow";
+      var name = document.createElement("div");
+      name.className = "name" + (s.current ? " current" : "");
+      name.textContent = s.name;
+      var track = document.createElement("div"); track.className = "track";
+      var bar = document.createElement("div");
+      bar.className = "bar" + (s.current ? " context" : "");
+      bar.style.left = "0%";
+      bar.style.width = (s.cost/max*100) + "%";
+      bar.tabIndex = 0;
+      var val = document.createElement("div");
+      val.className = "bar-value";
+      val.style.left = "calc(" + (s.cost/max*100) + "% + 8px)";
+      val.textContent = fmtMoney(s.cost);
+      wireTooltip(bar, function(){
+        return [ttTitle(s.name), ttRow("Basis", basisText(s)), ttRow("Est. annual cost", "$" + s.cost.toLocaleString(), s.current?css("--baseline"):css("--series-1"))];
+      });
+      track.appendChild(bar); track.appendChild(val);
+      row.appendChild(name); row.appendChild(track);
+      host.appendChild(row);
+    });
+
+    var tbody = document.querySelector("#costTable tbody");
+    sorted.forEach(function(s){
+      var tr = document.createElement("tr");
+      function td(v, strong){ var el=document.createElement("td"); if(strong) el.className="strong"; el.textContent=v; return el; }
+      tr.appendChild(td(s.name));
+      tr.appendChild(td(basisText(s)));
+      tr.appendChild(td("$" + s.cost.toLocaleString(), true));
+      var srcTd = document.createElement("td");
+      addLink(srcTd, s.links.niche, "Niche");
+      tr.appendChild(srcTd);
+      tbody.appendChild(tr);
+    });
+  })();
+
+  // ================= 04 earnings bar =================
+  (function(){
+    var host = document.getElementById("earningsChart");
+    // Any school without a real earnings figure is left out rather than estimated.
+    var sorted = schools.filter(function(s){ return s.earnings != null; }).sort(function(a,b){ return b.earnings - a.earnings; });
+    var max = Math.ceil(Math.max.apply(null, sorted.map(function(s){return s.earnings;})) / 10000) * 10000;
+    sorted.forEach(function(s){
+      var row = document.createElement("div"); row.className = "barrow";
+      var name = document.createElement("div");
+      name.className = "name" + (s.current ? " current" : "");
+      name.textContent = s.name;
+      var track = document.createElement("div"); track.className = "track";
+      var bar = document.createElement("div");
+      bar.className = "bar" + (s.current ? " context" : "");
+      bar.style.left = "0%";
+      bar.style.width = (s.earnings/max*100) + "%";
+      bar.tabIndex = 0;
+      var val = document.createElement("div");
+      val.className = "bar-value";
+      val.style.left = "calc(" + (s.earnings/max*100) + "% + 8px)";
+      val.textContent = fmtMoney(s.earnings);
+      wireTooltip(bar, function(){
+        return [ttTitle(s.name), ttRow("Median earnings, 5 yrs out", "$" + s.earnings.toLocaleString(), s.current?css("--baseline"):css("--series-1"))];
+      });
+      track.appendChild(bar); track.appendChild(val);
+      row.appendChild(name); row.appendChild(track);
+      host.appendChild(row);
+    });
+
+    var tbody = document.querySelector("#earningsTable tbody");
+    sorted.forEach(function(s){
+      var tr = document.createElement("tr");
+      function td(v, strong){ var el=document.createElement("td"); if(strong) el.className="strong"; el.textContent=v; return el; }
+      tr.appendChild(td(s.name));
+      tr.appendChild(td("$" + s.earnings.toLocaleString(), true));
+      var srcTd = document.createElement("td");
+      addLink(srcTd, s.links.niche, "Niche");
+      tr.appendChild(srcTd);
+      tbody.appendChild(tr);
+    });
+  })();
+
+  // ================= 05 setter cards =================
+  (function(){
+    var host = document.getElementById("setterCards");
+    if(!SETTER) return;   // only Setter has a position panel for now (D5)
+    function retTag(cls){
+      // NCAA eligibility is a flat 5 years to use 5 seasons — no redshirt
+      // exemption to account for. Only a listed 5th-year/graduate season
+      // means eligibility is actually used up.
+      if(cls === "Gr" || cls === "5th-Yr" || cls === "5th") return "Final season of eligibility — likely done after " + (TARGET - 1);
+      return "5-in-5 eligibility — likely returning in " + TARGET;
+    }
+    byComposite.forEach(function(s){
+      var card = document.createElement("div");
+      card.className = "setcard" + (s.current ? " current" : "");
+
+      var school = document.createElement("div"); school.className = "school";
+      school.textContent = s.name + (s.current ? " · comparing to" : "");
+      var region = document.createElement("span"); region.className="region"; region.textContent = s.conf;
+      school.appendChild(region);
+      card.appendChild(school);
+
+      [s.setter, s.secondSetter, s.thirdSetter].forEach(function(st){
+        if(!st) return;
+        var row = document.createElement("div"); row.className = "setter";
+        var jersey = document.createElement("span"); jersey.className="jersey"; jersey.textContent = "#" + st.jersey;
+        var sname = document.createElement("span"); sname.className="sname"; sname.textContent = st.name || "";   // null = not stored (D13): jersey and class only
+        var cls = document.createElement("span"); cls.style.fontSize="11px"; cls.style.color="var(--text-muted)"; cls.textContent = st.cls;
+        row.appendChild(jersey); row.appendChild(sname); row.appendChild(cls);
+        if(st.height){
+          var ht = document.createElement("span"); ht.style.fontSize="11px"; ht.style.color="var(--text-muted)"; ht.textContent = "· " + st.height;
+          row.appendChild(ht);
+        }
+        card.appendChild(row);
+
+        var meta = document.createElement("div"); meta.className="meta";
+        var assists = document.createElement("div"); assists.className="assists";
+        var lbl = document.createElement("span"); lbl.className="lbl"; lbl.textContent="Assists";
+        assists.appendChild(lbl);
+        assists.appendChild(document.createTextNode(st.assists));
+        meta.appendChild(assists);
+        card.appendChild(meta);
+
+        var ret = document.createElement("div"); ret.className="ret-tag"; ret.textContent = retTag(st.cls);
+        card.appendChild(ret);
+      });
+
+      var offNote = document.createElement("div"); offNote.className = "ret-tag"; offNote.style.fontWeight = "600"; offNote.style.color = "var(--text-secondary)";
+      offNote.textContent = s.offenseNote || "Setters not researched for this school yet";
+      card.appendChild(offNote);
+
+      var chips = document.createElement("div"); chips.className = "src-row tight";
+      addLink(chips, s.links.schedule, "Sched");
+      addLink(chips, s.links.roster, "Roster");
+      addLink(chips, s.links.stats, "Stats");
+      card.appendChild(chips);
+
+      host.appendChild(card);
+    });
+  })();
+
+  // ================= 06 flags matrix =================
+  (function(){
+    var tbody = document.querySelector("#flagsTable tbody");
+    var order = CONFIG.flagCols.map(function(c){ return c.key; });
+    var labels = { good:"Good", warning:"Watch", critical:"Dealbreaker", pending:"Not researched" };
+    var icons = { good:"✓", warning:"!", critical:"✕", pending:"?", info:"·" };
+    byComposite.forEach(function(s){
+      var tr = document.createElement("tr");
+      if(s.current) tr.className = "current";
+      tr.appendChild(schoolCell(s));
+      order.forEach(function(k){
+        var td = document.createElement("td");
+        var span = document.createElement("span");
+        span.className = "flag " + s.flags[k] + (s.flags[k] === "info" && s.flagDetail[k] === "Yes" ? " yes" : "");
+        // fact columns (Female coach, AiA) show the fact itself instead of a rating
+        span.textContent = icons[s.flags[k]] + " " + (s.flags[k] === "info" ? s.flagDetail[k] : labels[s.flags[k]]);
+        if(k === "beach" && s.links.beachRoster){
+          // the Beach chip links to the current beach roster (BEACH_PLAN.md §6.2)
+          var a = document.createElement("a"); a.className = "flaglink";
+          a.href = s.links.beachRoster; a.target = "_blank"; a.rel = "noopener noreferrer";
+          a.appendChild(span); td.appendChild(a);
+        } else {
+          td.appendChild(span);
+        }
+        if(s.flagDetail && s.flagDetail[k] && s.flags[k] !== "info" && s.flags[k] !== "pending"){
+          var det = document.createElement("span"); det.className = "flag-detail";
+          det.textContent = s.flagDetail[k];
+          td.appendChild(det);
+        }
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+  })();
+
+  // ================= 07 profile card =================
+  (function(){
+    var host = document.getElementById("profileCard");
+    byComposite.forEach(function(s){
+    var card = document.createElement("div"); card.className = "profile" + (s.current ? " current" : "");
+
+    var top = document.createElement("div"); top.className = "profile-top";
+    var left = document.createElement("div");
+    var h3 = document.createElement("h3"); h3.textContent = s.name + (s.current ? " (comparing to)" : "");
+    var loc = document.createElement("div"); loc.className = "loc";
+    loc.textContent = (s.ipeds && s.ipeds.city ? s.ipeds.city + ", " + s.ipeds.state +
+      (s.ipeds.locale ? " (" + s.ipeds.locale.toLowerCase() + ")" : "") + " · " : "") +
+      s.conf + " · National rank #" + s.natRank +
+      (s.confRank === "—" || s.confRank == null ? "" : " (" + s.confRank + " in conference)");
+    left.appendChild(h3); left.appendChild(loc);
+    var hero = document.createElement("div"); hero.className = "hero";
+    var val = document.createElement("div"); val.className = "val"; val.textContent = compText(s);
+    var lbl = document.createElement("div"); lbl.className = "lbl"; lbl.textContent = "Composite score";
+    hero.appendChild(val); hero.appendChild(lbl);
+    top.appendChild(left); top.appendChild(hero);
+    card.appendChild(top);
+
+    var grid = document.createElement("div"); grid.className = "profile-grid";
+
+    var mini = document.createElement("div"); mini.className = "mini-bars";
+    if(!s.scores){
+      var pn = document.createElement("div"); pn.className = "partial-note";
+      pn.textContent = "Not researched yet: no Niche grades, so no composite score. Cost, majors, rank, and location are from IPEDS and Massey.";
+      mini.appendChild(pn);
+    }
+    if(s.scores) CATS.forEach(function(c){
+      var row = document.createElement("div"); row.className = "mini-bar-row";
+      var l = document.createElement("div"); l.className="l"; l.textContent = c.label;
+      var track = document.createElement("div"); track.className="mini-track";
+      var fill = document.createElement("div"); fill.className="mini-fill";
+      var sv = Math.round(s.scores[c.key]);
+      fill.style.width = sv + "%"; fill.style.background = css(c.slot);
+      track.appendChild(fill);
+      var v = document.createElement("div"); v.className="v"; v.textContent = sv;
+      row.appendChild(l); row.appendChild(track); row.appendChild(v);
+      mini.appendChild(row);
+    });
+    grid.appendChild(mini);
+
+    var side = document.createElement("div"); side.className = "profile-side";
+    function kv(k,v){
+      var row = document.createElement("div"); row.className="kv";
+      var kk = document.createElement("div"); kk.className="k"; kk.textContent=k;
+      var vv = document.createElement("div"); vv.className="v"; vv.textContent=v;
+      row.appendChild(kk); row.appendChild(vv);
+      return row;
+    }
+    side.appendChild(kv("Estimated annual cost", (s.cost == null ? "—" : "$" + s.cost.toLocaleString()) + " (" + basisText(s) + ")"));
+    if(HOME && s.ipeds && s.ipeds.lat != null){
+      side.appendChild(kv("Distance from home", milesBetween(HOME, s.ipeds).toLocaleString() + " mi from " + HOME.city + ", " + HOME.state + " (straight line)"));
+    }
+    if(s.programs && s.programs.length){
+      // IPEDS 2025 completions for the profile's majors: bachelor's graduates
+      // per year, a rough measure of program size
+      side.appendChild(kv("Degree programs (IPEDS)", s.programs.join(" · ")));
+    }
+    if(SETTER && s.setter){
+      side.appendChild(kv("Primary setter", (s.setter.name ? s.setter.name + " · " : "") + "#" + s.setter.jersey + " · " + s.setter.cls));
+      side.appendChild(kv("Assists / offense", s.setter.assists + " assists · " + s.offenseNote));
+    } else if(s.offenseNote){
+      side.appendChild(kv("Offense", s.offenseNote));   // a team fact, kept for every position
+    }
+    if(sac && !s.current){
+      var dv = s.composite != null && sac.composite != null ? s.composite - sac.composite : null;
+      side.appendChild(kv("vs. " + CONFIG.currentName, dv == null ? "—" : (dv >= 0 ? "+" : "") + dv.toFixed(1) + " composite"));
+    }
+    if(s.coachStaff && s.coachStaff[0]){
+      var hcRow = document.createElement("div"); hcRow.className = "kv";
+      var hcK = document.createElement("div"); hcK.className = "k"; hcK.textContent = "Head coach";
+      var hcV = document.createElement("div"); hcV.className = "v";
+      hcV.appendChild(srcLink(s.links.roster, s.coachStaff[0][1]));
+      hcRow.appendChild(hcK); hcRow.appendChild(hcV);
+      side.appendChild(hcRow);
+
+      var assistants = s.coachStaff.slice(1);
+      if(assistants.length){
+        var asRow = document.createElement("div"); asRow.className = "kv";
+        var asK = document.createElement("div"); asK.className = "k"; asK.textContent = "Other staff";
+        var asV = document.createElement("div"); asV.className = "v"; asV.style.fontWeight = "400";
+        asV.textContent = assistants.map(function(c){ return c[1]; }).join(", ");
+        asRow.appendChild(asK); asRow.appendChild(asV);
+        side.appendChild(asRow);
+      }
+    }
+
+    if(CONFIG.beachHref){
+      var bRow = document.createElement("div"); bRow.className = "kv";
+      var bK = document.createElement("div"); bK.className = "k"; bK.textContent = "Beach volleyball";
+      var bV = document.createElement("div"); bV.className = "v";
+      var b = s.beach;
+      if(!b){
+        bV.textContent = "Not researched";
+      } else if(!b.program){
+        bV.textContent = "No program";
+      } else {
+        // same label as the flag chip: "Some · 2 of 18" (BEACH_PLAN.md Step C)
+        var share = { most:"Most", some:"Some", none:"None" }[b.share];
+        bV.appendChild(document.createTextNode(share + " · " + b.crossover + " of " + b.courtSize + " fall " + b.courtSeason +
+          " court players were on the spring " + b.beachSeason + " beach roster" +
+          (b.share === "none" ? " (separate team)" : "") + " · "));
+        addLink(bV, s.links.beachRoster, "Beach roster");
+        bV.appendChild(document.createTextNode(" · "));
+        var cmp = document.createElement("a"); cmp.className = "srclink";
+        // "#<school id>&s=<settings>": the beach page scrolls to the school and reads the settings
+        cmp.href = carry(CONFIG.beachHref).replace("#", "#" + s.id + "&"); cmp.target = "_blank"; cmp.rel = "noopener";
+        cmp.textContent = "Compare rosters";
+        bV.appendChild(cmp);
+      }
+      bRow.appendChild(bK); bRow.appendChild(bV);
+      side.appendChild(bRow);
+    }
+
+    var flagLabel = document.createElement("div"); flagLabel.className="k"; flagLabel.style.marginTop="4px"; flagLabel.textContent = "Flags";
+    side.appendChild(flagLabel);
+    var flagrow = document.createElement("div"); flagrow.className = "flagrow";
+    var order = CONFIG.flagCols.map(function(c){ return c.key; });
+    var short = {}; CONFIG.flagCols.forEach(function(c){ short[c.key] = c.short; });
+    var icons = { good:"✓", warning:"!", critical:"✕", pending:"?", info:"·" };
+    order.forEach(function(k){
+      var span = document.createElement("span");
+      span.className = "flag " + s.flags[k] + (s.flags[k] === "info" && s.flagDetail[k] === "Yes" ? " yes" : "");
+      span.textContent = icons[s.flags[k]] + " " + short[k] + (s.flags[k] === "info" ? ": " + s.flagDetail[k] : "");
+      flagrow.appendChild(span);
+    });
+    side.appendChild(flagrow);
+    grid.appendChild(side);
+
+    card.appendChild(grid);
+
+    var srcLabel = document.createElement("div");
+    srcLabel.className = "k"; srcLabel.style.fontSize = "11px"; srcLabel.style.textTransform = "uppercase";
+    srcLabel.style.letterSpacing = ".04em"; srcLabel.textContent = "Sources";
+    card.appendChild(srcLabel);
+    var srcRow = document.createElement("div"); srcRow.className = "src-row";
+    addLink(srcRow, s.links.niche, "Niche");
+    addLink(srcRow, s.links.standings, "Standings");
+    addLink(srcRow, masseyUrl(s), "Massey");
+    addLink(srcRow, s.links.schedule, "Schedule");
+    addLink(srcRow, s.links.roster, "Roster");
+    addLink(srcRow, s.links.stats, "Stats");
+    if (CONFIG.beachHref && s.links.beachRoster) addLink(srcRow, s.links.beachRoster, "Beach roster");
+    if (s.links.aia) srcRow.appendChild(srcLink(s.links.aia, CONFIG.faithShort || "AiA"));
+    card.appendChild(srcRow);
+
+    host.appendChild(card);
+    });
+  })();
+
+  // print/save as PDF: browsers name the file after the title, so use the page's file name
+  // (e.g. "mwc-report") while printing and restore the readable title afterwards
+  (function(){
+    var title = document.title;
+    var file = decodeURIComponent(location.pathname.split("/").pop()).replace(/\.html?$/i, "");
+    if(!file) return;
+    window.addEventListener("beforeprint", function(){ document.title = file; });
+    window.addEventListener("afterprint", function(){ document.title = title; });
+  })();
+
+})();
+</script>
+
+</body></html>

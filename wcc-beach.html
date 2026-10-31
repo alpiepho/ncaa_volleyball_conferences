@@ -1,0 +1,677 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WCC Beach Rosters</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- tokens, shell, chart, chip, and tooltip styles: copied from tools/site/report_template.html by tools/build_site.py -->
+<style>
+  /* ---------- tokens ---------- */
+  :root{
+    color-scheme: light;
+    --page-bg:#f9f9f7;
+    --surface:#fcfcfb;
+    --surface-raised:#ffffff;
+    --text-primary:#0b0b0b;
+    --text-secondary:#52514e;
+    --text-muted:#898781;
+    --grid:#e1e0d9;
+    --baseline:#c3c2b7;
+    --border:rgba(11,11,11,0.10);
+    --series-1:#2a78d6; /* blue   */
+    --series-2:#eb6834; /* orange */
+    --series-3:#1baf7a; /* aqua   */
+    --series-4:#eda100; /* yellow */
+    --series-5:#e87ba4; /* magenta*/
+    --series-6:#008300; /* green  */
+    --series-7:#4a3aa7; /* violet */
+    --series-8:#e34948; /* red    */
+    --status-good:#0ca30c;
+    --status-warning:#fab219;
+    --status-serious:#ec835a;
+    --status-critical:#d03b3b;
+    --diverging-mid:#f0efec;
+    --context-line:#c3c2b7;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --page-bg:#0d0d0d;
+      --surface:#1a1a19;
+      --surface-raised:#232322;
+      --text-primary:#ffffff;
+      --text-secondary:#c3c2b7;
+      --text-muted:#898781;
+      --grid:#2c2c2a;
+      --baseline:#383835;
+      --border:rgba(255,255,255,0.10);
+      --series-1:#3987e5;
+      --series-2:#d95926;
+      --series-3:#199e70;
+      --series-4:#c98500;
+      --series-5:#d55181;
+      --series-6:#008300;
+      --series-7:#9085e9;
+      --series-8:#e66767;
+      --diverging-mid:#383835;
+      --context-line:#383835;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --page-bg:#0d0d0d;
+    --surface:#1a1a19;
+    --surface-raised:#232322;
+    --text-primary:#ffffff;
+    --text-secondary:#c3c2b7;
+    --text-muted:#898781;
+    --grid:#2c2c2a;
+    --baseline:#383835;
+    --border:rgba(255,255,255,0.10);
+    --series-1:#3987e5;
+    --series-2:#d95926;
+    --series-3:#199e70;
+    --series-4:#c98500;
+    --series-5:#d55181;
+    --series-6:#008300;
+    --series-7:#9085e9;
+    --series-8:#e66767;
+    --diverging-mid:#383835;
+    --context-line:#383835;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--page-bg);
+    color:var(--text-primary);
+    font-family:"Work Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  img{max-width:100%;}
+  [hidden]{display:none!important;}
+  h1,h2,h3{font-family:"Oswald", system-ui, sans-serif; letter-spacing:.01em; text-wrap:balance; margin:0;}
+  .num{font-variant-numeric:normal;}
+  .tabular{font-variant-numeric:tabular-nums;}
+
+  /* ---------- shell ---------- */
+  .wrap{max-width:1040px; margin:0 auto; padding-inline:20px;}
+
+  header.top{
+    position:sticky; top:env(safe-area-inset-top,0px); z-index:20;
+    background:var(--page-bg);
+    border-bottom:1px solid var(--border);
+  }
+  .top-inner{
+    max-width:1040px; margin:0 auto; padding:14px 20px 0 20px;
+  }
+  .brand{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; padding-bottom:10px;}
+  .brand h1{font-size:22px; font-weight:700; text-transform:uppercase; letter-spacing:.03em;}
+  .brand .tag{font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.08em;}
+  nav.chips{
+    display:flex; gap:6px; overflow-x:auto; padding-bottom:10px;
+    -ms-overflow-style:none; scrollbar-width:none;
+  }
+  nav.chips::-webkit-scrollbar{display:none;}
+  nav.chips a{
+    flex:0 0 auto;
+    font-size:12px; font-weight:600; color:var(--text-secondary);
+    text-decoration:none; padding:6px 10px; border-radius:999px;
+    border:1px solid var(--border); white-space:nowrap;
+  }
+  nav.chips a:hover{ color:var(--text-primary); }
+  nav.chips a:focus-visible{outline:2px solid var(--series-1); outline-offset:1px;}
+
+  main{padding-bottom:64px;}
+
+  .intro{
+    padding:28px 0 8px;
+  }
+  .intro .kicker{font-size:12px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--series-1);}
+  .intro h2.page-title{font-size:30px; line-height:1.15; margin-top:6px; max-width:30ch;}
+  .intro p{font-size:15px; line-height:1.55; color:var(--text-secondary); max-width:62ch; margin:12px 0 0;}
+  .intro ul.intro-list{font-size:14px; line-height:1.5; color:var(--text-secondary); max-width:78ch; margin:14px 0 0; padding-left:20px;}
+  .intro ul.intro-list li{margin-bottom:6px;}
+  .intro ul.intro-list li:last-child{margin-bottom:0;}
+  .mock-note{
+    display:inline-flex; align-items:center; gap:8px; margin-top:16px;
+    font-size:12px; font-weight:600; color:var(--text-secondary);
+    background:var(--surface); border:1px solid var(--border);
+    padding:7px 12px; border-radius:8px;
+  }
+  .mock-note .dot{width:7px;height:7px;border-radius:50%;background:var(--status-warning);flex:0 0 auto;}
+
+  section.panel{
+    margin-top:40px; padding-top:28px; border-top:1px solid var(--border);
+    scroll-margin-top:96px;
+  }
+  .panel-head{display:flex; gap:16px; align-items:baseline; margin-bottom:6px;}
+  .panel-head .idx{font-family:"Oswald"; font-size:14px; font-weight:600; color:var(--text-muted); letter-spacing:.06em;}
+  .panel-head h2{font-size:21px; font-weight:600;}
+  .panel .question{font-size:14px; color:var(--text-secondary); max-width:58ch; line-height:1.5; margin:6px 0 18px;}
+
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:10px;
+    padding:18px 18px 10px;
+  }
+  figure{margin:0;}
+  figcaption{font-size:11.5px; color:var(--text-muted); margin-top:10px; line-height:1.5;}
+
+  /* legend */
+  .legend{display:flex; flex-wrap:wrap; gap:14px; margin-bottom:14px;}
+  .legend .item{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-secondary); font-weight:500;}
+  .legend .swatch{width:10px; height:10px; border-radius:2px; flex:0 0 auto;}
+  .legend .line-key{width:16px; height:2px; border-radius:1px; flex:0 0 auto;}
+
+  /* bars (horizontal) */
+  .barrow{display:flex; align-items:center; gap:10px; padding:5px 0; position:relative;}
+  .barrow .name{
+    width:150px; flex:0 0 auto; font-size:12.5px; color:var(--text-primary); font-weight:500;
+    text-align:right; line-height:1.3;
+  }
+  .barrow .name.current{color:var(--text-secondary); font-style:italic;}
+  .track{flex:1 1 auto; position:relative; height:24px;}
+  .bar{
+    position:absolute; top:2px; height:20px; border-radius:4px; background:var(--series-1);
+    transition:filter .15s;
+  }
+  .bar.context{background:var(--baseline);}
+  .bar:hover, .bar:focus-visible{filter:brightness(1.08);}
+  .bar-value{
+    position:absolute; top:50%; transform:translateY(-50%);
+    font-size:12px; font-weight:600; color:var(--text-primary); white-space:nowrap;
+  }
+  .stackseg{position:absolute; top:2px; height:20px;}
+  .stackseg:focus-visible{outline:2px solid var(--text-primary); outline-offset:1px;}
+
+  .divergetrack{flex:1 1 auto; height:24px; position:relative;}
+  .divcenter{position:absolute; top:-4px; bottom:-4px; width:1px; background:var(--baseline);}
+
+  /* tooltip */
+  .tt{
+    position:fixed; z-index:50; pointer-events:none;
+    background:var(--surface-raised); border:1px solid var(--border); border-radius:8px;
+    padding:9px 11px; font-size:12px; color:var(--text-secondary);
+    box-shadow:0 6px 20px rgba(0,0,0,.14);
+    max-width:230px; transition:opacity .08s;
+    opacity:0;
+  }
+  .tt.show{opacity:1;}
+  .tt .tt-title{font-weight:700; color:var(--text-primary); margin-bottom:4px; font-size:12.5px;}
+  .tt .tt-row{display:flex; justify-content:space-between; gap:10px; padding:1px 0;}
+  .tt .tt-row .k{display:flex; align-items:center; gap:6px;}
+  .tt .tt-row .k .key{width:10px;height:2px;border-radius:1px;}
+  .tt .tt-row .v{font-weight:700; color:var(--text-primary);}
+
+  details.tview{margin-top:14px;}
+  details.tview summary{
+    cursor:pointer; font-size:12px; font-weight:600; color:var(--series-1);
+    list-style:none; padding:4px 0;
+  }
+  details.tview summary::-webkit-details-marker{display:none;}
+  details.tview summary::before{content:"▸ "; }
+  details.tview[open] summary::before{content:"▾ "; }
+  table.dtable{width:100%; border-collapse:collapse; font-size:12.5px; margin-top:10px;}
+  table.dtable caption{text-align:left; font-size:11px; color:var(--text-muted); margin-bottom:6px;}
+  table.dtable th, table.dtable td{text-align:right; padding:6px 8px; border-bottom:1px solid var(--grid);}
+  table.dtable th:first-child, table.dtable td:first-child{text-align:left;}
+  table.dtable thead th{color:var(--text-muted); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.04em;}
+  table.dtable td{color:var(--text-secondary); font-family:"Work Sans";}
+  table.dtable td.strong{color:var(--text-primary); font-weight:600;}
+  table.dtable tbody tr:hover{background:var(--page-bg);}
+
+  .scroll-x{overflow-x:auto;}
+
+  /* big comparison table */
+  table.maintable{width:100%; border-collapse:collapse; font-size:13px; min-width:760px;}
+  table.maintable caption{display:none;}
+  table.maintable th, table.maintable td{padding:9px 10px; border-bottom:1px solid var(--grid); white-space:nowrap;}
+  table.maintable thead th{
+    text-align:left; font-size:11px; color:var(--text-muted); text-transform:uppercase;
+    letter-spacing:.04em; font-weight:600; border-bottom:1px solid var(--baseline);
+    position:sticky; top:0; background:var(--surface);
+  }
+  table.maintable td{color:var(--text-secondary);}
+  table.maintable td.school{color:var(--text-primary); font-weight:600; position:sticky; left:0; background:var(--surface);}
+  table.maintable tbody tr.current td.school{color:var(--text-secondary); font-style:italic; font-weight:500;}
+  table.maintable td.num, table.maintable th.num{text-align:right; font-variant-numeric:tabular-nums;}
+  table.maintable tbody tr:hover td{background:var(--page-bg);}
+  table.maintable tbody tr.current td{background:color-mix(in srgb, var(--baseline) 16%, var(--surface));}
+  .composite-chip{
+    display:inline-block; min-width:38px; text-align:center; font-weight:700;
+    padding:2px 7px; border-radius:5px; background:color-mix(in srgb, var(--series-1) 16%, var(--surface));
+    color:var(--series-1);
+  }
+
+  /* stat / setter cards */
+  .cardgrid{display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;}
+  @media (max-width:760px){ .cardgrid{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:480px){ .cardgrid{grid-template-columns:1fr;} }
+  .setcard{
+    background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px;
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .setcard.current{border-style:dashed;}
+  .setcard .school{font-size:13px; font-weight:700; color:var(--text-primary);}
+  .setcard .school .region{font-weight:500; color:var(--text-muted); font-size:11px; display:block; margin-top:1px;}
+  .setcard .setter{display:flex; align-items:baseline; gap:6px; margin-top:2px;}
+  .setcard .setter .jersey{
+    font-family:"Work Sans"; font-weight:700; font-size:11px; color:var(--text-secondary);
+    border:1px solid var(--border); border-radius:4px; padding:1px 5px;
+  }
+  .setcard .setter .sname{font-weight:600; font-size:13.5px;}
+  .setcard .meta{display:flex; justify-content:space-between; align-items:center; margin-top:6px;}
+  .setcard .assists{font-size:20px; font-weight:700; font-family:"Work Sans";}
+  .setcard .assists .lbl{display:block; font-size:10.5px; font-weight:500; color:var(--text-muted); text-transform:uppercase; letter-spacing:.04em;}
+  .pill{
+    font-size:11px; font-weight:700; padding:3px 8px; border-radius:999px;
+    border:1px solid var(--border); color:var(--text-secondary); white-space:nowrap;
+  }
+  .ret-tag{font-size:11px; color:var(--text-muted); margin-top:2px;}
+
+  /* source links */
+  a.srclink{color:var(--series-1); text-decoration:none; font-weight:600;}
+  a.srclink:hover, a.srclink:focus-visible{text-decoration:underline;}
+  a.srclink:focus-visible{outline:2px solid var(--series-1); outline-offset:2px; border-radius:2px;}
+  a.srclink::after{content:" \2197"; font-weight:400;}
+  .src-row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+  .src-row.tight{gap:8px; margin-top:6px;}
+  .src-row .srclink{font-size:10.5px; font-weight:600; color:var(--text-muted);}
+  .src-row .srclink:hover, .src-row .srclink:focus-visible{color:var(--series-1);}
+  td.school span.schoolname{font-weight:600;}
+  .sources-note{font-size:12px; color:var(--text-secondary); margin-top:10px; line-height:1.5;}
+  ul.sources-note{ padding-left:18px; margin:10px 0 0; }
+  ul.sources-note li{ margin-bottom:7px; }
+  ul.sources-note li:last-child{ margin-bottom:0; }
+  .sources-note a.srclink{font-size:inherit; font-weight:600;}
+
+  /* flags matrix */
+  table.flags{width:100%; border-collapse:separate; border-spacing:0; font-size:12.5px; min-width:720px;}
+  table.flags th, table.flags td{padding:8px; text-align:center; border-bottom:1px solid var(--grid);}
+  table.flags thead th{
+    font-size:10.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.03em;
+    font-weight:600; vertical-align:bottom; max-width:92px;
+  }
+  table.flags td.school{text-align:left; font-weight:600; color:var(--text-primary); white-space:nowrap;}
+  table.flags tr.current td.school{font-style:italic; color:var(--text-secondary); font-weight:500;}
+  .flag{
+    display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:700;
+    padding:3px 7px; border-radius:6px; justify-content:center; min-width:64px;
+  }
+  .flag.good{background:color-mix(in srgb, var(--status-good) 14%, var(--surface)); color:var(--status-good);}
+  .flag.warning{background:color-mix(in srgb, var(--status-warning) 22%, var(--surface)); color:#8a5a00;}
+  :root:not([data-theme="light"]) .flag.warning{color:var(--status-warning);}
+  :root[data-theme="dark"] .flag.warning{color:var(--status-warning);}
+  .flag.critical{background:color-mix(in srgb, var(--status-critical) 16%, var(--surface)); color:var(--status-critical);}
+  .flag.pending{background:var(--grid); color:var(--text-muted); font-style:italic;}
+  a.flaglink{text-decoration:none;}
+  a.flaglink:hover .flag, a.flaglink:focus-visible .flag{text-decoration:underline;}
+  a.flaglink:focus-visible{outline:2px solid var(--series-1); outline-offset:2px; border-radius:6px;}
+  .flag-detail{display:block; font-size:10.5px; color:var(--text-muted); margin-top:3px; white-space:nowrap;}
+
+  /* profile card */
+  .profile-stack{display:flex; flex-direction:column; gap:16px;}
+  .profile{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:22px;
+    display:grid; gap:20px;
+  }
+  .profile.current{border-style:dashed;}
+  .profile-top{display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; align-items:flex-start;}
+  .profile-top h3{font-size:22px;}
+  .profile-top .loc{font-size:12.5px; color:var(--text-muted); margin-top:4px;}
+  .hero{text-align:right;}
+  .hero .val{font-size:46px; font-weight:700; font-family:"Work Sans"; line-height:1; color:var(--series-1);}
+  .hero .lbl{font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em;}
+  .profile-grid{display:grid; grid-template-columns:1.1fr .9fr; gap:22px;}
+  @media (max-width:680px){ .profile-grid{grid-template-columns:1fr;} }
+  .mini-bars{display:flex; flex-direction:column; gap:9px;}
+  .mini-bar-row{display:grid; grid-template-columns:96px 1fr 34px; align-items:center; gap:8px; font-size:12px;}
+  .mini-bar-row .l{color:var(--text-secondary);}
+  .mini-track{height:8px; background:var(--grid); border-radius:4px; overflow:hidden;}
+  .mini-fill{height:100%; border-radius:4px;}
+  .mini-bar-row .v{text-align:right; font-weight:600; color:var(--text-primary); font-variant-numeric:tabular-nums;}
+  .profile-side{display:flex; flex-direction:column; gap:14px;}
+  .kv{display:flex; justify-content:space-between; font-size:13px; padding:7px 0; border-bottom:1px solid var(--grid);}
+  .kv .k{color:var(--text-muted);}
+  .kv .v{font-weight:600; color:var(--text-primary); text-align:right;}
+  .flagrow{display:flex; gap:6px; flex-wrap:wrap;}
+  .profile .src-row .srclink{font-size:12px;}
+
+  footer.endnote{
+    margin-top:50px; padding-top:20px; border-top:1px solid var(--border);
+    font-size:13px; color:var(--text-secondary); line-height:1.6; padding-bottom:10px;
+  }
+  footer.endnote b{color:var(--text-primary);}
+
+  /* ---------- generic site: settings line, neutral flags, partial rows ---------- */
+  .settings-line{display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px; font-size:12.5px;
+    color:var(--text-secondary); padding-bottom:10px; margin-top:-4px;}
+  .settings-line b{color:var(--text-primary); font-weight:600;}
+  .settings-line a{color:var(--series-1); font-weight:600; text-decoration:none; white-space:nowrap;}
+  .settings-line a:hover{text-decoration:underline;}
+  .flag.info{background:var(--grid); color:var(--text-secondary);}
+  /* a "Yes" fact (Female coach, AiA) reads green like Good; "No" stays grey */
+  .flag.info.yes{background:color-mix(in srgb, var(--status-good) 14%, var(--surface)); color:var(--status-good);}
+  .nolink{color:var(--text-secondary);}
+  .partial-note{font-size:12.5px; color:var(--text-muted); font-style:italic;}
+  .footnote{display:block; font-size:11.5px; color:var(--text-muted); font-weight:400; margin-top:3px;}
+  /* phones: the widest bar's value label sat past the track and widened the page */
+  @media (max-width:520px){
+    .wrap, .top-inner{padding-inline:16px;}
+    .barrow .name{width:104px;}
+    .track{margin-right:48px;}
+  }
+
+  /* ---------- print / save as PDF ---------- */
+  @media print{
+    @page{margin:12mm;}
+    /* bars, chips and flags are background colors, which browsers drop by default */
+    *{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    .wrap, .top-inner{max-width:none; padding-inline:0;}
+    /* header prints once at the top; chips wrap instead of scrolling. In-page (#) links
+       still work inside the PDF; links to other files don't, so hide those. */
+    header.top{position:static; border-bottom:none;}
+    nav.chips{flex-wrap:wrap; overflow:visible;}
+    nav.chips a:not([href^="#"]){display:none;}
+    /* wide tables can't scroll on paper: let them shrink and wrap to the page width */
+    .scroll-x{overflow:visible;}
+    table.maintable, table.flags{min-width:0; font-size:10px;}
+    table.maintable th, table.maintable td{white-space:normal; padding:5px 4px;}
+    table.maintable thead th, table.maintable td.school{position:static;}
+    table.flags th, table.flags td{padding:5px 3px;}
+    table.flags td.school, .flag-detail{white-space:normal;}
+    .flag{min-width:0; padding:2px 4px; font-size:9.5px;}
+    .barrow, tr, .setcard, .profile{break-inside:avoid;}
+    .panel-head{break-after:avoid;}
+    .tt{display:none;}
+  }
+</style>
+<style>
+  /* ---------- beach roster comparison (BEACH_PLAN.md §6.5) ---------- */
+  a.brow{text-decoration:none; color:inherit; border-radius:6px;}
+  a.brow:hover .name, a.brow:focus-visible .name{color:var(--series-1);}
+  a.brow:focus-visible{outline:2px solid var(--series-1); outline-offset:2px;}
+  .bar.beachonly{background:var(--series-3); height:8px; top:8px;}
+  .half{position:absolute; top:-3px; bottom:-3px; width:0; border-left:2px dashed var(--text-muted);}
+  .chiplab{flex:0 0 auto; min-width:118px;}
+  .noprog{font-size:12.5px; color:var(--text-secondary); line-height:1.6; margin-top:12px;}
+  .noprog b{color:var(--text-primary);}
+  .filters{display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--text-secondary); margin:18px 0 4px;}
+  .filters label{display:flex; gap:6px; align-items:center; cursor:pointer;}
+  .bstack{display:flex; flex-direction:column; gap:16px; margin-top:14px;}
+  .bcard{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; scroll-margin-top:110px;}
+  .bcard.current{border-style:dashed;}
+  .bcard-top{display:flex; justify-content:space-between; gap:14px; flex-wrap:wrap; align-items:flex-start; margin-bottom:14px;}
+  .bcard-top h3{font-size:21px;}
+  .bcard-top .cur{font-family:"Work Sans"; font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; margin-left:6px;}
+  .bcard-top .loc{font-size:12.5px; color:var(--text-muted); margin-top:4px;}
+  .flag.big{font-size:12.5px; padding:5px 10px;}
+  .cols-h{display:grid; grid-template-columns:1fr 26px 1fr; font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; padding-bottom:6px; border-bottom:1px solid var(--baseline);}
+  .cols-h b{color:var(--text-primary);}
+  .grp-h{font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; margin:14px 0 6px;}
+  .both{display:flex; flex-direction:column; border-radius:8px; overflow:hidden; border:1px solid color-mix(in srgb, var(--status-good) 30%, var(--border));}
+  .pair{display:grid; grid-template-columns:1fr 26px 1fr; align-items:center; background:color-mix(in srgb, var(--status-good) 8%, var(--surface));}
+  .pair + .pair{border-top:1px solid var(--grid);}
+  .pair .arrow{text-align:center; color:var(--status-good); font-weight:700;}
+  .cell{display:grid; grid-template-columns:30px 1fr auto; gap:8px; align-items:baseline; padding:6px 10px; font-size:13px;}
+  .cell .jn{font-weight:700; font-size:11px; color:var(--text-secondary); text-align:right;}
+  .cell .jn:not(:empty)::before{content:"#"; color:var(--text-muted); font-weight:500;}
+  .cell .pn{font-weight:600; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .cell .pm{font-size:11.5px; color:var(--text-muted); white-space:nowrap;}
+  .cell .how{font-size:10px; font-weight:600; color:var(--text-muted); border:1px solid var(--border); border-radius:4px; padding:0 4px; margin-left:6px;}
+  .split{display:grid; grid-template-columns:1fr 26px 1fr;}
+  .split > div:last-child{grid-column:3;}
+  .list .cell + .cell{border-top:1px solid var(--grid);}
+  .empty{font-size:12.5px; color:var(--text-muted); font-style:italic; padding:6px 10px;}
+  .empty.wide{background:color-mix(in srgb, var(--status-warning) 12%, var(--surface)); border-radius:8px;}
+  @media (max-width:640px){
+    .cols-h{display:none;}
+    .pair{grid-template-columns:1fr;}
+    .pair .arrow{display:none;}
+    .pair .bside{grid-template-columns:44px auto 1fr; padding-left:0; padding-top:0; margin-top:-4px; font-size:11.5px;}
+    .pair .bside .pn{display:none;}
+    .pair .bside::before{content:"Beach"; grid-column:1; grid-row:1; font-size:10.5px; font-weight:600; color:var(--status-good); text-transform:uppercase; letter-spacing:.04em; text-align:right;}
+    .pair .bside .jn{grid-column:2; grid-row:1; padding-left:4px; color:var(--text-muted); font-weight:600;}
+    .pair .bside .pm{grid-column:3; grid-row:1; text-align:left;}
+    .split{grid-template-columns:1fr;}
+    .split > div:last-child{grid-column:1;}
+    .barrow .name{width:96px;}
+    .chiplab{min-width:0;}
+  }
+</style></head><body>
+<header class="top"><div class="top-inner">
+  <div class="brand"><h1>Beach Rosters</h1><span class="tag">Full West Coast Conference, built on real pulled data</span></div>
+  <div class="settings-line"><span id="summary"></span><a class="carry" href="index.html">Edit settings</a></div>
+  <nav class="chips" aria-label="Jump to" id="nav"><a class="carry" href="wcc-report.html">← Report</a><a href="#summary">Summary</a></nav>
+</div></header>
+<main class="wrap">
+  <div class="intro">
+    <div class="kicker">Beach volleyball · court → beach crossover</div>
+    <h2 class="page-title">Do court players also play beach?</h2>
+    <p>Each school's fall 2025 court roster compared with its spring 2026 beach roster, both from the
+    school's athletics site. A player counts as on both when first and last name and hometown match (or, marked
+    <i>nickname</i>, the same last name and hometown with a short form of the first name). <b>Most</b> = at least half of the
+    court roster played beach, <b>Some</b> = fewer than half, <b>None</b> = a separate beach team.</p>
+    <div class="mock-note"><span class="dot" aria-hidden="true"></span> Rosters checked Oct 18, 2026. Links marked <span style="color:var(--series-1);font-weight:600">↗</span> open the live roster.</div>
+  </div>
+
+  <section class="panel" id="summary">
+    <div class="panel-head"><h2>How much of each court roster plays beach</h2></div>
+    <div class="card">
+      <figure>
+        <div class="legend">
+          <span class="item"><span class="swatch" style="background:var(--series-1)"></span>Court players on the beach roster</span>
+          <span class="item"><span class="swatch" style="background:var(--baseline)"></span>Court only</span>
+          <span class="item"><span class="swatch" style="background:var(--series-3);height:6px"></span>Beach only</span>
+          <span class="item"><span class="line-key" style="border-top:2px dashed var(--text-muted);height:0"></span>Half the court roster ("Most" line)</span>
+        </div>
+        <div id="bars"></div>
+        <figcaption>Bar length is the fall 2025 court roster; the thin bar after it is beach-only players. Click a school to jump to its rosters.</figcaption>
+      </figure>
+      <div class="noprog" id="noprog"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="rosters">
+    <div class="panel-head"><h2>Rosters side by side</h2></div>
+    <p class="question">Players on both rosters come first, on the same row. Position and class are from the court roster; beach class can differ because eligibility is counted per sport.</p>
+    <div class="filters"><label><input type="checkbox" id="hideNone"> Hide separate teams (None)</label></div>
+    <div class="bstack" id="cards"></div>
+  </section>
+
+  <footer class="endnote">Sources: each school's athletics site (archived fall 2025 court and spring 2026 beach rosters), pulled with
+  <code>tools/beach_check.py</code>. Program list cross-checked against the NCAA Directory (women's beach volleyball). Full pull log in <code>data/2026/logs/WCC_RESULTS.md</code>.</footer>
+</main>
+<div class="tt" id="tooltip" role="tooltip"></div>
+<script src="data/schools.js"></script>
+<script src="compare.js"></script>
+<script src="data/beach.js"></script>
+<script>
+(function(){
+  "use strict";
+  // ---------------- generic site (REFACTOR_COMPARE.md phase 5) ----------------
+  // Cards are built here (a port of build_reports.render_beach) from the report's
+  // rows for the viewer's settings and the season rosters in data/beach.js.
+  // Names are exactly as stored: a null name (D13) shows jersey and class only.
+  // Source: tools/site/beach_template.html.
+  var C = window.Compare, ROSTERS = window.SITE_BEACH;
+  var SLUG = "wcc";
+  var settings = C.load();
+  window.addEventListener("hashchange", function(){ if (C.fromHash()){ C.load(); location.reload(); } });
+  document.getElementById("summary").textContent = C.summary(settings) + " · ";
+  Array.prototype.forEach.call(document.querySelectorAll("a.carry"), function(a){
+    a.href = C.withSettings(a.getAttribute("href"), settings);
+  });
+
+  var DATA = (function(){
+    function player(p){ return { name: p.name, jersey: p.jersey, pos: p.pos, cls: p.cls }; }
+    var cards = [], notResearched = [], noProgram = [];
+    C.reportRows(SLUG, settings).forEach(function(s){
+      var b = s.beach;
+      if (!b){ notResearched.push(s.name); return; }
+      if (!b.program){ noProgram.push(s.name); return; }
+      var r = ROSTERS[s.id];
+      if (!r){ notResearched.push(s.name); return; }
+      var court = r.court.map(player), beach = r.beach.map(player), paired = {};
+      r.court.forEach(function(p){ if ("beach" in p) paired[p.beach] = true; });
+      cards.push({
+        id: s.id, name: s.name, current: s.current, share: b.share,
+        label: C.beachLabel(b), tone: C.beachFlag(b), note: b.note || "",
+        crossover: b.crossover, courtSize: b.courtSize, beachSize: b.beachSize,
+        courtSeason: b.courtSeason, beachSeason: b.beachSeason,
+        both: r.court.map(function(p, i){ return "beach" in p ? { court: court[i], beach: beach[p.beach], how: p.match } : null; })
+                     .filter(Boolean),
+        courtOnly: court.filter(function(q, i){ return !("beach" in r.court[i]); }),
+        beachOnly: beach.filter(function(q, j){ return !paired[j]; }),
+        links: { court: r.courtRoster, beachSeason: r.beachRosterSeason, beachCurrent: r.beachRoster }
+      });
+    });
+    // comparison school first, then by share of the court roster on the beach roster
+    cards.sort(function(a, b){
+      return (b.current - a.current) || (b.crossover / b.courtSize - a.crossover / a.courtSize) || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
+    });
+    return { schools: cards, notResearched: notResearched, noProgram: noProgram };
+  })();
+
+  function el(tag, cls, text){
+    var e = document.createElement(tag);
+    if(cls) e.className = cls;
+    if(text != null) e.textContent = text;
+    return e;
+  }
+  function srcLink(url, label){
+    var a = el("a", "srclink", label);
+    a.href = url; a.target = "_blank"; a.rel = "noopener noreferrer";
+    return a;
+  }
+  function cell(p, side, how){
+    var c = el("div", "cell" + (side === "beach" ? " bside" : ""));
+    c.appendChild(el("span", "jn", p.jersey || ""));
+    var n = el("span", "pn", p.name);   // null (D13): jersey and class only
+    if(how === "nickname" || how === "bio") n.appendChild(el("span", "how", how));
+    c.appendChild(n);
+    var meta = side === "court" ? [p.pos, p.cls].filter(Boolean).join(" · ") : (p.cls || "");
+    c.appendChild(el("span", "pm", meta));
+    return c;
+  }
+
+  var nav = document.getElementById("nav");
+  DATA.schools.forEach(function(s){
+    var a = el("a", null, s.name); a.href = "#" + s.id; nav.appendChild(a);
+  });
+
+  // ---------- summary chart ----------
+  var bars = document.getElementById("bars");
+  var maxlen = Math.max.apply(null, DATA.schools.map(function(s){ return s.courtSize + s.beachOnly.length; }).concat([1]));
+  function pct(n){ return (n / maxlen * 100).toFixed(2) + "%"; }
+  var tt = document.getElementById("tooltip");
+  function ttRow(k, v, color){
+    var r = el("div", "tt-row"), a = el("div", "k");
+    var key = el("span", "key"); key.style.background = color; key.style.height = "8px"; a.appendChild(key);
+    a.appendChild(document.createTextNode(k));
+    r.appendChild(a); r.appendChild(el("div", "v", String(v)));
+    return r;
+  }
+  DATA.schools.forEach(function(s){
+    var row = el("a", "barrow brow"); row.href = "#" + s.id;
+    row.appendChild(el("span", "name" + (s.current ? " current" : ""), s.name));
+    var track = el("span", "track");
+    var ctx = el("span", "bar context"); ctx.style.left = "0"; ctx.style.width = pct(s.courtSize);
+    var on = el("span", "bar"); on.style.left = "0"; on.style.width = pct(s.crossover);
+    var bo = el("span", "bar beachonly"); bo.style.left = "calc(" + pct(s.courtSize) + " + 3px)"; bo.style.width = pct(s.beachOnly.length);
+    var half = el("span", "half"); half.style.left = pct(s.courtSize / 2); half.setAttribute("aria-hidden", "true");
+    [ctx, on, bo, half].forEach(function(x){ track.appendChild(x); });
+    row.appendChild(track);
+    row.appendChild(el("span", "chiplab flag " + s.tone, s.label));
+    function show(e){
+      tt.innerHTML = "";
+      tt.appendChild(el("div", "tt-title", s.name + " · " + s.label));
+      tt.appendChild(ttRow("On both", s.crossover, "var(--series-1)"));
+      tt.appendChild(ttRow("Court only", s.courtSize - s.crossover, "var(--baseline)"));
+      tt.appendChild(ttRow("Beach only", s.beachOnly.length, "var(--series-3)"));
+      tt.classList.add("show");
+      var r = tt.getBoundingClientRect(), b = row.getBoundingClientRect();
+      var x = e.clientX || b.left, y = e.clientY || b.top;
+      var left = x + 14; if(left + r.width > innerWidth - 10) left = x - r.width - 14;
+      tt.style.left = Math.max(10, left) + "px";
+      tt.style.top = Math.max(10, Math.min(y - r.height / 2, innerHeight - r.height - 10)) + "px";
+    }
+    row.addEventListener("mousemove", show); row.addEventListener("focus", show);
+    row.addEventListener("mouseleave", function(){ tt.classList.remove("show"); });
+    row.addEventListener("blur", function(){ tt.classList.remove("show"); });
+    bars.appendChild(row);
+  });
+  var np = document.getElementById("noprog");
+  [["Not researched", DATA.notResearched], ["No beach program", DATA.noProgram]].forEach(function(x, i){
+    if(!x[1].length) return;
+    if(np.childNodes.length) np.appendChild(el("br"));
+    np.appendChild(el("b", null, x[0] + ": "));
+    np.appendChild(document.createTextNode(x[1].join(", ") + "."));
+  });
+  if(!DATA.schools.length) bars.appendChild(el("p", "empty", "No school in this report has a beach program."));
+
+  // ---------- cards ----------
+  var host = document.getElementById("cards");
+  DATA.schools.forEach(function(s){
+    var card = el("article", "bcard" + (s.current ? " current" : "")); card.id = s.id;
+    card.dataset.share = s.share;
+    var top = el("div", "bcard-top"), left = el("div");
+    var h3 = el("h3", null, s.name);
+    if(s.current) h3.appendChild(el("span", "cur", "comparing to"));
+    left.appendChild(h3);
+    if(s.note) left.appendChild(el("div", "loc", s.note));
+    top.appendChild(left);
+    top.appendChild(el("span", "flag " + s.tone + " big", s.label + " court"));
+    card.appendChild(top);
+
+    var ch = el("div", "cols-h");
+    var c1 = el("div", null, "Fall " + s.courtSeason + " court "); c1.appendChild(el("b", null, "(" + s.courtSize + ")"));
+    var c3 = el("div", null, "Spring " + s.beachSeason + " beach "); c3.appendChild(el("b", null, "(" + s.beachSize + ")"));
+    ch.appendChild(c1); ch.appendChild(el("div")); ch.appendChild(c3);
+    card.appendChild(ch);
+
+    card.appendChild(el("div", "grp-h", "On both rosters (" + s.crossover + ")"));
+    if(s.both.length){
+      var both = el("div", "both");
+      s.both.forEach(function(x){
+        var pr = el("div", "pair");
+        pr.appendChild(cell(x.court, "court", x.how));
+        var ar = el("div", "arrow", "⇄"); ar.setAttribute("aria-hidden", "true"); pr.appendChild(ar);
+        pr.appendChild(cell(x.beach, "beach"));
+        both.appendChild(pr);
+      });
+      card.appendChild(both);
+    } else {
+      card.appendChild(el("div", "empty wide", "No fall " + s.courtSeason + " court player was on the spring " + s.beachSeason + " beach roster: a separate beach team."));
+    }
+
+    var split = el("div", "split");
+    [["Court only", s.courtOnly, "court"], ["Beach only", s.beachOnly, "beach-only"]].forEach(function(x){
+      var col = el("div");
+      col.appendChild(el("div", "grp-h", x[0] + " (" + x[1].length + ")"));
+      var list = el("div", "list");
+      if(x[1].length) x[1].forEach(function(p){ list.appendChild(cell(p, x[2] === "court" ? "court" : "list")); });
+      else list.appendChild(el("div", "empty", "None"));
+      col.appendChild(list);
+      split.appendChild(col);
+    });
+    card.appendChild(split);
+
+    var src = el("div", "src-row tight");
+    src.appendChild(srcLink(s.links.court, "Court roster " + s.courtSeason));
+    src.appendChild(srcLink(s.links.beachSeason, "Beach roster " + s.beachSeason));
+    src.appendChild(srcLink(s.links.beachCurrent, "Current beach roster"));
+    card.appendChild(src);
+    host.appendChild(card);
+  });
+  // "#<school id>&s=…" from a report: the settings part is consumed by
+  // Compare.load(); scroll to the school now that its card exists
+  var target = location.hash.replace(/^#/, "").split("&")[0];
+  if (target && document.getElementById(target)) document.getElementById(target).scrollIntoView();
+
+  document.getElementById("hideNone").addEventListener("change", function(e){
+    document.querySelectorAll('.bcard[data-share="none"]').forEach(function(c){ c.hidden = e.target.checked; });
+  });
+})();
+</script>
+</body></html>

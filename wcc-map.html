@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Big Sky (D1) Volleyball Map</title>
+<title>WCC School Map</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -18,6 +18,7 @@
     --series-1:#2a78d6; --series-2:#eb6834; --series-3:#1baf7a;
     --status-good:#0ca30c; --status-warning:#fab219;
     --marker-ring:#ffffff;
+    --saved:#1f8a55;
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
@@ -27,6 +28,7 @@
       --border:rgba(255,255,255,0.10);
       --series-1:#3987e5; --series-2:#d95926; --series-3:#199e70;
       --marker-ring:#1a1a19;
+      --saved:#4fc287;
     }
   }
   :root[data-theme="dark"]{
@@ -36,6 +38,7 @@
     --border:rgba(255,255,255,0.10);
     --series-1:#3987e5; --series-2:#d95926; --series-3:#199e70;
     --marker-ring:#1a1a19;
+    --saved:#4fc287;
   }
   *{box-sizing:border-box;}
   html,body{height:100%;}
@@ -80,6 +83,9 @@
   ul.schools .nm{font-weight:600; font-size:14px; display:block;}
   ul.schools .sub{font-size:12px; color:var(--text-muted); display:block;}
   aside .note{font-size:11px; color:var(--text-muted); line-height:1.5; margin-top:12px;}
+  aside .settings{font-size:12px; color:var(--text-secondary); margin:0 0 10px; line-height:1.45;}
+  aside .settings a{color:var(--series-1); font-weight:600; text-decoration:none; white-space:nowrap;}
+  aside .settings a:hover{text-decoration:underline;}
 
   /* markers */
   .pin{
@@ -88,6 +94,16 @@
     border:2px solid var(--marker-ring); box-shadow:0 1px 4px rgba(0,0,0,.35);
   }
   .pin.current{background:var(--series-2);}
+  /* saved school (SAVE_SCHOOLS.md §5.2): a green check badge on the pin's corner */
+  .pin.saved{position:relative;}
+  .pin.saved::after{
+    content:"✓"; position:absolute; top:-6px; right:-7px; width:15px; height:15px; border-radius:50%;
+    background:var(--saved); color:#fff; border:1.5px solid var(--marker-ring);
+    font:700 9px/12px "Work Sans", system-ui, sans-serif; text-align:center;
+  }
+  ul.schools li.saved button{box-shadow:inset 3px 0 0 var(--saved);}
+  ul.schools .saved-tag{color:var(--saved); font-weight:600;}
+  aside .settings a.saved-count{color:var(--saved);}
   /* home: a square pin standing on a short tail, so its point (the tail tip)
      sits on the location and the body clears a nearby campus pin */
   .pin.home{background:var(--series-3); border-radius:6px; font-size:15px; position:relative;}
@@ -104,6 +120,9 @@
   .pop dl{display:grid; grid-template-columns:auto 1fr; gap:2px 10px; margin:0 0 8px;}
   .pop dt{color:var(--text-muted);}
   .pop dd{margin:0; font-weight:600;}
+  .pop .save{display:flex; align-items:center; gap:7px; margin:0 0 8px; font-weight:600; cursor:pointer; width:max-content;}
+  .pop .save input{width:16px; height:16px; margin:0; accent-color:var(--saved); cursor:pointer;}
+  .pop .save.on{color:var(--saved);}
   .pop .links{display:flex; flex-wrap:wrap; gap:6px;}
   .pop .links a{
     font-size:12px; font-weight:600; color:var(--series-1); text-decoration:none;
@@ -121,444 +140,139 @@
 </head>
 <body>
 <header class="top">
-  <h1>Big Sky Map</h1>
-  <span class="tag">NCAA D1 women&#x27;s volleyball · 11 schools</span>
+  <h1>WCC Map</h1>
+  <span class="tag">School locations, with the comparison school and home town from the settings</span>
   <nav>
-    <a href="../index.html">All conferences</a>
-    <a href="https://masseyratings.com/cvol2026/10668" target="_blank" rel="noopener">Massey standings ↗</a>
+    <a href="index.html" class="carry">Home</a>
+    <a href="wcc-report.html" class="carry">Full report</a>
     <button type="button" id="fitAll">Show all</button>
   </nav>
 </header>
 
 <div class="layout">
-  <div id="map" role="region" aria-label="Big Sky Map"></div>
+  <div id="map" role="region" aria-label="WCC Map"></div>
   <aside>
-    <div class="legend">
-      <span><span class="dotkey" style="background:var(--series-1)"></span>School (number = order by Massey national rank)</span>
-    </div>
+    <p class="settings"><span id="summary"></span> · <a id="edit-settings" href="index.html">Edit settings</a><span id="saved-line"></span></p>
+    <div class="legend" id="legend"></div>
     <ul class="schools" id="schoolList"></ul>
-    <p class="note">Team list and national ranks are from Massey Ratings (snapshot 2026-10-25). Campus coordinates, city, locale type, and 2024-25 tuition + fees are from U.S. Dept. of Education IPEDS data. Niche and Roster links open a search when no verified direct link exists. Map tiles: Esri; use the layer button at top right to switch to Terrain.</p>
+    <p class="note">Campus coordinates, city, and locale type are from the U.S. Dept. of Education IPEDS directory (the same federal data College Scorecard and Niche use). Ranks are from the conference data; costs follow the settings (home town and majors), as in the report. Distances are straight-line (as the crow flies) from the home town and from the comparison school in the settings. Map tiles: Esri (World Street Map / World Topo); use the layer button at top right to switch to Terrain.</p>
   </aside>
 </div>
 
+<script src="data/schools.js"></script>
+<script src="compare.js"></script>
 <script>
 (function(){
   "use strict";
-  var HOME = null;
-  var SCHOOLS = [
- {
-  "id": "utah-tech",
-  "name": "Utah Tech University",
-  "current": false,
-  "badge": "1",
-  "sort": 1,
-  "city": "Saint George",
-  "state": "UT",
-  "locale": "Midsize city",
-  "lat": 37.102769,
-  "lon": -113.565903,
-  "rows": [
-   [
-    "Massey rank",
-    "#66 in D1 (348 teams)"
-   ],
-   [
-    "In conference",
-    "1 of 11 by Massey rank"
-   ],
-   [
-    "Tuition + fees",
-    "$6,306 in-state \u00b7 $18,246 out-of-state"
-   ]
-  ],
-  "links": [
-   [
-    "Niche",
-    "https://www.google.com/search?q=site%3Aniche.com+Utah+Tech+University"
-   ],
-   [
-    "Roster",
-    "https://www.google.com/search?q=Utah+Tech+University+women%27s+volleyball+roster"
-   ]
-  ],
-  "sub": "Massey #66 \u00b7 Saint George, UT"
- },
- {
-  "id": "idaho-st",
-  "name": "Idaho State University",
-  "current": false,
-  "badge": "2",
-  "sort": 2,
-  "city": "Pocatello",
-  "state": "ID",
-  "locale": "Small city",
-  "lat": 42.863832,
-  "lon": -112.432312,
-  "rows": [
-   [
-    "Massey rank",
-    "#117 in D1 (348 teams)"
-   ],
-   [
-    "In conference",
-    "2 of 11 by Massey rank"
-   ],
-   [
-    "Tuition + fees",
-    "$8,610 in-state \u00b7 $27,720 out-of-state"
-   ]
-  ],
-  "links": [
-   [
-    "Niche",
-    "https://www.google.com/search?q=site%3Aniche.com+Idaho+State+University"
-   ],
-   [
-    "Roster",
-    "https://www.google.com/search?q=Idaho+State+University+women%27s+volleyball+roster"
-   ]
-  ],
-  "sub": "Massey #117 \u00b7 Pocatello, ID"
- },
- {
-  "id": "weber-st",
-  "name": "Weber State University",
-  "current": false,
-  "badge": "3",
-  "sort": 3,
-  "city": "Ogden",
-  "state": "UT",
-  "locale": "Small city",
-  "lat": 41.192591,
-  "lon": -111.944845,
-  "rows": [
-   [
-    "Massey rank",
-    "#121 in D1 (348 teams)"
-   ],
-   [
-    "In conference",
-    "3 of 11 by Massey rank"
-   ],
-   [
-    "Tuition + fees",
-    "$6,557 in-state \u00b7 $17,545 out-of-state"
-   ]
-  ],
-  "links": [
-   [
-    "Niche",
-    "https://www.google.com/search?q=site%3Aniche.com+Weber+State+University"
-   ],
-   [
-    "Roster",
-    "https://www.google.com/search?q=Weber+State+University+women%27s+volleyball+roster"
-   ]
-  ],
-  "sub": "Massey #121 \u00b7 Ogden, UT"
- },
- {
-  "id": "n-colorado",
-  "name": "University of Northern Colorado",
-  "current": false,
-  "badge": "4",
-  "sort": 4,
-  "city": "Greeley",
-  "state": "CO",
-  "locale": "Midsize city",
-  "lat": 40.410855,
-  "lon": -104.692777,
-  "rows": [
-   [
-    "Massey rank",
-    "#140 in D1 (348 teams)"
-   ],
-   [
-    "In conference",
-    "4 of 11 by Massey rank"
-   ],
-   [
-    "Tuition + fees",
-    "$12,416 in-state \u00b7 $27,266 out-of-state"
-   ]
-  ],
-  "links": [
-   [
-    "Niche",
-    "https://www.google.com/search?q=site%3Aniche.com+University+of+Northern+Colorado"
-   ],
-   [
-    "Roster",
-    "https://www.google.com/search?q=University+of+Northern+Colorado+women%27s+volleyball+roster"
-   ]
-  ],
-  "sub": "Massey #140 \u00b7 Greeley, CO"
- },
- {
-  "id": "montana-st",
-  "name": "Montana State University",
-  "current": false,
-  "badge": "5",
-  "sort": 5,
-  "city": "Bozeman",
-  "state": "MT",
-  "locale": "Small city",
-  "lat": 45.666726,
-  "lon": -111.048812,
-  "rows": [
-   [
-    "Massey rank",
-    "#146 in D1 (348 teams)"
-   ],
-   [
-    "In conference",
-    "5 of 11 by Massey rank"
-   ],
-   [
-    "Tuition + fees",
-    "$8,460 in-state \u00b7 $33,287 out-of-state"
-   ]
-  ],
-  "links": [
-   [
-    "Niche",
-    "https://www.google.com/search?q=site%3Aniche.com+Montana+State+University"
-   ],
-   [
-    "Roster",
-    "https://www.google.com/search?q=Montana+State+University+women%27s+volleyball+roster"
-   ]
-  ],
-  "sub": "Massey #146 \u00b7 Bozeman, MT"
- },
- {
-  "id": "northern-arizona",
-  "name": "Northern Arizona University",
-  "current": false,
-  "badge": "6",
-  "sort": 6,
-  "city": "Flagstaff",
-  "state": "AZ",
-  "locale": "Small city",
-  "lat": 35.188449,
-  "lon": -111.653724,
-  "rows": [
-   [
-    "Massey rank",
-    "#152 in D1 (348 teams)"
-   ],
-   [
-    "In conference",
-    "6 of 11 by Massey rank"
-   ],
-   [
-    "Tuition + fees",
-    "$13,009 in-state \u00b7 $29,881 out-of-state"
-   ]
-  ],
-  "links": [
-   [
-    "Niche",
-    "https://www.google.com/search?q=site%3Aniche.com+Northern+Arizona+University"
-   ],
-   [
-    "Roster",
-    "https://www.google.com/search?q=Northern+Arizona+University+women%27s+volleyball+roster"
-   ]
-  ],
-  "sub": "Massey #152 \u00b7 Flagstaff, AZ"
- },
- {
-  "id": "portland-st",
-  "name": "Portland State University",
-  "current": false,
-  "badge": "7",
-  "sort": 7,
-  "city": "Portland",
-  "state": "OR",
-  "locale": "Large city",
-  "lat": 45.511601,
-  "lon": -122.686289,
-  "rows": [
-   [
-    "Massey rank",
-    "#210 in D1 (348 teams)"
-   ],
-   [
-    "In conference",
-    "7 of 11 by Massey rank"
-   ],
-   [
-    "Tuition + fees",
-    "$11,679 in-state \u00b7 $31,074 out-of-state"
-   ]
-  ],
-  "links": [
-   [
-    "Niche",
-    "https://www.google.com/search?q=site%3Aniche.com+Portland+State+University"
-   ],
-   [
-    "Roster",
-    "https://www.google.com/search?q=Portland+State+University+women%27s+volleyball+roster"
-   ]
-  ],
-  "sub": "Massey #210 \u00b7 Portland, OR"
- },
- {
-  "id": "idaho",
-  "name": "University of Idaho",
-  "current": false,
-  "badge": "8",
-  "sort": 8,
-  "city": "Moscow",
-  "state": "ID",
-  "locale": "Town (distant)",
-  "lat": 46.727406,
-  "lon": -117.014167,
-  "rows": [
-   [
-    "Massey rank",
-    "#244 in D1 (348 teams)"
-   ],
-   [
-    "In conference",
-    "8 of 11 by Massey rank"
-   ],
-   [
-    "Tuition + fees",
-    "$9,084 in-state \u00b7 $28,320 out-of-state"
-   ]
-  ],
-  "links": [
-   [
-    "Niche",
-    "https://www.google.com/search?q=site%3Aniche.com+University+of+Idaho"
-   ],
-   [
-    "Roster",
-    "https://www.google.com/search?q=University+of+Idaho+women%27s+volleyball+roster"
-   ]
-  ],
-  "sub": "Massey #244 \u00b7 Moscow, ID"
- },
- {
-  "id": "e-washington",
-  "name": "Eastern Washington University",
-  "current": false,
-  "badge": "9",
-  "sort": 9,
-  "city": "Cheney",
-  "state": "WA",
-  "locale": "Town (fringe)",
-  "lat": 47.490667,
-  "lon": -117.583808,
-  "rows": [
-   [
-    "Massey rank",
-    "#248 in D1 (348 teams)"
-   ],
-   [
-    "In conference",
-    "9 of 11 by Massey rank"
-   ],
-   [
-    "Tuition + fees",
-    "$8,586 in-state \u00b7 $25,959 out-of-state"
-   ]
-  ],
-  "links": [
-   [
-    "Niche",
-    "https://www.google.com/search?q=site%3Aniche.com+Eastern+Washington+University"
-   ],
-   [
-    "Roster",
-    "https://www.google.com/search?q=Eastern+Washington+University+women%27s+volleyball+roster"
-   ]
-  ],
-  "sub": "Massey #248 \u00b7 Cheney, WA"
- },
- {
-  "id": "montana",
-  "name": "The University of Montana",
-  "current": false,
-  "badge": "10",
-  "sort": 10,
-  "city": "Missoula",
-  "state": "MT",
-  "locale": "Small city",
-  "lat": 46.859312,
-  "lon": -113.982912,
-  "rows": [
-   [
-    "Massey rank",
-    "#250 in D1 (348 teams)"
-   ],
-   [
-    "In conference",
-    "10 of 11 by Massey rank"
-   ],
-   [
-    "Tuition + fees",
-    "$8,552 in-state \u00b7 $33,671 out-of-state"
-   ]
-  ],
-  "links": [
-   [
-    "Niche",
-    "https://www.google.com/search?q=site%3Aniche.com+The+University+of+Montana"
-   ],
-   [
-    "Roster",
-    "https://www.google.com/search?q=The+University+of+Montana+women%27s+volleyball+roster"
-   ]
-  ],
-  "sub": "Massey #250 \u00b7 Missoula, MT"
- },
- {
-  "id": "southern-utah",
-  "name": "Southern Utah University",
-  "current": false,
-  "badge": "11",
-  "sort": 11,
-  "city": "Cedar City",
-  "state": "UT",
-  "locale": "Town (remote)",
-  "lat": 37.674617,
-  "lon": -113.070146,
-  "rows": [
-   [
-    "Massey rank",
-    "#318 in D1 (348 teams)"
-   ],
-   [
-    "In conference",
-    "11 of 11 by Massey rank"
-   ],
-   [
-    "Tuition + fees",
-    "$6,962 in-state \u00b7 $21,192 out-of-state"
-   ]
-  ],
-  "links": [
-   [
-    "Niche",
-    "https://www.google.com/search?q=site%3Aniche.com+Southern+Utah+University"
-   ],
-   [
-    "Roster",
-    "https://www.google.com/search?q=Southern+Utah+University+women%27s+volleyball+roster"
-   ]
-  ],
-  "sub": "Massey #318 \u00b7 Cedar City, UT"
- }
-];
+  // ---------------- generic site (REFACTOR_COMPARE.md phase 5) ----------------
+  // tools/build_site.py fills in only which conference this is (MAP) and static
+  // text. Pins, distances, costs, and major rows are computed here from
+  // SITE_DATA and the viewer's settings. Source: tools/site/map_template.html.
+  var C = window.Compare, D = window.SITE_DATA;
+  var MAP = {"kind": "report", "slug": "wcc"};   // {kind: "report", slug} or {kind: "conf", division, conf}
+  var settings = C.load();
+  window.addEventListener("hashchange", function(){ if (C.fromHash()){ C.load(); location.reload(); } });
+  var HOME = settings.home ? { label: "Home", city: settings.home.city, state: settings.home.state,
+                               lat: settings.home.lat, lon: settings.home.lon } : null;
+  var BASE = settings.school ? C.schoolRecord(settings.school) : null;
+  var MAJORS = C.activeMajors(C.matchMajors(settings.majors));
+  var saved = C.savedLoad();   // saved schools: Massey names (SAVE_SCHOOLS.md)
 
-  // Each school: {id, name, current, badge, sort, lat, lon, city, state, locale,
-  // rows: [[label, value]], links: [[label, url]], sub}, filled in by the
-  // build scripts.
-  function badge(s){ return s.current ? "S" : s.badge; }
+  function money(v){ return v == null ? "—" : "$" + v.toLocaleString("en-US"); }
+  function miles(n){ return n.toLocaleString("en-US") + " mi"; }
+  // same encoding as Python's urllib.parse.quote_plus
+  function google(q){
+    return "https://www.google.com/search?q=" + encodeURIComponent(q).replace(/%20/g, "+")
+      .replace(/[!'()*]/g, function(c){ return "%" + c.charCodeAt(0).toString(16).toUpperCase(); });
+  }
+  // "From home" and "From <comparison school>" rows (only for the settings that are set)
+  function distRows(loc, current){
+    var rows = [];
+    if (HOME) rows.push(["From home", miles(C.milesBetween(loc, HOME))]);
+    if (BASE) rows.push(["From " + BASE.name, current ? "—" : miles(C.milesBetween(loc, BASE.ipeds))]);
+    return rows;
+  }
+  function links(s, keys){
+    return keys.filter(function(k){ return s.links && s.links[k[0]]; }).map(function(k){ return [k[1], s.links[k[0]]]; });
+  }
+
+  function reportPoints(){
+    return C.reportRows(MAP.slug, settings).map(function(s){
+      var rank = String(s.confRank == null ? "" : s.confRank).split(" ")[0], num = /^\d+$/.test(rank);
+      var loc = s.ipeds;
+      var sub = loc.city + ", " + loc.state;
+      if (HOME) sub += " · " + miles(C.milesBetween(loc, HOME)) + " from home";
+      if (BASE && !s.current) sub += " · " + miles(C.milesBetween(loc, BASE.ipeds)) + " from " + BASE.name;
+      return {
+        id: s.id, team: s.masseyName, name: s.name, current: s.current, badge: num ? rank : "•", sort: num ? +rank : 99,
+        city: loc.city, state: loc.state, locale: loc.locale, lat: loc.lat, lon: loc.lon,
+        rows: [["Nat'l rank", "#" + s.natRank], ["Conf. rank", s.confRank == null ? "—" : s.confRank],
+               ["Est. cost/yr", money(s.cost)]].concat(distRows(loc, s.current)),
+        links: links(s, [["niche", "Niche"], ["roster", "Roster"], ["schedule", "Schedule"], ["stats", "Stats"], ["aia", "AiA"]]),
+        sub: sub
+      };
+    });
+  }
+
+  function confPoint(m, order, of){
+    var t = D.teams[m], rec = C.schoolRecord(m);
+    var current = !!BASE && BASE.masseyName === m;
+    var full = t.name, loc = rec.ipeds, div = t.division;
+    var rows = [["Massey rank", "#" + t.rank + " in " + div + " (" + D.meta.teamCount[div] + " teams)"]];
+    if (order) rows.push(["In conference", order + " of " + of + " by Massey rank"]);
+    if (current) rows.push(["Conference", t.conf + " (comparison school)"]);
+    if (t.ipedsId){
+      rows.push(["Tuition + fees", money(rec.tuitionInState) + " in-state · " + money(rec.tuitionOutOfState) + " out-of-state"]);
+      // one row per major in the settings: graduates per year for each matched program
+      MAJORS.forEach(function(mj){
+        var got = mj.cips.filter(function(c){ return c in rec.programs; });
+        rows.push([mj.label, got.length ? got.map(function(c){ var g = rec.programs[c]; return g + " grads/yr" + (g === 0 ? " (new)" : ""); }).join("; ") : "not offered"]);
+      });
+    }
+    rows = rows.concat(distRows(loc, current));
+    var lk = [["Niche", t.niche || google("site:niche.com " + full)], ["Roster", google(full + " women's volleyball roster")]];
+    if (current && rec.researched) lk = links(rec, [["niche", "Niche"], ["roster", "Roster"], ["schedule", "Schedule"], ["stats", "Stats"]]);
+    return {
+      id: m.toLowerCase().replace(/[^a-z0-9]+/g, "-"), team: m, name: current ? BASE.name : full, current: current,
+      badge: order ? String(order) : "", sort: order || 0,
+      city: loc.city, state: loc.state, locale: loc.locale, lat: loc.lat, lon: loc.lon, rows: rows, links: lk,
+      sub: "Massey #" + t.rank + " · " + loc.city + ", " + loc.state + (HOME ? " · " + miles(C.milesBetween(loc, HOME)) + " from home" : "")
+    };
+  }
+
+  function confPoints(){
+    var teams = Object.keys(D.teams).filter(function(m){ var t = D.teams[m]; return t.division === MAP.division && t.conf === MAP.conf; })
+      .sort(function(a, b){ return D.teams[a].rank - D.teams[b].rank; });
+    var pts = teams.map(function(m, i){ return confPoint(m, i + 1, teams.length); });
+    if (BASE && teams.indexOf(BASE.masseyName) < 0) pts.push(confPoint(BASE.masseyName, null, null));
+    return pts;
+  }
+
+  var SCHOOLS = MAP.kind === "report" ? reportPoints() : confPoints();
+  window.MAP_POINTS = SCHOOLS;   // read by the regression check (REFACTOR_COMPARE.md §12)
+
+  // settings line, legend, and links that carry the settings
+  document.getElementById("summary").textContent = C.summary(settings);
+  Array.prototype.forEach.call(document.querySelectorAll("a.carry, #edit-settings"), function(a){
+    a.href = C.withSettings(a.getAttribute("href"), settings);
+  });
+  (function(){
+    var lg = document.getElementById("legend");
+    [["Conference school (number = conf. rank)", "--series-1", false],
+     BASE ? [BASE.name + " (comparing to)", "--series-2", false] : null,
+     HOME ? ["Home (" + HOME.city + ", " + HOME.state + ")", "--series-3", true] : null
+    ].forEach(function(x){
+      if (!x) return;
+      var sp = document.createElement("span"), key = document.createElement("span");
+      key.className = "dotkey"; key.style.background = "var(" + x[1] + ")";
+      if (x[2]) key.style.borderRadius = "3px";
+      sp.appendChild(key); sp.appendChild(document.createTextNode(x[0]));
+      lg.appendChild(sp);
+    });
+  })();
+
+  // the comparison school's pin is marked with a star
+  function badge(s){ return s.current ? "★" : s.badge; }
 
   var map = L.map("map", { scrollWheelZoom:true, worldCopyJump:true });
   // Basemaps: Esri's public ArcGIS Online tiles (no API key, served the same
@@ -584,6 +298,14 @@
     var w = document.createElement("div"); w.className = "where";
     w.textContent = s.city + ", " + s.state + (s.locale ? " · " + s.locale : "");
     wrap.appendChild(w);
+    // saved-school checkbox; the label is the tap target
+    var lab = document.createElement("label"); lab.className = "save";
+    var box = document.createElement("input"); box.type = "checkbox";
+    box.setAttribute("aria-label", "Save " + s.name);
+    box.addEventListener("change", function(){ saved = C.setSaved(s.team, box.checked); refreshSaved(); });
+    lab.appendChild(box); lab.appendChild(document.createTextNode("Saved school"));
+    wrap.appendChild(lab);
+    s.box = box; s.boxLabel = lab;
     var dl = document.createElement("dl");
     s.rows.forEach(function(r){
       var dt = document.createElement("dt"); dt.textContent = r[0];
@@ -595,10 +317,23 @@
     s.links.forEach(function(p){
       var a = document.createElement("a");
       a.href = p[1]; a.target = "_blank"; a.rel = "noopener noreferrer"; a.textContent = p[0] + " ↗";
+      if (p[0] === "Niche" || p[0] === "Roster") autoSave(a, s.team);
       links.appendChild(a);
     });
     wrap.appendChild(links);
     return wrap;
+  }
+
+  // opening a school's Niche or Roster link ticks it (never unticks), as on the index
+  function autoSave(a, m){
+    function tick(e){
+      if (e.type === "auxclick" && e.button !== 1) return;
+      if (saved.indexOf(m) >= 0) return;
+      saved = C.setSaved(m, true);
+      refreshSaved();
+    }
+    a.addEventListener("click", tick);
+    a.addEventListener("auxclick", tick);
   }
 
   var markers = {};
@@ -640,12 +375,16 @@
   }).forEach(function(s){
     var li = document.createElement("li");
     if(s.current) li.className = "current";
+    s.li = li;
     var b = document.createElement("button"); b.type = "button";
     var bd = document.createElement("span"); bd.className = "badge"; bd.textContent = badge(s);
     var txt = document.createElement("span");
     var nm = document.createElement("span"); nm.className = "nm"; nm.textContent = s.name;
     var sub = document.createElement("span"); sub.className = "sub";
     sub.textContent = s.sub;
+    var tag = document.createElement("span"); tag.className = "saved-tag";
+    s.tag = tag;
+    sub.appendChild(tag);
     txt.appendChild(nm); txt.appendChild(sub);
     b.appendChild(bd); b.appendChild(txt);
     b.addEventListener("click", function(){
@@ -655,6 +394,32 @@
     li.appendChild(b);
     list.appendChild(li);
   });
+
+  // sync popups' checkboxes, pins, the side list, and the count with the saved list
+  function refreshSaved(){
+    SCHOOLS.forEach(function(s){
+      var on = saved.indexOf(s.team) >= 0;
+      if (s.box){ s.box.checked = on; s.boxLabel.classList.toggle("on", on); }
+      var el = markers[s.id] && markers[s.id].getElement();
+      var pin = el && el.querySelector(".pin");
+      if (pin) pin.classList.toggle("saved", on);
+      if (s.li){ s.li.classList.toggle("saved", on); s.tag.textContent = on ? " · saved" : ""; }
+    });
+    var line = document.getElementById("saved-line");
+    line.innerHTML = "";
+    if (saved.length){
+      line.appendChild(document.createTextNode(" · "));
+      var a = document.createElement("a"); a.className = "saved-count";
+      // the index opens its saved-list editor for "&saved" in the hash
+      a.href = C.withSettings(document.getElementById("edit-settings").getAttribute("href").split("#")[0], settings) + "&saved";
+      a.textContent = saved.length + " saved school" + (saved.length === 1 ? "" : "s");
+      a.title = "View, copy, or edit the saved list";
+      line.appendChild(a);
+    }
+  }
+  refreshSaved();
+  // a box ticked on the index or another map shows here without a reload
+  C.onSavedChange(function(list){ saved = list; refreshSaved(); });
 })();
 </script>
 </body>
