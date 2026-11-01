@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <title>NCAA Women's Volleyball Conferences 2026</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -95,8 +98,22 @@
   h1{
     font:600 22px/1.2 "Oswald",sans-serif;
     letter-spacing:0.01em;
-    margin:0 0 10px;
+    margin:0;
+    flex:1;
+    min-width:0;
   }
+  /* title with the share button at its right end */
+  .title-row{ display:flex; align-items:flex-start; gap:10px; margin:0 0 10px; }
+  .icon-btn{ flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; padding:0; margin-top:-4px; }
+  dialog.saved-dlg.share-dlg{ width:min(360px, calc(100vw - 32px)); }
+  .share-dlg .dlg{ align-items:stretch; }
+  /* the QR code stays dark on white in dark mode too, so every camera reads it */
+  .share-qr{ align-self:center; background:#fff; padding:12px; border-radius:8px; line-height:0; min-width:244px; min-height:244px; display:flex; align-items:center; justify-content:center; }
+  .share-qr img, .share-qr canvas{ width:220px; height:220px; image-rendering:pixelated; }
+  .share-qr .qr-msg{ line-height:1.4; font-size:13px; color:#52514e; text-align:center; max-width:200px; }
+  .share-url{ margin:0; font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; color:var(--text-secondary);
+              overflow-wrap:anywhere; user-select:all; -webkit-user-select:all; text-align:center; }
+  .share-btns{ display:flex; justify-content:center; }
   .updated{ font-size:13px; color:var(--text-muted); margin:0 0 6px; }
   .updated b{ color:var(--text-secondary); font-weight:600; }
   .sub{
@@ -326,8 +343,11 @@
   .dlg-foot .spacer{ flex:1; }
   @media (max-width:520px){
     dialog.saved-dlg{ width:100vw; max-width:100vw; height:100dvh; max-height:100dvh; margin:0; border-radius:0; border:none; }
+    /* the share popup is small: it stays a centered card on phones */
+    dialog.saved-dlg.share-dlg{ width:calc(100vw - 32px); height:fit-content; max-height:calc(100dvh - 32px); margin:auto; border-radius:12px; border:1px solid var(--border); }
     .dlg{ height:100%; max-height:none; padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px)); }
     .dlg textarea{ min-height:0; resize:none; }
+    .share-dlg .dlg{ height:auto; }
   }
 
   .settings-foot .status{ flex:1 1 200px; }
@@ -552,7 +572,29 @@
 <body>
 <header class="top">
   <div class="top-inner">
-    <h1>NCAA Women's Volleyball Conferences 2026</h1>
+    <div class="title-row">
+      <h1>NCAA Women's Volleyball Conferences 2026</h1>
+      <button type="button" class="quiet icon-btn" id="share-btn" aria-haspopup="dialog" aria-label="Share this site (QR code and link)" title="Share this site">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/>
+        </svg>
+      </button>
+    </div>
+    <dialog class="saved-dlg share-dlg" id="share-dlg" aria-labelledby="share-dlg-title">
+      <form method="dialog" class="dlg">
+        <div class="dlg-head">
+          <h2 id="share-dlg-title">Share this site</h2>
+          <button value="cancel" class="quiet x" aria-label="Close">✕</button>
+        </div>
+        <p class="dlg-help">Scan with a phone's camera to open the site, or copy the link to send it.</p>
+        <div class="share-qr" id="share-qr" role="img" aria-label="QR code for the site's address"></div>
+        <p class="share-url" id="share-url"></p>
+        <p class="dlg-help" id="share-note">The link opens the site fresh: your settings and saved schools stay in this browser.</p>
+        <div class="share-btns">
+          <button type="button" id="share-copy">Copy link</button>
+        </div>
+      </form>
+    </dialog>
     <div class="settings-line">
       <span class="summary" id="summary" aria-live="polite"></span>
       <button type="button" id="toggle-settings" aria-controls="settings" aria-expanded="false">Edit settings</button>
@@ -817,7 +859,8 @@ function setOpen(open){
   toggle.textContent = open ? "Hide settings" : "Edit settings";
   measureHeader();
 }
-toggle.addEventListener("click", function(){ setOpen(form.hidden); if (!form.hidden) $("f-school").focus(); });
+// no focus jump into the first field: on a phone that pops the keyboard over the form
+toggle.addEventListener("click", function(){ setOpen(form.hidden); });
 $("done").addEventListener("click", function(){ setOpen(false); });
 
 C.POSITIONS.forEach(function(p){
@@ -894,6 +937,41 @@ window.addEventListener("storage", function(e){ if (e.key === VIEW_KEY) applyVie
 // (SAVE_SCHOOLS.md §7). The editor's text box is both the viewer and the importer.
 var dlg = $("saved-dlg"), box = $("saved-text"), checkTimer = null;
 
+// ---------------------------------------------------------------- share: QR code + link
+// The public address (copied by hand to the GitHub Pages repo); no settings in it on purpose.
+var SHARE_URL = "https://alpiepho.github.io/ncaa_volleyball_conferences/index.html";
+var QR_LIB = "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
+$("share-url").textContent = SHARE_URL;
+function drawQR(){
+  var box = $("share-qr");
+  if (box.getAttribute("data-done")) return;
+  function draw(){
+    box.innerHTML = "";
+    new window.QRCode(box, { text: SHARE_URL, width: 440, height: 440, colorDark: "#000000", colorLight: "#ffffff",
+                             correctLevel: window.QRCode.CorrectLevel.M });
+    box.title = SHARE_URL;
+    box.setAttribute("data-done", "1");
+  }
+  if (window.QRCode) return draw();
+  box.innerHTML = '<span class="qr-msg">Loading QR code…</span>';
+  var sc = document.createElement("script");
+  sc.src = QR_LIB; sc.async = true;
+  sc.onload = draw;
+  sc.onerror = function(){ box.innerHTML = '<span class="qr-msg">The QR code needs an internet connection. The link below still works.</span>'; };
+  document.head.appendChild(sc);
+}
+$("share-btn").addEventListener("click", function(){ $("share-dlg").showModal(); drawQR(); });
+$("share-copy").addEventListener("click", function(){
+  var btn = this;
+  copyText(SHARE_URL, function(ok){
+    if (ok) return flash(btn, "Link copied");
+    // no clipboard here (plain http): select the address so it can be copied by hand
+    var r = document.createRange(); r.selectNodeContents($("share-url"));
+    var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    flash(btn, "Selected: press ⌘/Ctrl+C");
+  });
+});
+
 // clipboard when allowed (https or localhost); the caller falls back to a selected text box
 function copyText(text, then){
   if (navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext){
@@ -938,8 +1016,10 @@ function openEditor(selectAll, note){
   renderCheck();
   if (note) $("saved-check").insertBefore(el("div", null, note), $("saved-check").firstChild);
   if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
-  box.focus();
-  if (selectAll) box.select(); else { box.setSelectionRange(box.value.length, box.value.length); box.scrollTop = box.scrollHeight; }
+  // no focus in the text box on open (a phone would pop the keyboard over the list), except for the
+  // copy fallback, where the text must be selected to copy it by hand
+  if (selectAll) { box.focus(); box.select(); }
+  else box.scrollTop = box.scrollHeight;
 }
 
 // live result of parsing the box: what matched, what a search picked, what didn't
