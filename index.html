@@ -87,8 +87,6 @@
     background:var(--page-bg);
     border-bottom:1px solid var(--border);
   }
-  /* while editing, the header scrolls with the page so a tall form never hides below the fold */
-  header.top.editing{ position:static; }
   .top-inner{
     max-width:1080px;
     margin:0 auto;
@@ -170,14 +168,29 @@
   button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible{
     outline:2px solid var(--accent); outline-offset:2px;
   }
-  #settings{
+  dialog.settings-dlg{
+    width:min(760px, calc(100vw - 32px));
+    max-height:calc(100dvh - 32px);
+    padding:0;
+    color:var(--text-primary);
     background:var(--surface-raised);
     border:1px solid var(--border);
-    border-radius:10px;
-    padding:14px 16px 12px;
-    margin:0 0 12px;
+    border-radius:12px;
+    box-shadow:0 18px 48px rgba(0,0,0,0.28);
+    overflow:hidden;
   }
-  #settings[hidden]{ display:none; }
+  dialog.settings-dlg::backdrop{ background:rgba(0,0,0,0.45); }
+  /* title bar and Done row stay put; the fields scroll between them when the form is taller than the screen */
+  #settings{ display:flex; flex-direction:column; max-height:calc(100dvh - 34px); }
+  .settings-head{ display:flex; align-items:center; gap:10px; padding:14px 16px 10px; border-bottom:1px solid var(--grid); }
+  .settings-head h2{ font:600 18px/1.2 "Oswald",sans-serif; margin:0; flex:1; }
+  .settings-head .x{ font-size:14px; padding:5px 9px; }
+  .settings-body{ flex:1 1 auto; overflow-y:auto; overscroll-behavior:contain; padding:14px 16px 4px; }
+  @media (max-width:520px){
+    dialog.settings-dlg{ width:100vw; max-width:100vw; height:100dvh; max-height:100dvh; margin:0; border-radius:0; border:none; }
+    #settings{ height:100%; max-height:none; }
+    .settings-body{ padding-inline:14px; }
+  }
   .fields{
     display:grid;
     grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
@@ -252,9 +265,10 @@
     flex-wrap:wrap;
     align-items:center;
     gap:8px 10px;
-    margin:12px 0 0;
-    padding-top:10px;
+    margin:0;
+    padding:10px 16px calc(12px + env(safe-area-inset-bottom,0px));
     border-top:1px solid var(--grid);
+    background:var(--surface-raised);
     font-size:12px;
     color:var(--text-muted);
   }
@@ -605,9 +619,17 @@
     </dialog>
     <div class="settings-line">
       <span class="summary" id="summary" aria-live="polite"></span>
-      <button type="button" id="toggle-settings" aria-controls="settings" aria-expanded="false">Edit settings</button>
+      <button type="button" id="toggle-settings" aria-haspopup="dialog" aria-controls="settings-dlg">Edit settings</button>
     </div>
-    <form id="settings" hidden autocomplete="off" onsubmit="return false">
+    <!-- settings as a modal: opens over the page wherever it's scrolled (no trip back to the top on a
+         phone); the title bar and the Done row stay put and the fields scroll between them -->
+    <dialog class="settings-dlg" id="settings-dlg" aria-labelledby="settings-dlg-title">
+    <form id="settings" autocomplete="off" onsubmit="return false">
+      <div class="settings-head">
+        <h2 id="settings-dlg-title">Settings</h2>
+        <button type="button" class="quiet x" id="settings-x" aria-label="Close settings" autofocus>✕</button>
+      </div>
+      <div class="settings-body">
       <div class="fields">
         <div class="field">
           <label for="f-school">School to compare</label>
@@ -648,6 +670,7 @@
         </div>
         <p class="hint" id="saved-hint" aria-live="polite"></p>
       </div>
+      </div>
       <div class="settings-foot">
         <span class="status" id="status"></span>
         <button type="button" class="quiet" id="copy-link">Copy link with settings</button>
@@ -655,6 +678,7 @@
         <button type="button" id="done">Done</button>
       </div>
     </form>
+    </dialog>
     <dialog class="saved-dlg" id="saved-dlg" aria-labelledby="saved-dlg-title">
       <form method="dialog" class="dlg">
         <div class="dlg-head">
@@ -822,7 +846,11 @@ function typeahead(input, list, search, onPick){
     if (e.key === "ArrowDown"){ active = Math.min(active + 1, items.length - 1); render(); e.preventDefault(); }
     else if (e.key === "ArrowUp"){ active = Math.max(active - 1, 0); render(); e.preventDefault(); }
     else if (e.key === "Enter"){ if (active >= 0){ pick(active); e.preventDefault(); } }
-    else if (e.key === "Escape"){ close(); e.preventDefault(); }
+    else if (e.key === "Escape"){
+      // Esc with the list open closes only the list, not the settings dialog around it
+      if (!list.hidden) lastListEsc = Date.now();
+      close(); e.preventDefault();
+    }
   });
   input.addEventListener("blur", function(){ setTimeout(close, 100); });
 }
@@ -858,18 +886,28 @@ function searchPlaces(q){
 
 // ---------------------------------------------------------------- settings form
 var $ = function(id){ return document.getElementById(id); };
-var form = $("settings"), toggle = $("toggle-settings");
+var form = $("settings"), toggle = $("toggle-settings"), settingsDlg = $("settings-dlg");
+var lastListEsc = 0;   // set by a typeahead when Esc closed its dropdown
 
+// focus lands on the ✕ (autofocus), not the first field: on a phone that would pop the keyboard
 function setOpen(open){
-  form.hidden = !open;
-  document.querySelector("header.top").classList.toggle("editing", open);
-  toggle.setAttribute("aria-expanded", open ? "true" : "false");
-  toggle.textContent = open ? "Hide settings" : "Edit settings";
-  measureHeader();
+  if (open){
+    if (settingsDlg.showModal) { if (!settingsDlg.open) settingsDlg.showModal(); }
+    else settingsDlg.setAttribute("open", "");
+  } else if (settingsDlg.open){
+    if (settingsDlg.close) settingsDlg.close(); else settingsDlg.removeAttribute("open");
+  }
 }
-// no focus jump into the first field: on a phone that pops the keyboard over the form
-toggle.addEventListener("click", function(){ setOpen(form.hidden); });
+toggle.addEventListener("click", function(){ setOpen(true); });
 $("done").addEventListener("click", function(){ setOpen(false); });
+$("settings-x").addEventListener("click", function(){ setOpen(false); });
+// a tap on the dimmed backdrop (the dialog element itself, outside the form) closes it
+settingsDlg.addEventListener("click", function(e){ if (e.target === settingsDlg) setOpen(false); });
+// the browser fires "cancel" right after that same keypress; block just that one
+settingsDlg.addEventListener("cancel", function(e){
+  if (lastListEsc && Date.now() - lastListEsc < 100) e.preventDefault();
+  lastListEsc = 0;
+});
 
 C.POSITIONS.forEach(function(p){
   var o = el("option", null, p[1]); o.value = p[0]; $("f-position").appendChild(o);
