@@ -254,6 +254,8 @@
       // every roster setter, most assists first (falls back to the older setter/secondSetter/thirdSetter)
       setters: r ? settersOf(r) : [],
       setter: r ? settersOf(r)[0] || null : null,
+      // every rostered player with position groups and season stats (OTHER_POSITIONS.md)
+      players: r && Array.isArray(r.players) ? r.players : [],
       links: r ? r.links : { niche: t.niche }
     };
   }
@@ -429,6 +431,7 @@
     };
     if (s.setter) row.setter = s.setter;
     row.setters = s.setters || [];
+    row.players = s.players || [];
     return row;
   }
 
@@ -480,6 +483,55 @@
 
   function setterOpenings(rows) {
     return rows.filter(function (r) { return !r.current && r.setter && SENIOR.indexOf(r.setter.cls) >= 0; });
+  }
+
+  // ------------------------------------------------------------ positions other than setter
+  // OTHER_POSITIONS.md §1/§8: which roster group each position lists, the stat it is ordered by,
+  // and how many starters count for "openings" (a starter who is a senior or grad student).
+  var POSITION_SPEC = {
+    OH:  { group: "OH",  plural: "Outside hitters", one: "outside hitter", sort: "k",   statLabel: "Kills",  starters: 2 },
+    OPP: { group: "OPP", plural: "Opposites",       one: "opposite",       sort: "k",   statLabel: "Kills",  starters: 1 },
+    MB:  { group: "MB",  plural: "Middle blockers", one: "middle blocker", sort: "blk", statLabel: "Blocks", starters: 2 },
+    L:   { group: "L",   plural: "Liberos / DS",    one: "libero/DS",      sort: "dig", statLabel: "Digs",   starters: 1 }
+  };
+  function positionSpec(code) { return POSITION_SPEC[code] || null; }
+
+  // derived numbers, computed here so they always agree with the stored counts
+  function totalBlocks(p) { return p.bs == null ? null : p.bs + 0.5 * (p.ba || 0); }   // NCAA: solo + ½ assist
+  function hitPct(p) { return p.ta ? (p.k - p.e) / p.ta : null; }
+  function playerStat(p, key) {
+    if (key === "blk") return totalBlocks(p);
+    if (key === "pct") return hitPct(p);
+    if (key === "perSet") return null;
+    return p[key] == null ? null : p[key];
+  }
+  function perSet(p, key) { var v = playerStat(p, key); return v == null || !p.sp ? null : v / p.sp; }
+
+  // a school's players at a position, by the position's stat (most first); ties by sets played.
+  // Players with no stats yet (null: not on the stats page) come last, in roster order.
+  function positionPlayers(row, code) {
+    var spec = positionSpec(code);
+    if (!spec) return [];
+    var list = (row.players || []).filter(function (p) { return (p.groups || []).indexOf(spec.group) >= 0; });
+    return list.map(function (p, i) { return { p: p, i: i }; }).sort(function (a, b) {
+      var x = playerStat(a.p, spec.sort), y = playerStat(b.p, spec.sort);
+      if ((x == null) !== (y == null)) return x == null ? 1 : -1;
+      if (x != null && y !== x) return y - x;
+      if ((b.p.sp || 0) !== (a.p.sp || 0)) return (b.p.sp || 0) - (a.p.sp || 0);
+      return a.i - b.i;
+    }).map(function (x) { return x.p; });
+  }
+
+  // schools where one of the top <starters> at the position is a senior or grad student
+  function positionOpenings(rows, code) {
+    var spec = positionSpec(code);
+    if (!spec) return [];
+    return rows.filter(function (r) { return !r.current; }).map(function (r) {
+      var leaving = positionPlayers(r, code).slice(0, spec.starters).filter(function (p) {
+        return p.sp && SENIOR.indexOf(p.cls) >= 0;
+      });
+      return { row: r, leaving: leaving };
+    }).filter(function (x) { return x.leaving.length; });
   }
 
   function positionName(code) {
@@ -708,6 +760,8 @@
     flagCols: flagCols, beachLabel: beachLabel, beachFlag: beachFlag,
     buildSchool: buildSchool, reportRows: reportRows,
     milesBetween: milesBetween, targetYear: targetYear, setterOpenings: setterOpenings,
+    POSITION_SPEC: POSITION_SPEC, positionSpec: positionSpec, positionPlayers: positionPlayers,
+    positionOpenings: positionOpenings, playerStat: playerStat, totalBlocks: totalBlocks, hitPct: hitPct, perSet: perSet,
     positionName: positionName, summary: summary, join: join,
     fold: fold, displayName: displayName, teamWhere: teamWhere, searchSchools: searchSchools,
     SAVED_KEY: SAVED_KEY, savedLoad: savedLoad, savedSave: savedSave, savedReset: savedReset,

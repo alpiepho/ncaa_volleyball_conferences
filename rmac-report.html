@@ -502,10 +502,10 @@
   </section>
 
   <section class="panel" id="setters">
-    <div class="panel-head"><span class="idx">05</span><h2>Setter &amp; offense snapshot</h2></div>
-    <p class="question">Who's actually playing setter, how is the offense run (5-1 vs. 6-2), and how likely is that setter to still be there by <span class="target-year"></span>?</p>
+    <div class="panel-head"><span class="idx">05</span><h2 id="pos-title">Setter &amp; offense snapshot</h2></div>
+    <p class="question" id="pos-question">Who's actually playing setter, how is the offense run (5-1 vs. 6-2), and how likely is that setter to still be there by <span class="target-year"></span>?</p>
     <div class="cardgrid" id="setterCards"></div>
-    <p class="question" style="margin-top:14px;">5-1: one setter runs the offense full-time. 6-2: two setters rotate, splitting assists roughly evenly.</p>
+    <p class="question" style="margin-top:14px;" id="pos-foot">5-1: one setter runs the offense full-time. 6-2: two setters rotate, splitting assists roughly evenly.</p>
   </section>
 
   <section class="panel" id="flags">
@@ -561,6 +561,8 @@
   var MAJORS = C.matchMajors(settings.majors);
   var BASE = settings.school ? C.schoolRecord(settings.school) : null;
   var SETTER = settings.position === "S";
+  // any other position: its own panel 05 (OTHER_POSITIONS.md), from each school's roster players
+  var POS = C.positionSpec(settings.position);
   var TARGET = C.targetYear();
   var WUE_URL = "https://www.wiche.edu/tuition-savings/wue/wue-list-of-schools/";
   var AIA_URL = "https://athletesinaction.org/campus/campus-list/";
@@ -752,7 +754,21 @@
     if (BASE) document.getElementById("legendCurrent").textContent = BASE.name + " (comparing to)";
     else document.getElementById("legendBase").hidden = true;
     Array.prototype.forEach.call(document.querySelectorAll(".target-year"), function(e){ e.textContent = TARGET; });
-    if (!SETTER){
+    if (POS){
+      document.getElementById("nav-setters").textContent = "05 " + POS.plural;
+      document.getElementById("pos-title").textContent = POS.plural + " snapshot";
+      document.getElementById("pos-question").innerHTML = "Who plays " + esc(POS.one) + " at each school, ordered by " +
+        esc(POS.statLabel.toLowerCase()) + ", and who is likely to still be there by <span class=\"target-year\">" + TARGET + "</span>?";
+      var dates = {};
+      schools.forEach(function(s){ var c = s.confSlug && D.conferences[s.confSlug]; if (c && c.playersDate) dates[c.playersDate] = true; });
+      document.getElementById("pos-foot").textContent = "Every player the current roster lists at " + POS.one +
+        " (a two-position player such as OH/RS appears under both). " + {
+          k: "Ordered by kills; hitting % = (kills − errors) ÷ attempts.",
+          blk: "Ordered by total blocks (solo blocks + ½ of block assists, the NCAA count).",
+          dig: "Ordered by digs."
+        }[POS.sort] + " Players not on the stats page yet are listed last. Season stats as of " +
+        (Object.keys(dates).sort().map(niceDate).join(", ") || "the conference's pull") + ".";
+    } else if (!SETTER){
       document.getElementById("setters").hidden = true;
       document.getElementById("nav-setters").hidden = true;
     }
@@ -822,6 +838,16 @@
     after.push(parts.join(" "));
     if (BASE) after.push(esc(BASE.name) + " is shown at its sticker price for a fair comparison; actual aid varies.");
 
+    if (POS){
+      var popen = C.positionOpenings(schools, settings.position);
+      if (popen.length){
+        after.push("<strong>" + esc(POS.one.charAt(0).toUpperCase() + POS.one.slice(1)) + " openings for " + TARGET + ":</strong> " +
+          (POS.starters > 1 ? "one of the top " + POS.starters + " by " + esc(POS.statLabel.toLowerCase()) : "the top " + esc(POS.one) + " by " + esc(POS.statLabel.toLowerCase())) +
+          " is a senior or grad student at " + C.join(popen.map(function(x){
+            return esc(x.row.name) + " (" + x.leaving.map(function(p){ return esc(p.name) + ", " + esc(p.cls); }).join("; ") + ")";
+          })) + ".");
+      }
+    }
     if (SETTER){
       var opens = C.setterOpenings(schools);
       if (opens.length){
@@ -1040,7 +1066,8 @@
   // ================= 05 setter cards =================
   (function(){
     var host = document.getElementById("setterCards");
-    if(!SETTER) return;   // only Setter has a position panel for now (D5)
+    if(POS){ positionCards(host); return; }
+    if(!SETTER) return;
     function retTag(cls){
       // NCAA eligibility is a flat 5 years to use 5 seasons — no redshirt
       // exemption to account for. Only a listed 5th-year/graduate season
@@ -1096,6 +1123,77 @@
       host.appendChild(card);
     });
   })();
+
+  // ================= 05 for any other position (OTHER_POSITIONS.md) =================
+  // "2026-11-01" -> "Nov 1, 2026"
+  function niceDate(d){
+    var m = /^(\d{4})-(\d\d)-(\d\d)$/.exec(d || "");
+    return m ? ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+m[2] - 1] + " " + (+m[3]) + ", " + m[1] : d;
+  }
+  function fmtStat(v, key){
+    if (v == null) return "—";
+    if (key === "pct") return (v < 0 ? "−" : "") + Math.abs(v).toFixed(3).replace(/^0/, "");
+    if (key === "blk") return v % 1 ? v.toFixed(1) : String(v);
+    return String(v);
+  }
+  function positionCards(host){
+    function retTag(cls){
+      if(cls === "Gr" || cls === "5th-Yr" || cls === "5th") return "Final season of eligibility — likely done after " + (TARGET - 1);
+      if(/Sr$/.test(cls || "")) return "Senior — may use a 5th year, or be done after " + (TARGET - 1);
+      return "Likely returning in " + TARGET;
+    }
+    function second(p){
+      var ps = function(v){ return v == null ? "—" : v.toFixed(2); };
+      if (POS.sort === "k") return [fmtStat(C.hitPct(p), "pct") + " hitting", p.ta + " attempts", ps(C.perSet(p, "k")) + " kills/set"];
+      if (POS.sort === "blk") return [p.bs + " solo · " + p.ba + " assisted", ps(C.perSet(p, "blk")) + " blocks/set", p.k + " kills · " + fmtStat(C.hitPct(p), "pct")];
+      return [ps(C.perSet(p, "dig")) + " digs/set", p.re + " reception errors", p.sa + " aces"];
+    }
+    byComposite.forEach(function(s){
+      var card = document.createElement("div");
+      card.className = "setcard" + (s.current ? " current" : "");
+      var school = document.createElement("div"); school.className = "school";
+      school.textContent = s.name + (s.current ? " · comparing to" : "");
+      var region = document.createElement("span"); region.className = "region"; region.textContent = s.conf;
+      school.appendChild(region);
+      card.appendChild(school);
+      var list = C.positionPlayers(s, settings.position);
+      if (!list.length){
+        var none = document.createElement("div"); none.className = "ret-tag"; none.style.fontWeight = "600";
+        none.textContent = s.researched ? "No " + POS.plural.toLowerCase() + " on the current roster" : "Roster not researched for this school yet";
+        card.appendChild(none);
+      }
+      list.forEach(function(p){
+        var row = document.createElement("div"); row.className = "setter";
+        var jersey = document.createElement("span"); jersey.className = "jersey"; jersey.textContent = "#" + p.jersey;
+        var sname = document.createElement("span"); sname.className = "sname"; sname.textContent = p.name;
+        var meta1 = document.createElement("span"); meta1.style.fontSize = "11px"; meta1.style.color = "var(--text-muted)";
+        meta1.textContent = [p.pos, p.cls, p.height].filter(Boolean).join(" · ");
+        row.appendChild(jersey); row.appendChild(sname); row.appendChild(meta1);
+        card.appendChild(row);
+        var meta = document.createElement("div"); meta.className = "meta";
+        var main = document.createElement("div"); main.className = "assists";
+        var lbl = document.createElement("span"); lbl.className = "lbl"; lbl.textContent = POS.statLabel;
+        main.appendChild(lbl);
+        main.appendChild(document.createTextNode(p.sp == null ? "—" : fmtStat(C.playerStat(p, POS.sort), POS.sort)));
+        meta.appendChild(main);
+        var pill = document.createElement("span"); pill.className = "pill";
+        pill.textContent = p.sp == null ? "no stats yet" : p.sp + " sets";
+        meta.appendChild(pill);
+        card.appendChild(meta);
+        if (p.sp != null){
+          var sub = document.createElement("div"); sub.className = "ret-tag"; sub.textContent = second(p).join(" · ");
+          card.appendChild(sub);
+        }
+        var ret = document.createElement("div"); ret.className = "ret-tag"; ret.textContent = retTag(p.cls);
+        card.appendChild(ret);
+      });
+      var chips = document.createElement("div"); chips.className = "src-row tight";
+      addLink(chips, s.links.roster, "Roster");
+      addLink(chips, s.links.stats, "Stats");
+      card.appendChild(chips);
+      host.appendChild(card);
+    });
+  }
 
   // ================= 06 flags matrix =================
   (function(){
@@ -1196,8 +1294,15 @@
     if(SETTER && s.setter){
       side.appendChild(kv("Primary setter", (s.setter.name ? s.setter.name + " · " : "") + "#" + s.setter.jersey + " · " + s.setter.cls));
       side.appendChild(kv("Assists / offense", s.setter.assists + " assists · " + s.offenseNote));
-    } else if(s.offenseNote){
-      side.appendChild(kv("Offense", s.offenseNote));   // a team fact, kept for every position
+    } else {
+      if(POS){
+        var top = C.positionPlayers(s, settings.position).filter(function(p){ return p.sp; }).slice(0, POS.starters);
+        side.appendChild(kv("Top " + POS.plural.charAt(0).toLowerCase() + POS.plural.slice(1), top.length ? top.map(function(p){
+          var v = C.playerStat(p, POS.sort), unit = POS.statLabel.toLowerCase();
+          return p.name + " · #" + p.jersey + " · " + (p.cls || "—") + " · " + fmtStat(v, POS.sort) + " " + (v === 1 ? unit.replace(/s$/, "") : unit);
+        }).join("; ") : "None with stats yet"));
+      }
+      if(s.offenseNote) side.appendChild(kv("Offense", s.offenseNote));   // a team fact, kept for every position
     }
     if(sac && !s.current){
       var dv = s.composite != null && sac.composite != null ? s.composite - sac.composite : null;
