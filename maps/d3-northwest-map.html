@@ -136,6 +136,7 @@
     #map{flex:0 0 60vh;}
     aside{width:auto; border-left:none; border-top:1px solid var(--border); padding:12px 16px;}
   }
+  .schools li.note-item { padding: 8px 10px; color: var(--text-secondary); font-size: 13px; }
 </style>
 </head>
 <body>
@@ -169,7 +170,7 @@
   // text. Pins, distances, costs, and major rows are computed here from
   // SITE_DATA and the viewer's settings. Source: tools/site/map_template.html.
   var C = window.Compare, D = window.SITE_DATA;
-  var MAP = {"kind": "conf", "division": "D3", "conf": "Northwest"};   // {kind: "report", slug} or {kind: "conf", division, conf}
+  var MAP = {"kind": "conf", "division": "D3", "conf": "Northwest"};   // {kind: "report", slug}, {kind: "conf", division, conf}, or {kind: "saved"}
   var settings = C.load();
   window.addEventListener("hashchange", function(){ if (C.fromHash()){ C.load(); location.reload(); } });
   var HOME = settings.home ? { label: "Home", city: settings.home.city, state: settings.home.state,
@@ -196,8 +197,8 @@
     return keys.filter(function(k){ return s.links && s.links[k[0]]; }).map(function(k){ return [k[1], s.links[k[0]]]; });
   }
 
-  function reportPoints(){
-    return C.reportRows(MAP.slug, settings).map(function(s){
+  function reportPoints(){ return C.reportRows(MAP.slug, settings).map(rowPoint); }
+  function rowPoint(s){
       var rank = String(s.confRank == null ? "" : s.confRank).split(" ")[0], num = /^\d+$/.test(rank);
       var loc = s.ipeds;
       var sub = loc.city + ", " + loc.state;
@@ -211,7 +212,23 @@
         links: links(s, [["niche", "Niche"], ["roster", "Roster"], ["schedule", "Schedule"], ["stats", "Stats"], ["aia", "AiA"]]),
         sub: sub
       };
-    });
+  }
+
+  // saved map: the saved list in order (badge = place in the list), plus the comparison school.
+  // Unresearched schools get the Massey/IPEDS popup; schools with no IPEDS location are left off.
+  var SAVED_MISSING = [];
+  function savedPoints(){
+    var n = 0;
+    return C.savedRows(settings).map(function(s){
+      var order = s.current && saved.indexOf(s.masseyName) < 0 ? null : ++n;
+      var loc = s.researched ? s.ipeds : C.schoolRecord(s.masseyName).ipeds;
+      if (!loc || loc.lat == null){ SAVED_MISSING.push(s.name); return null; }
+      var p = s.researched ? rowPoint(s) : confPoint(s.masseyName, null, null);
+      if (!s.researched) p.rows.splice(1, 0, ["Conference", D.teams[s.masseyName].conf + " (not researched yet)"]);
+      if (s.researched) p.rows[0][1] += " in " + s.division;   // Massey ranks each division separately
+      p.badge = order ? String(order) : ""; p.sort = order || 0;
+      return p;
+    }).filter(Boolean);
   }
 
   function confPoint(m, order, of){
@@ -248,7 +265,7 @@
     return pts;
   }
 
-  var SCHOOLS = MAP.kind === "report" ? reportPoints() : confPoints();
+  var SCHOOLS = MAP.kind === "report" ? reportPoints() : MAP.kind === "saved" ? savedPoints() : confPoints();
   window.MAP_POINTS = SCHOOLS;   // read by the regression check (REFACTOR_COMPARE.md §12)
 
   // settings line, legend, and links that carry the settings
@@ -363,7 +380,8 @@
     bounds.push([HOME.lat, HOME.lon]);
   }
 
-  function fitAll(){ map.fitBounds(bounds, { padding:[40,40] }); }
+  // no pins (an empty saved list, no settings): the lower 48
+  function fitAll(){ if (bounds.length) map.fitBounds(bounds, { padding:[40,40], maxZoom: 11 }); else map.setView([39.5, -98.5], 4); }
   fitAll();
   document.getElementById("fitAll").addEventListener("click", function(){ map.closePopup(); fitAll(); });
 
@@ -418,6 +436,13 @@
     }
   }
   refreshSaved();
+  if (MAP.kind === "saved" && (!SCHOOLS.length || SAVED_MISSING.length)){
+    var empty = document.createElement("li"); empty.className = "note-item";
+    empty.textContent = !saved.length
+      ? "No schools saved in this browser yet. Tick schools on the index or in a conference map's popups, then come back."
+      : "Not on the map (no IPEDS campus location): " + SAVED_MISSING.join(", ") + ".";
+    list.appendChild(empty);
+  }
   // a box ticked on the index or another map shows here without a reload
   C.onSavedChange(function(list){ saved = list; refreshSaved(); });
 })();

@@ -251,10 +251,16 @@
       offenseNote: r ? r.offenseNote : null, coachStaff: r ? r.coachStaff : null,
       femaleCoachOnStaff: r ? r.femaleCoachOnStaff : null, aiaChapter: r ? r.aiaChapter : null,
       beach: r ? (r.beach === undefined ? null : r.beach) : null,
-      setter: r ? r.setter || null : null, secondSetter: r ? r.secondSetter || null : null,
-      thirdSetter: r ? r.thirdSetter || null : null,
+      // every roster setter, most assists first (falls back to the older setter/secondSetter/thirdSetter)
+      setters: r ? settersOf(r) : [],
+      setter: r ? settersOf(r)[0] || null : null,
       links: r ? r.links : { niche: t.niche }
     };
+  }
+
+  function settersOf(r) {
+    if (Array.isArray(r.setters)) return r.setters;
+    return [r.setter, r.secondSetter, r.thirdSetter].filter(Boolean);
   }
 
   function inferTuitionType(t, ip) {
@@ -411,7 +417,7 @@
     var offeredMajors = {};
     act.forEach(function (m) { offeredMajors[m.key] = offered[m.key].length > 0; });
     var row = {
-      id: s.id, name: s.name, current: !!current, researched: s.researched, masseyName: s.masseyName,
+      id: s.id, name: s.name, current: !!current, researched: s.researched, masseyName: s.masseyName, confSlug: s.confSlug,
       conf: isMember ? conf.memberName : s.confSlug ? D().conferences[s.confSlug].memberName : s.masseyConf,
       division: s.division, region: s.region, niche: s.niche,
       cost: c.cost, costBasis: basis, costKind: c.kind, costFootnotes: c.footnotes,
@@ -421,7 +427,8 @@
       offenseNote: s.offenseNote, coachStaff: s.coachStaff,
       flags: flags, flagDetail: detail, beach: s.beach, links: s.links
     };
-    ["setter", "secondSetter", "thirdSetter"].forEach(function (k) { if (s[k]) row[k] = s[k]; });
+    if (s.setter) row.setter = s.setter;
+    row.setters = s.setters || [];
     return row;
   }
 
@@ -439,6 +446,22 @@
     if (base && !rows.some(function (r) { return r.current; })) {
       rows.unshift(buildSchool(base, settings, majors, conf, true));
     }
+    rows.sort(function (a, b) { return (b.current ? 1 : 0) - (a.current ? 1 : 0); });
+    return rows;
+  }
+
+  // The saved-schools report (saved-report.html): one row per saved school, each built against its
+  // own conference (so its conference rank shows), plus the comparison school; unresearched schools
+  // get partial rows (D12). Order: comparison school, then the saved list's export order.
+  function savedRows(settings, list) {
+    var d = D(), majors = matchMajors(settings.majors);
+    var base = settings.school ? schoolRecord(settings.school) : null;
+    var own = function (s) { return s.confSlug ? d.conferences[s.confSlug] : null; };
+    var rows = savedSort(list || savedLoad()).map(function (m) {
+      var s = schoolRecord(m);
+      return buildSchool(s, settings, majors, own(s), !!base && base.masseyName === s.masseyName);
+    });
+    if (base && !rows.some(function (r) { return r.current; })) rows.unshift(buildSchool(base, settings, majors, own(base), true));
     rows.sort(function (a, b) { return (b.current ? 1 : 0) - (a.current ? 1 : 0); });
     return rows;
   }
@@ -689,6 +712,6 @@
     fold: fold, displayName: displayName, teamWhere: teamWhere, searchSchools: searchSchools,
     SAVED_KEY: SAVED_KEY, savedLoad: savedLoad, savedSave: savedSave, savedReset: savedReset,
     isSaved: isSaved, setSaved: setSaved, toggleSaved: toggleSaved, onSavedChange: onSavedChange,
-    savedSort: savedSort, savedText: savedText, parseSaved: parseSaved
+    savedSort: savedSort, savedText: savedText, parseSaved: parseSaved, savedRows: savedRows
   };
 })(typeof window !== "undefined" ? window : globalThis);

@@ -26,6 +26,7 @@
     --critical:#c2412d;
     --critical-soft:rgba(194,65,45,0.10);
     --saved:#1f8a55;
+    --saved-soft:rgba(31,138,85,0.14);
     box-sizing:border-box;
     padding-top:env(safe-area-inset-top,0px);
     padding-bottom:env(safe-area-inset-bottom,0px);
@@ -46,6 +47,7 @@
       --critical:#ef7a63;
       --critical-soft:rgba(239,122,99,0.14);
       --saved:#4fc287;
+      --saved-soft:rgba(79,194,135,0.18);
     }
   }
   :root[data-theme="dark"]{
@@ -63,6 +65,7 @@
     --critical:#ef7a63;
     --critical-soft:rgba(239,122,99,0.14);
     --saved:#4fc287;
+    --saved-soft:rgba(79,194,135,0.18);
   }
   *{box-sizing:border-box;}
   body{
@@ -116,6 +119,9 @@
     padding:6px 12px;
   }
   nav.jump a:hover{ color:var(--accent); border-color:var(--accent); }
+  /* saved report/map chips (SAVE_SCHOOLS.md): green like the saved rows; open in a new tab */
+  nav.jump a.carry-saved{ color:var(--saved); border-color:var(--saved); background:var(--saved-soft); }
+  nav.jump a.carry-saved:hover{ color:var(--text-primary); }
 
   /* ---------- settings bar (REFACTOR_COMPARE.md §3) ---------- */
   .settings-line{
@@ -427,6 +433,10 @@
     border-color:var(--accent);
     font-weight:600;
   }
+  /* saved school (SAVE_SCHOOLS.md): the same green check as the conference lists */
+  .chip.saved::before{ content:"✓"; color:var(--saved); font-weight:700; margin-right:4px; }
+  .chip.saved{ border-color:var(--saved); background:var(--saved-soft); color:var(--text-primary); }
+  .chip.saved.current{ border-color:var(--accent); }
 
   /* compact conference cards */
   .mini-grid{
@@ -516,9 +526,9 @@
     color:var(--text-secondary);
     flex:1 1 auto;
     min-width:0;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
+    /* long names wrap instead of being cut off with "…" (narrow windows have no sideways scroll) */
+    overflow-wrap:anywhere;
+    line-height:1.3;
   }
   .mini-link{
     font:600 10px/1 "Work Sans",sans-serif;
@@ -620,6 +630,8 @@
       <a href="#d1-reports">D1 Reports</a>
       <a href="#d2-reports">D2 Reports</a>
       <a href="#d3-reports">D3 Reports</a>
+      <a class="carry-saved" data-href="saved-report.html" href="saved-report.html" target="_blank" rel="noopener" hidden>Saved report ↗</a>
+      <a class="carry-saved" data-href="saved-map.html" href="saved-map.html" target="_blank" rel="noopener" hidden>Saved map ↗</a>
     </nav>
   </div>
 </header>
@@ -901,6 +913,8 @@ function renderSavedSection(){
   $("saved-n").textContent = n ? plural(n, "school") : "";
   $("saved-copy").disabled = !n;
   $("saved-reset").disabled = !n;
+  // the saved report/map chips at the top show only when something is saved
+  Array.prototype.forEach.call(document.querySelectorAll("a.carry-saved"), function(a){ a.hidden = !n; });
   var h = $("saved-hint");
   if (!C.storageAvailable()){
     h.className = "hint warn";
@@ -1080,6 +1094,7 @@ function renderSummary(){
     b.addEventListener("click", function(){ openEditor(false); });
     s.appendChild(b);
   }
+  carrySaved();
 }
 
 // ---------------------------------------------------------------- cards
@@ -1100,9 +1115,14 @@ function renderReportCard(host, slug){
 
   var chips = el("div", "schools");
   var names = c.schools.map(function(id){ return D.researched[id]; });
-  if (base && !names.some(function(r){ return r.id === base.id; })) chips.appendChild(el("span", "chip current", base.name));
+  function chip(cls, name, team){
+    var ch = el("span", cls, name);
+    ch.setAttribute("data-team", team);   // refreshSaved() marks saved schools
+    chips.appendChild(ch);
+  }
+  if (base && !names.some(function(r){ return r.id === base.id; })) chip("chip current", base.name, base.masseyName);
   names.forEach(function(r){
-    chips.appendChild(el("span", "chip" + (base && r.id === base.id ? " current" : ""), r.name));
+    chip("chip" + (base && r.id === base.id ? " current" : ""), r.name, r.masseyName);
   });
   card.appendChild(chips);
   host.appendChild(card);
@@ -1188,6 +1208,12 @@ function refreshSaved(){
     });
     card.querySelector("h4 .n-saved").textContent = k ? " · " + k + " saved" : "";
   });
+  // report-card chips get the same check as the conference-list rows
+  Array.prototype.forEach.call(document.querySelectorAll(".card .chip[data-team]"), function(ch){
+    var is = !!on[ch.getAttribute("data-team")];
+    ch.classList.toggle("saved", is);
+    if (is) ch.title = "Saved school"; else ch.removeAttribute("title");
+  });
   renderSummary();
   renderSavedSection();
 }
@@ -1270,6 +1296,11 @@ function openSavedFromHash(){
 C.onSavedChange(function(list){ saved = list; refreshSaved(); measureHeader(); });
 
 $("researched-link").href = carry("researched.html");
+// saved report/map links carry the current settings (set again whenever the settings line redraws)
+function carrySaved(){
+  Array.prototype.forEach.call(document.querySelectorAll("a.carry-saved"), function(a){ a.href = carry(a.getAttribute("data-href")); });
+}
+carrySaved();
 fillForm();
 renderUpdated();
 renderFooter();

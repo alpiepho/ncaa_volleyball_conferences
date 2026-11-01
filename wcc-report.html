@@ -547,7 +547,12 @@
   // the viewer's settings (compare.js). Source: tools/site/report_template.html.
   var C = window.Compare, D = window.SITE_DATA;
   var SLUG = "wcc";
-  var CONF = D.conferences[SLUG];
+  // "saved": the saved-schools report (SAVE_SCHOOLS.md) — rows come from the saved list in this
+  // browser, each school with its own conference, instead of one conference's members
+  var SAVED = SLUG === "saved";
+  // each school's beach comparison page: its own conference's in the saved report
+  function beachHref(s){ return SAVED ? (s && s.confSlug ? s.confSlug + "-beach.html" : "") : CONFIG.beachHref; }
+  var CONF = SAVED ? { division: null, short: "saved", memberName: "saved schools", schools: [] } : D.conferences[SLUG];
   var settings = C.load();
   // a settings link pasted into an open report changes only the hash
   window.addEventListener("hashchange", function(){ if (C.fromHash()){ C.load(); location.reload(); } });
@@ -563,6 +568,7 @@
     home: settings.home, weights: C.DEFAULTS.weights, flagCols: C.flagCols(MAJORS),
     currentName: BASE ? BASE.name : null, beachHref: "wcc-beach.html", faithShort: "AiA"
   };
+  var BEACH = SAVED || !!CONFIG.beachHref;   // beach rows and links (per school in the saved report)
   var HOME = CONFIG.home;
   var milesBetween = C.milesBetween;
   function masseyUrl(s){ return "https://masseyratings.com/cvol/ncaa-" + (s.division || CONF.division).toLowerCase() + "/ratings"; }
@@ -573,7 +579,8 @@
   var GRADE_MAP = { "A+":97,"A":95,"A-":92,"B+":88,"B":85,"B-":82,"C+":78,"C":75,"C-":72,"D+":68,"D":65,"D-":62,"F":50 };
   function gradeNum(g){ return GRADE_MAP[g]; }
 
-  var schools = C.reportRows(SLUG, settings);
+  var schools = SAVED ? C.savedRows(settings) : C.reportRows(SLUG, settings);
+  if (SAVED) C.onSavedChange(function(){ location.reload(); });   // ticked or unticked in another tab
 
   schools.forEach(function(s){ s.links.standings = STANDINGS[s.conf]; });
 
@@ -727,16 +734,18 @@
     function a_or_an(w){ return /^[AEIOU]/i.test(w) || /^RMAC/.test(w) ? "an" : "a"; }
     function list(items){ return C.join(items.map(esc)); }
     var cands = schools.filter(function(s){ return !s.current; }), n = cands.length;
-    var members = CONF.schools.length;
+    var members = SAVED ? cands.length : CONF.schools.length;
     var baseConf = BASE ? (BASE.confSlug ? D.conferences[BASE.confSlug].memberName : BASE.masseyConf) : null;
 
     document.title = document.title;  // set by the build
     document.getElementById("summary").textContent = C.summary(settings) + " · ";
     ["edit-settings", "home-link"].forEach(function(id){ document.getElementById(id).href = carry("index.html"); });
     document.getElementById("map-link").href = carry(document.getElementById("map-link").getAttribute("href"));
-    document.getElementById("beach-link").href = carry(CONFIG.beachHref);
-    document.getElementById("headline").textContent = "All " + members + " " + CONF.short + " schools" +
-      (BASE ? ", compared to " + BASE.name : "");
+    if (CONFIG.beachHref) document.getElementById("beach-link").href = carry(CONFIG.beachHref);
+    else document.getElementById("beach-link").hidden = true;   // saved report: beach links are per school
+    document.getElementById("headline").textContent = SAVED
+      ? "Your " + members + " saved school" + (members === 1 ? "" : "s") + (BASE ? ", compared to " + BASE.name : "")
+      : "All " + members + " " + CONF.short + " schools" + (BASE ? ", compared to " + BASE.name : "");
     document.getElementById("mainCaption").textContent = BASE ? "Comparison of schools against " + BASE.name : "Comparison of schools";
     if (BASE) document.getElementById("legendCurrent").textContent = BASE.name + " (comparing to)";
     else document.getElementById("legendBase").hidden = true;
@@ -748,7 +757,24 @@
 
     // intro: these bullets go around the build's static ones (sources, conference facts)
     var before = [], after = [];
-    if (!BASE){
+    if (SAVED){
+      var editLink = '<a class="srclink" href="' + esc(carry("index.html") + "&saved") + '">Saved schools</a>';
+      if (!members){
+        before.push("No schools saved in this browser yet. Tick schools in the conference lists on the index or on a map " +
+          "(opening a school's Niche or Roster link saves it too), then come back. Edit the list under " + editLink + ".");
+        Array.prototype.forEach.call(document.querySelectorAll("section.panel"), function(p){ p.hidden = true; });
+      } else {
+        before.push("The " + members + " school" + (members === 1 ? "" : "s") + " saved in this browser (edit the list under " + editLink +
+          "), each shown with its own conference and conference rank" + (BASE ? ", plus the comparison school" : "") + ".");
+        var unres = cands.filter(function(s){ return !s.researched; });
+        if (unres.length) before.push(unres.length + " of them " + (unres.length === 1 ? "hasn't" : "haven't") + " been researched yet (" +
+          list(unres.map(function(s){ return s.name; })) + "): their rows show IPEDS and Massey data (cost, majors, national rank, " +
+          "location), with — for the rest and no composite score.");
+        var divs = {}; schools.forEach(function(s){ divs[s.division] = true; });
+        if (Object.keys(divs).length > 1) before.push("These schools span " + Object.keys(divs).sort().join(" and ") + ". Massey ranks each " +
+          "division separately, so a national rank (and the athletics part of the composite) isn't comparable across divisions.");
+      }
+    } else if (!BASE){
       before.push("All " + members + " " + esc(CONF.short) + " women's volleyball programs. Pick a school to compare under " +
         '<a class="srclink" href="' + esc(carry("index.html")) + '">Edit settings</a> to add it as a baseline row.');
     } else if (BASE.confSlug === SLUG){
@@ -761,7 +787,7 @@
           "(and NCAA transfer rules between divisions), not just conferences.");
       }
     }
-    if (BASE && !BASE.researched){
+    if (BASE && !BASE.researched && !(SAVED && !members)){
       before.push(esc(BASE.name) + " hasn't been researched yet, so its row shows only IPEDS and Massey data " +
         "(cost, majors, national rank, location), with — for the rest and no composite score.");
     }
@@ -836,7 +862,8 @@
       prog.length + " of " + n + " have a program; court players crossed over at " + cross.length +
       (cross.length ? ": " + C.join(cross.map(function(s){ return esc(s.name) + " (" + esc(s.flagDetail.beach) + ")"; })) : "") + ". " +
       (todo.length ? "Not researched: " + list(todo) + ". " : "") +
-      '<a class="srclink" href="' + esc(carry(CONFIG.beachHref)) + '" target="_blank" rel="noopener">Compare the rosters</a>.');
+      (SAVED ? "Each school's card links to its conference's roster comparison."
+             : '<a class="srclink" href="' + esc(carry(CONFIG.beachHref)) + '" target="_blank" rel="noopener">Compare the rosters</a>.'));
     var aia = cands.filter(function(s){ return s.flagDetail.aia === "Yes"; }).map(function(s){ return s.name; });
     notes.push("AiA (Athletes in Action) is checked against the official campus list at " +
       '<a class="srclink" href="' + AIA_URL + '" target="_blank" rel="noopener noreferrer">athletesinaction.org/campus/campus-list</a>. ' +
@@ -1029,7 +1056,7 @@
       school.appendChild(region);
       card.appendChild(school);
 
-      [s.setter, s.secondSetter, s.thirdSetter].forEach(function(st){
+      (s.setters || []).forEach(function(st){
         if(!st) return;
         var row = document.createElement("div"); row.className = "setter";
         var jersey = document.createElement("span"); jersey.className="jersey"; jersey.textContent = "#" + st.jersey;
@@ -1046,7 +1073,7 @@
         var assists = document.createElement("div"); assists.className="assists";
         var lbl = document.createElement("span"); lbl.className="lbl"; lbl.textContent="Assists";
         assists.appendChild(lbl);
-        assists.appendChild(document.createTextNode(st.assists));
+        assists.appendChild(document.createTextNode(st.assists == null ? "—" : st.assists));   // null: not published where scripts can read it
         meta.appendChild(assists);
         card.appendChild(meta);
 
@@ -1193,7 +1220,7 @@
       }
     }
 
-    if(CONFIG.beachHref){
+    if(BEACH){
       var bRow = document.createElement("div"); bRow.className = "kv";
       var bK = document.createElement("div"); bK.className = "k"; bK.textContent = "Beach volleyball";
       var bV = document.createElement("div"); bV.className = "v";
@@ -1209,12 +1236,14 @@
           " court players were on the spring " + b.beachSeason + " beach roster" +
           (b.share === "none" ? " (separate team)" : "") + " · "));
         addLink(bV, s.links.beachRoster, "Beach roster");
-        bV.appendChild(document.createTextNode(" · "));
-        var cmp = document.createElement("a"); cmp.className = "srclink";
-        // "#<school id>&s=<settings>": the beach page scrolls to the school and reads the settings
-        cmp.href = carry(CONFIG.beachHref).replace("#", "#" + s.id + "&"); cmp.target = "_blank"; cmp.rel = "noopener";
-        cmp.textContent = "Compare rosters";
-        bV.appendChild(cmp);
+        if (beachHref(s)) {
+          bV.appendChild(document.createTextNode(" · "));
+          var cmp = document.createElement("a"); cmp.className = "srclink";
+          // "#<school id>&s=<settings>": the beach page scrolls to the school and reads the settings
+          cmp.href = carry(beachHref(s)).replace("#", "#" + s.id + "&"); cmp.target = "_blank"; cmp.rel = "noopener";
+          cmp.textContent = "Compare rosters";
+          bV.appendChild(cmp);
+        }
       }
       bRow.appendChild(bK); bRow.appendChild(bV);
       side.appendChild(bRow);
@@ -1248,7 +1277,7 @@
     addLink(srcRow, s.links.schedule, "Schedule");
     addLink(srcRow, s.links.roster, "Roster");
     addLink(srcRow, s.links.stats, "Stats");
-    if (CONFIG.beachHref && s.links.beachRoster) addLink(srcRow, s.links.beachRoster, "Beach roster");
+    if (BEACH && s.links.beachRoster) addLink(srcRow, s.links.beachRoster, "Beach roster");
     if (s.links.aia) srcRow.appendChild(srcLink(s.links.aia, CONFIG.faithShort || "AiA"));
     card.appendChild(srcRow);
 
