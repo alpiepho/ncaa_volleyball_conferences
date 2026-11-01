@@ -104,6 +104,9 @@
   }
   /* title with the share button at its right end */
   .title-row{ display:flex; align-items:flex-start; gap:10px; margin:0 0 10px; }
+  /* the help link looks like the share button next to it (a quiet button) */
+  a.help-btn{ color:var(--text-secondary); background:var(--surface-raised); border:1px solid var(--border); border-radius:6px; text-decoration:none; box-sizing:border-box; }
+  a.help-btn:hover{ background:var(--surface); color:var(--text-primary); border-color:var(--text-muted); }
   .icon-btn{ flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; padding:0; margin-top:-4px; }
   dialog.saved-dlg.share-dlg{ width:min(360px, calc(100vw - 32px)); }
   .share-dlg .dlg{ align-items:stretch; }
@@ -574,6 +577,11 @@
   <div class="top-inner">
     <div class="title-row">
       <h1>NCAA Women's Volleyball Conferences 2026</h1>
+      <a class="icon-btn help-btn" id="help-link" href="help.html" aria-label="How to use this site" title="How to use this site">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8 1c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01" stroke-width="2.6"/>
+        </svg>
+      </a>
       <button type="button" class="quiet icon-btn" id="share-btn" aria-haspopup="dialog" aria-label="Share this site (QR code and link)" title="Share this site">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/>
@@ -1376,6 +1384,7 @@ function openSavedFromHash(){
 C.onSavedChange(function(list){ saved = list; refreshSaved(); measureHeader(); });
 
 $("researched-link").href = carry("researched.html");
+$("help-link").href = carry("help.html");
 // saved report/map links carry the current settings (set again whenever the settings line redraws)
 function carrySaved(){
   Array.prototype.forEach.call(document.querySelectorAll("a.carry-saved"), function(a){ a.href = carry(a.getAttribute("data-href")); });
