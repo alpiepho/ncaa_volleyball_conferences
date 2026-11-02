@@ -214,6 +214,8 @@
     opacity:0;
   }
   .tt.show{opacity:1;}
+  /* on a phone: wide enough to read, centered across the screen */
+  .tt.touch{max-width:min(340px, calc(100vw - 20px)); width:max-content;}
   .tt .tt-title{font-weight:700; color:var(--text-primary); margin-bottom:4px; font-size:12.5px;}
   .tt .tt-row{display:flex; justify-content:space-between; gap:10px; padding:1px 0;}
   .tt .tt-row .k{display:flex; align-items:center; gap:6px;}
@@ -496,7 +498,7 @@
           <span class="item" id="costLegendEst" hidden><span class="swatch living est"></span>Estimated (state median; the school doesn't report it)</span>
         </div>
         <div id="costChart"></div>
-        <figcaption>Total cost per year living on campus, sticker price before aid. The solid part is tuition + fees at the rate that would apply for the home town and majors in the settings (in-state, WUE, or private); the lighter part adds on-campus food and housing, books, and other expenses. Hover a bar for the breakdown. IPEDS 2024-25, the latest federal data; a school's own site may show this year's rate.</figcaption>
+        <figcaption>Total cost per year living on campus, sticker price before aid. The solid part is tuition + fees at the rate that would apply for the home town and majors in the settings (in-state, WUE, or private); the lighter part adds on-campus food and housing, books, and other expenses. Hover or tap a bar for the breakdown (tap elsewhere to close). IPEDS 2024-25, the latest federal data; a school's own site may show this year's rate.</figcaption>
       </figure>
       <details class="tview">
         <summary>View as table</summary>
@@ -714,6 +716,7 @@
   // ---------------- tooltip ----------------
   var ttEl = document.getElementById("tooltip");
   function showTT(x, y, html){
+    ttEl.classList.remove("touch");
     ttEl.innerHTML = "";
     html.forEach(function(row){ ttEl.appendChild(row); });
     ttEl.classList.add("show");
@@ -747,21 +750,49 @@
     row.appendChild(k); row.appendChild(v);
     return row;
   }
+  // Touch (phones): a tap toggles the tooltip, placed full width under (or over) the bar; a tap
+  // anywhere else, or scrolling, closes it. Mouse and keyboard: hover and focus, as before.
+  var ttOwner = null;
+  function showTouchTT(el, html){
+    ttEl.innerHTML = "";
+    html.forEach(function(row){ ttEl.appendChild(row); });
+    ttEl.classList.add("show", "touch");
+    var b = el.getBoundingClientRect(), r = ttEl.getBoundingClientRect();
+    var top = b.bottom + 8;
+    if (top + r.height > window.innerHeight - 10) top = Math.max(10, b.top - r.height - 8);
+    ttEl.style.left = Math.max(10, (window.innerWidth - r.width) / 2) + "px";
+    ttEl.style.top = top + "px";
+    ttOwner = el;
+  }
+  function hideTTAll(){ hideTT(); ttEl.classList.remove("touch"); ttOwner = null; }
+  document.addEventListener("pointerdown", function(e){
+    if (e.pointerType === "touch" && ttOwner && !ttOwner.contains(e.target)) hideTTAll();
+  }, true);
+  window.addEventListener("scroll", function(){ if (ttEl.classList.contains("touch")) hideTTAll(); }, { passive: true });
+
   function wireTooltip(el, build){
-    el.addEventListener("pointerenter", function(e){ showTT(e.clientX, e.clientY, build()); });
+    var touched = false;
+    el.addEventListener("pointerdown", function(e){ touched = e.pointerType === "touch"; });
+    el.addEventListener("click", function(){
+      if (!touched) return;
+      if (ttOwner === el) hideTTAll(); else showTouchTT(el, build());
+    });
+    el.addEventListener("pointerenter", function(e){ if (e.pointerType !== "touch") showTT(e.clientX, e.clientY, build()); });
     el.addEventListener("pointermove", function(e){
+      if (e.pointerType === "touch") return;
       var r = ttEl.getBoundingClientRect();
       var left = e.clientX + 14, top = e.clientY - r.height/2;
       if(left + r.width > window.innerWidth - 10) left = e.clientX - r.width - 14;
       top = Math.max(10, Math.min(top, window.innerHeight - r.height - 10));
       ttEl.style.left = left + "px"; ttEl.style.top = top + "px";
     });
-    el.addEventListener("pointerleave", hideTT);
+    el.addEventListener("pointerleave", function(e){ if (e.pointerType !== "touch") hideTT(); });
     el.addEventListener("focus", function(){
+      if (touched) return;   // a tap focuses too; the click above handles it
       var r = el.getBoundingClientRect();
       showTT(r.right, r.top + r.height/2, build());
     });
-    el.addEventListener("blur", hideTT);
+    el.addEventListener("blur", function(){ if (!touched) hideTT(); });
   }
 
   // ================= settings-dependent text =================
