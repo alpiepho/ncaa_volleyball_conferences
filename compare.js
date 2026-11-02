@@ -245,11 +245,12 @@
       natRank: r ? r.natRank : t.rank, confRank: r ? r.confRank : null,
       // a hand-entered branch campus has no IPEDS locale of its own; leave it blank
       ipeds: { city: loc.city || null, state: loc.state || null, locale: t.campus ? (t.campus.locale || "") : (ip ? ip.locale : ""),
-               lat: loc.lat, lon: loc.lon },
+               lat: loc.lat, lon: loc.lon, zip: t.campus ? null : (ip ? ip.zip || null : null) },
       tuitionInState: ip ? ip.tuitionInState : null, tuitionOutOfState: ip ? ip.tuitionOutOfState : null,
       programs: ip ? ip.programs : {},
       offenseNote: r ? r.offenseNote : null, coachStaff: r ? r.coachStaff : null,
       femaleCoachOnStaff: r ? r.femaleCoachOnStaff : null, aiaChapter: r ? r.aiaChapter : null,
+      fcaChapter: r ? (r.fcaChapter === undefined ? null : r.fcaChapter) : null,
       beach: r ? (r.beach === undefined ? null : r.beach) : null,
       // every roster setter, most assists first (falls back to the older setter/secondSetter/thirdSetter)
       setters: r ? settersOf(r) : [],
@@ -382,7 +383,7 @@
     cols.push({ key: "cost", label: "Affordability", short: "Cost", kind: "scored" });
     cols.push({ key: "coach", label: "Female coach", short: "Female coach", kind: "fact" });
     cols.push({ key: "beach", label: "Beach volleyball", short: "Beach", kind: "scored" });
-    cols.push({ key: "aia", label: "AiA chapter", short: "AiA", kind: "fact" });
+    cols.push({ key: "aia", label: "AIA/FCA", short: "AIA/FCA", kind: "fact" });   // Athletes in Action, Fellowship of Christian Athletes
     return cols;
   }
 
@@ -398,6 +399,17 @@
   }
   function factFlag(v) { return v === null || v === undefined ? "pending" : "info"; }
   function factText(v) { return v === null || v === undefined ? "—" : v ? "Yes" : "No"; }
+  // AIA/FCA column: which of the two campus ministries is listed ("AIA", "FCA", "AIA + FCA"), "na" for
+  // neither, null when the school hasn't been checked
+  function faithText(aia, fca) {
+    if ((aia === null || aia === undefined) && (fca === null || fca === undefined)) return null;
+    var p = [];
+    if (aia) p.push("AIA");
+    if (fca) p.push("FCA");
+    return p.length ? p.join(" + ") : "na";
+  }
+  // a fact column shows green for a positive fact: "Yes" (female coach) or a listed ministry
+  function factYes(d) { return d === "Yes" || /^(AIA|FCA)/.test(d || ""); }
 
   // ------------------------------------------------------------ report rows
   // The row a report page renders (was build_reports.build_school). conf: the
@@ -415,7 +427,8 @@
     flags.cost = costFlag(c.cost, c.kind, s);
     flags.coach = factFlag(s.femaleCoachOnStaff); detail.coach = factText(s.femaleCoachOnStaff);
     flags.beach = beachFlag(s.beach); detail.beach = beachLabel(s.beach) || "—";
-    flags.aia = factFlag(s.aiaChapter); detail.aia = factText(s.aiaChapter);
+    var faith = faithText(s.aiaChapter, s.fcaChapter);
+    flags.aia = faith === null ? "pending" : "info"; detail.aia = faith === null ? "—" : faith;
     var offeredMajors = {};
     act.forEach(function (m) { offeredMajors[m.key] = offered[m.key].length > 0; });
     var row = {
@@ -757,7 +770,7 @@
     matchMajors: matchMajors, activeMajors: activeMajors,
     team: team, schoolRecord: schoolRecord,
     resolveCost: resolveCost, costFlag: costFlag, programsFor: programsFor, programLines: programLines,
-    flagCols: flagCols, beachLabel: beachLabel, beachFlag: beachFlag,
+    flagCols: flagCols, factYes: factYes, faithText: faithText, beachLabel: beachLabel, beachFlag: beachFlag,
     buildSchool: buildSchool, reportRows: reportRows,
     milesBetween: milesBetween, targetYear: targetYear, setterOpenings: setterOpenings,
     POSITION_SPEC: POSITION_SPEC, positionSpec: positionSpec, positionPlayers: positionPlayers,

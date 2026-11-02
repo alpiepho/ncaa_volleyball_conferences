@@ -212,7 +212,7 @@
         city: loc.city, state: loc.state, locale: loc.locale, lat: loc.lat, lon: loc.lon,
         rows: [["Nat'l rank", "#" + s.natRank], ["Conf. rank", s.confRank == null ? "—" : s.confRank],
                ["Est. cost/yr", money(s.cost)]].concat(distRows(loc, s.current)),
-        links: links(s, [["niche", "Niche"], ["roster", "Roster"], ["schedule", "Schedule"], ["stats", "Stats"], ["aia", "AiA"]]),
+        links: links(s, [["niche", "Niche"], ["roster", "Roster"], ["schedule", "Schedule"], ["stats", "Stats"], ["aia", "AIA"], ["fca", "FCA"]]),
         sub: sub
       };
   }

@@ -352,7 +352,7 @@
   .settings-line a{color:var(--series-1); font-weight:600; text-decoration:none; white-space:nowrap;}
   .settings-line a:hover{text-decoration:underline;}
   .flag.info{background:var(--grid); color:var(--text-secondary);}
-  /* a "Yes" fact (Female coach, AiA) reads green like Good; "No" stays grey */
+  /* a positive fact (Female coach "Yes"; AIA/FCA listed) reads green like Good; "No" / "na" stays grey */
   .flag.info.yes{background:color-mix(in srgb, var(--status-good) 14%, var(--surface)); color:var(--status-good);}
   .nolink{color:var(--text-secondary);}
   .partial-note{font-size:12.5px; color:var(--text-muted); font-style:italic;}
@@ -511,7 +511,7 @@
 
   <section class="panel" id="flags">
     <div class="panel-head"><span class="idx">06</span><h2>Flags</h2></div>
-    <p class="question">Which schools miss a listed major or cost too much? Majors, cost, and beach are rated; Female coach and AiA are listed as facts.</p>
+    <p class="question">Which schools miss a listed major or cost too much? Majors, cost, and beach are rated; Female coach and AIA/FCA are listed as facts.</p>
     <div class="card scroll-x">
       <table class="flags" id="flagsTable">
         <thead>
@@ -567,11 +567,14 @@
   var TARGET = C.targetYear();
   var WUE_URL = "https://www.wiche.edu/tuition-savings/wue/wue-list-of-schools/";
   var AIA_URL = "https://athletesinaction.org/campus/campus-list/";
+  var FCA_URL = "https://www.fca.org/quick-links/local-staff-websites";
+  // FCA's staff finder: FCA staff serve nearly every zip, so this is the way to reach a local huddle
+  var FCA_STAFF_URL = "https://www.fca.org/quick-links/find-local-staff";
   var STANDINGS = {};
   Object.keys(D.conferences).forEach(function(k){ STANDINGS[D.conferences[k].memberName] = D.conferences[k].standingsUrl; });
   var CONFIG = {
     home: settings.home, weights: C.DEFAULTS.weights, flagCols: C.flagCols(MAJORS),
-    currentName: BASE ? BASE.name : null, beachHref: "aac-beach.html", faithShort: "AiA"
+    currentName: BASE ? BASE.name : null, beachHref: "aac-beach.html", faithShort: "AIA"
   };
   var BEACH = SAVED || !!CONFIG.beachHref;   // beach rows and links (per school in the saved report)
   var HOME = CONFIG.home;
@@ -893,11 +896,15 @@
       (todo.length ? "Not researched: " + list(todo) + ". " : "") +
       (SAVED ? "Each school's card links to its conference's roster comparison."
              : '<a class="srclink" href="' + esc(carry(CONFIG.beachHref)) + '" target="_blank" rel="noopener">Compare the rosters</a>.'));
-    var aia = cands.filter(function(s){ return s.flagDetail.aia === "Yes"; }).map(function(s){ return s.name; });
-    notes.push("AiA (Athletes in Action) is checked against the official campus list at " +
-      '<a class="srclink" href="' + AIA_URL + '" target="_blank" rel="noopener noreferrer">athletesinaction.org/campus/campus-list</a>. ' +
-      (aia.length ? "Listed: " + list(aia) + ". " : "No school here is listed. ") +
-      "\"No\" means the school isn't on the official list, which doesn't rule out an unlisted or student-led chapter.");
+    var aia = cands.filter(function(s){ return /AIA/.test(s.flagDetail.aia); }).map(function(s){ return s.name; });
+    var fca = cands.filter(function(s){ return /FCA/.test(s.flagDetail.aia); }).map(function(s){ return s.name; });
+    notes.push("AIA/FCA: two Christian athlete ministries. <b>AIA</b> (Athletes in Action) is checked against its official campus list at " +
+      '<a class="srclink" href="' + AIA_URL + '" target="_blank" rel="noopener noreferrer">athletesinaction.org/campus/campus-list</a>' +
+      (aia.length ? "; listed: " + list(aia) + "." : "; no school here is listed.") +
+      " <b>FCA</b> (Fellowship of Christian Athletes) publishes no campus list; a school counts when FCA's own " +
+      '<a class="srclink" href="' + FCA_URL + '" target="_blank" rel="noopener noreferrer">local staff websites</a> page links a live ' +
+      "FCA ministry site for that university" + (fca.length ? "; listed: " + list(fca) + "." : "; no school here has one.") +
+      " \"na\" means neither is listed, which doesn't rule out an unlisted or student-led group (many FCA college huddles run through athletics).");
     var fn = document.getElementById("flagsNotes");
     notes.forEach(function(h){ fn.appendChild(li(h)); });
   })();
@@ -1209,8 +1216,8 @@
       order.forEach(function(k){
         var td = document.createElement("td");
         var span = document.createElement("span");
-        span.className = "flag " + s.flags[k] + (s.flags[k] === "info" && s.flagDetail[k] === "Yes" ? " yes" : "");
-        // fact columns (Female coach, AiA) show the fact itself instead of a rating
+        span.className = "flag " + s.flags[k] + (s.flags[k] === "info" && C.factYes(s.flagDetail[k]) ? " yes" : "");
+        // fact columns (Female coach, AIA/FCA) show the fact itself instead of a rating
         span.textContent = icons[s.flags[k]] + " " + (s.flags[k] === "info" ? s.flagDetail[k] : labels[s.flags[k]]);
         if(k === "beach" && s.links.beachRoster){
           // the Beach chip links to the current beach roster (BEACH_PLAN.md §6.2)
@@ -1357,6 +1364,22 @@
       side.appendChild(bRow);
     }
 
+    // Local FCA: FCA staff cover nearly every area, so point to its staff finder with the campus zip
+    // (the finder can't be linked with the zip filled in)
+    (function(){
+      var row = document.createElement("div"); row.className = "kv";
+      var k = document.createElement("div"); k.className = "k"; k.textContent = "Local FCA";
+      var v = document.createElement("div"); v.className = "v";
+      var a = document.createElement("a"); a.className = "srclink"; a.href = FCA_STAFF_URL;
+      a.target = "_blank"; a.rel = "noopener noreferrer"; a.textContent = "Find local FCA staff";
+      v.appendChild(a);
+      var where = s.ipeds && s.ipeds.zip ? "enter zip " + s.ipeds.zip
+                : s.ipeds && s.ipeds.city ? "enter the zip for " + s.ipeds.city + ", " + s.ipeds.state : "";
+      if (where) v.appendChild(document.createTextNode(" · " + where));
+      row.appendChild(k); row.appendChild(v);
+      side.appendChild(row);
+    })();
+
     var flagLabel = document.createElement("div"); flagLabel.className="k"; flagLabel.style.marginTop="4px"; flagLabel.textContent = "Flags";
     side.appendChild(flagLabel);
     var flagrow = document.createElement("div"); flagrow.className = "flagrow";
@@ -1365,7 +1388,7 @@
     var icons = { good:"✓", warning:"!", critical:"✕", pending:"?", info:"·" };
     order.forEach(function(k){
       var span = document.createElement("span");
-      span.className = "flag " + s.flags[k] + (s.flags[k] === "info" && s.flagDetail[k] === "Yes" ? " yes" : "");
+      span.className = "flag " + s.flags[k] + (s.flags[k] === "info" && C.factYes(s.flagDetail[k]) ? " yes" : "");
       span.textContent = icons[s.flags[k]] + " " + short[k] + (s.flags[k] === "info" ? ": " + s.flagDetail[k] : "");
       flagrow.appendChild(span);
     });
@@ -1386,7 +1409,8 @@
     addLink(srcRow, s.links.roster, "Roster");
     addLink(srcRow, s.links.stats, "Stats");
     if (BEACH && s.links.beachRoster) addLink(srcRow, s.links.beachRoster, "Beach roster");
-    if (s.links.aia) srcRow.appendChild(srcLink(s.links.aia, CONFIG.faithShort || "AiA"));
+    if (s.links.aia) srcRow.appendChild(srcLink(s.links.aia, CONFIG.faithShort || "AIA"));
+    if (s.links.fca) srcRow.appendChild(srcLink(s.links.fca, "FCA"));
     card.appendChild(srcRow);
 
     host.appendChild(card);

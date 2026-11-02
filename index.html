@@ -122,6 +122,18 @@
     margin:0 0 22px;
     max-width:700px;
   }
+  /* find a school (under the chips): a compact search; the suggestion list drops over the page */
+  .find{ position:relative; max-width:420px; margin:10px 0 0; }
+  .find-icon{ position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--text-muted); pointer-events:none; }
+  .find input{ width:100%; font:14px/1.3 "Work Sans",sans-serif; color:var(--text-primary); background:var(--surface-raised);
+               border:1px solid var(--border); border-radius:999px; padding:7px 12px 7px 32px; }
+  .find input::placeholder{ color:var(--text-muted); }
+  .find input:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
+  .find .ta-list{ max-height:min(320px, 50vh); }
+  /* the row a search jumped to: a brief highlight that fades */
+  @keyframes found-flash{ 0%, 60%{ background:var(--accent-soft); box-shadow:0 0 0 2px var(--accent); } 100%{ background:transparent; box-shadow:0 0 0 2px transparent; } }
+  .mini-school-row.found{ animation:found-flash 2.4s ease-out; border-radius:4px; }
+  @media (prefers-reduced-motion: reduce){ .mini-school-row.found{ animation:none; background:var(--accent-soft); box-shadow:0 0 0 2px var(--accent); } }
   nav.jump{
     display:flex;
     flex-wrap:wrap;
@@ -658,7 +670,7 @@
       </div>
       <div class="view-sec" role="group" aria-labelledby="view-title">
         <span class="view-title" id="view-title">Layout</span>
-        <label><input type="checkbox" id="f-single"> Single column (conferences and reports one per row)</label>
+        <label><input type="checkbox" id="f-multi"> Multiple columns (conferences and reports side by side)</label>
       </div>
       <div class="saved-sec" aria-labelledby="saved-title">
         <span class="saved-title" id="saved-title">Saved schools</span>
@@ -707,6 +719,14 @@
       <a class="carry-saved" data-href="saved-report.html" href="saved-report.html" target="_blank" rel="noopener" hidden>Saved report ↗</a>
       <a class="carry-saved" data-href="saved-map.html" href="saved-map.html" target="_blank" rel="noopener" hidden>Saved map ↗</a>
     </nav>
+    <!-- find a school: jumps to its row in its conference's card (with that conference's report and map) -->
+    <div class="find" role="search">
+      <svg class="find-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input id="find-school" type="search" role="combobox" aria-autocomplete="list" aria-expanded="false"
+             aria-controls="find-list" aria-label="Find a school and go to its conference"
+             placeholder="Find a school…" spellcheck="false" autocomplete="off" enterkeyhint="go">
+      <ul class="ta-list" id="find-list" role="listbox" hidden></ul>
+    </div>
   </div>
 </header>
 <main>
@@ -857,7 +877,12 @@ function typeahead(input, list, search, onPick){
 
 // schools: every Massey team, by report/IPEDS name, Massey name, or city
 function searchSchools(q){
-  return C.searchSchools(q).map(function(s){
+  // an exact name (Massey's, or the displayed one) goes first: "Nebraska" -> Nebraska-Lincoln before
+  // Nebraska Wesleyan. Only for these search boxes; pasted saved lists keep Compare.searchSchools' order.
+  var f = fold(q);
+  var exact = function(s){ return fold(s.value) === f || fold(s.label) === f; };
+  var found = C.searchSchools(q);
+  return found.filter(exact).concat(found.filter(function(s){ return !exact(s); })).map(function(s){
     return { value: s.value, label: s.label, sub: s.sub, badge: s.researched ? "full data" : "partial", badgeMuted: !s.researched };
   });
 }
@@ -923,6 +948,29 @@ typeahead($("f-school"), $("f-school-list"), searchSchools, function(it){
   if (it) $("f-school").value = it.label;   // before commit, so the hint sees the picked name
   commit({school: it ? it.value : null});
 });
+// find a school: scroll to its row in its conference's card and flash it
+function goToSchool(m){
+  var row = document.querySelector('.mini-school-row[data-team="' + (window.CSS && CSS.escape ? CSS.escape(m) : m) + '"]');
+  if (!row) return false;
+  document.querySelectorAll(".mini-school-row.found").forEach(function(r){ r.classList.remove("found"); });
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // center the row in the space below the pinned header (scrollIntoView ignores the header)
+  var headerBottom = document.querySelector("header.top").getBoundingClientRect().bottom;
+  var b = row.getBoundingClientRect();
+  var y = window.scrollY + b.top - headerBottom - Math.max(0, (window.innerHeight - headerBottom - b.height) / 2);
+  window.scrollTo({ top: Math.max(0, y), behavior: reduce ? "auto" : "smooth" });
+  void row.offsetWidth;   // restart the highlight if the same row is found twice
+  row.classList.add("found");
+  setTimeout(function(){ row.classList.remove("found"); }, 4000);
+  return true;
+}
+typeahead($("find-school"), $("find-list"), searchSchools, function(it){
+  if (!it) return;
+  $("find-school").value = it.label;
+  $("find-school").blur();   // drops the phone keyboard so the row is in view
+  // after the keyboard has gone (the viewport changes size), so the scroll isn't cut short
+  setTimeout(function(){ goToSchool(it.value); }, 60);
+});
 typeahead($("f-home"), $("f-home-list"), searchPlaces, function(it){
   if (it) $("f-home").value = it.label;   // before commit, so the hint sees the picked name
   commit({home: it ? it.value : null});
@@ -961,18 +1009,21 @@ $("copy-link").addEventListener("click", function(){
 
 // ---------------------------------------------------------------- view options
 // A per-browser display preference, kept apart from the comparison settings: not in shared
-// links and not cleared by Reset.
+// links and not cleared by Reset. Single column is the default (since 2026-11-02); the box turns on
+// multiple columns. An older stored choice still counts: {single: true} stays single, and
+// {single: false} (single turned on, then off again) means multiple columns.
 var VIEW_KEY = "ncaaCompare.view.v1";
 function loadView(){
   try { return JSON.parse(localStorage.getItem(VIEW_KEY)) || {}; } catch (e) { return {}; }
 }
+function isMulti(v){ return v.multi !== undefined ? !!v.multi : v.single === false; }
 function applyView(v){
-  document.body.classList.toggle("single", !!v.single);
-  $("f-single").checked = !!v.single;
+  var multi = isMulti(v);
+  document.body.classList.toggle("single", !multi);
+  $("f-multi").checked = multi;
 }
-$("f-single").addEventListener("change", function(){
-  var v = loadView();
-  v.single = this.checked;
+$("f-multi").addEventListener("change", function(){
+  var v = { multi: this.checked };
   try { localStorage.setItem(VIEW_KEY, JSON.stringify(v)); } catch (e) { /* lasts for this page only */ }
   applyView(v);
 });
