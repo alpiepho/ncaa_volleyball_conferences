@@ -247,6 +247,9 @@
       ipeds: { city: loc.city || null, state: loc.state || null, locale: t.campus ? (t.campus.locale || "") : (ip ? ip.locale : ""),
                lat: loc.lat, lon: loc.lon, zip: t.campus ? null : (ip ? ip.zip || null : null) },
       tuitionInState: ip ? ip.tuitionInState : null, tuitionOutOfState: ip ? ip.tuitionOutOfState : null,
+      // books, food and housing, other expenses (IPEDS, same year as tuition): {parts, basis "on"|"off",
+      // estimated: [part indexes from the state median], from}; null if IPEDS has no cost row
+      living: ip && ip.living ? ip.living : null,
       programs: ip ? ip.programs : {},
       offenseNote: r ? r.offenseNote : null, coachStaff: r ? r.coachStaff : null,
       femaleCoachOnStaff: r ? r.femaleCoachOnStaff : null, aiaChapter: r ? r.aiaChapter : null,
@@ -436,6 +439,14 @@
       conf: isMember ? conf.memberName : s.confSlug ? D().conferences[s.confSlug].memberName : s.masseyConf,
       division: s.division, region: s.region, niche: s.niche,
       cost: c.cost, costBasis: basis, costKind: c.kind, costFootnotes: c.footnotes,
+      // total cost of attendance: the tuition + fees above plus living costs (a service academy covers
+      // room and board too, so its total stays at its cost)
+      livingParts: c.kind === "academy" ? [0, 0, 0] : (s.living ? s.living.parts : null),
+      livingBasis: c.kind === "academy" ? "academy" : (s.living ? s.living.basis : null),
+      livingEstimated: c.kind === "academy" || !s.living ? [] : s.living.estimated,
+      livingFrom: s.living ? s.living.from : null,
+      totalCost: c.cost == null ? null : c.kind === "academy" ? c.cost
+        : s.living ? c.cost + s.living.parts[0] + s.living.parts[1] + s.living.parts[2] : null,
       earnings: s.earnings, natRank: s.natRank,
       confRank: isMember ? s.confRank : "—",
       ipeds: s.ipeds, programs: programLines(offered, act), offeredMajors: offeredMajors,

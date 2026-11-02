@@ -185,6 +185,21 @@
     font-size:12px; font-weight:600; color:var(--text-primary); white-space:nowrap;
   }
   .stackseg{position:absolute; top:2px; height:20px;}
+  /* cost bars: total cost, split into tuition + fees (solid) and living on campus (lighter), with a 2px gap */
+  .bar.split{display:flex; gap:2px; background:transparent; overflow:hidden;}
+  .bar.split .seg{height:100%; flex:0 0 auto;}
+  .bar.split .seg.tuition{background:var(--series-1);}
+  .bar.split .seg.living{background:color-mix(in srgb, var(--series-1) 40%, var(--surface));}
+  .bar.split.context .seg.tuition{background:var(--baseline);}
+  .bar.split.context .seg.living{background:color-mix(in srgb, var(--baseline) 45%, var(--surface));}
+  .legend .swatch.living{background:color-mix(in srgb, var(--series-1) 40%, var(--surface));}
+  /* living costs filled from a state median (IPEDS lacks them for the school): hash marks */
+  .bar.split .seg.living.est, .legend .swatch.living.est{
+    background:repeating-linear-gradient(135deg, color-mix(in srgb, var(--series-1) 40%, var(--surface)) 0 3px, var(--surface) 3px 6px);
+  }
+  .bar.split.context .seg.living.est{
+    background:repeating-linear-gradient(135deg, color-mix(in srgb, var(--baseline) 45%, var(--surface)) 0 3px, var(--surface) 3px 6px);
+  }
   .stackseg:focus-visible{outline:2px solid var(--text-primary); outline-offset:1px;}
 
   .divergetrack{flex:1 1 auto; height:24px; position:relative;}

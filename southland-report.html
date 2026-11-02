@@ -184,6 +184,21 @@
     font-size:12px; font-weight:600; color:var(--text-primary); white-space:nowrap;
   }
   .stackseg{position:absolute; top:2px; height:20px;}
+  /* cost bars: total cost, split into tuition + fees (solid) and living on campus (lighter), with a 2px gap */
+  .bar.split{display:flex; gap:2px; background:transparent; overflow:hidden;}
+  .bar.split .seg{height:100%; flex:0 0 auto;}
+  .bar.split .seg.tuition{background:var(--series-1);}
+  .bar.split .seg.living{background:color-mix(in srgb, var(--series-1) 40%, var(--surface));}
+  .bar.split.context .seg.tuition{background:var(--baseline);}
+  .bar.split.context .seg.living{background:color-mix(in srgb, var(--baseline) 45%, var(--surface));}
+  .legend .swatch.living{background:color-mix(in srgb, var(--series-1) 40%, var(--surface));}
+  /* living costs filled from a state median (IPEDS lacks them for the school): hash marks */
+  .bar.split .seg.living.est, .legend .swatch.living.est{
+    background:repeating-linear-gradient(135deg, color-mix(in srgb, var(--series-1) 40%, var(--surface)) 0 3px, var(--surface) 3px 6px);
+  }
+  .bar.split.context .seg.living.est{
+    background:repeating-linear-gradient(135deg, color-mix(in srgb, var(--baseline) 45%, var(--surface)) 0 3px, var(--surface) 3px 6px);
+  }
   .stackseg:focus-visible{outline:2px solid var(--text-primary); outline-offset:1px;}
 
   .divergetrack{flex:1 1 auto; height:24px; position:relative;}
@@ -436,7 +451,7 @@
           <tr>
             <th>School</th><th>Conference</th><th class="num">Nat'l rank</th><th class="num">Conf rank</th>
             <th class="num">Academics</th><th class="num">Athletics</th><th class="num">Campus</th>
-            <th class="num">Diversity</th><th class="num">Est. cost / yr</th><th class="num">Composite</th>
+            <th class="num">Diversity</th><th class="num" title="IPEDS 2024-25 tuition + required fees at the rate that applies; the cost section and profile cards also give the total living on campus">Tuition + fees / yr</th><th class="num">Composite</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -478,12 +493,17 @@
     <p class="question">What does a year actually cost once residency, WUE eligibility, and private sticker price are factored in?</p>
     <div class="card">
       <figure>
+        <div class="legend" aria-hidden="true">
+          <span class="item"><span class="swatch" style="background:var(--series-1)"></span>Tuition + fees</span>
+          <span class="item"><span class="swatch living"></span>Food and housing, books, other (living on campus)</span>
+          <span class="item" id="costLegendEst" hidden><span class="swatch living est"></span>Estimated (state median; the school doesn't report it)</span>
+        </div>
         <div id="costChart"></div>
-        <figcaption>Tuition + fees estimate at the rate that would apply for the home town and majors in the settings (in-state, WUE, or private). Hover a bar for the basis.</figcaption>
+        <figcaption>Total cost per year living on campus, sticker price before aid. The solid part is tuition + fees at the rate that would apply for the home town and majors in the settings (in-state, WUE, or private); the lighter part adds on-campus food and housing, books, and other expenses. Hover a bar for the breakdown. IPEDS 2024-25, the latest federal data; a school's own site may show this year's rate.</figcaption>
       </figure>
       <details class="tview">
         <summary>View as table</summary>
-        <table class="dtable" id="costTable"><thead><tr><th>School</th><th>Basis</th><th>Est. cost / yr</th><th>Source</th></tr></thead><tbody></tbody></table>
+        <table class="dtable" id="costTable"><thead><tr><th>School</th><th>Basis</th><th>Tuition + fees / yr</th><th>Total, living on campus</th><th>Source</th></tr></thead><tbody></tbody></table>
       </details>
     </div>
   </section>
@@ -584,6 +604,14 @@
   function carry(href){ return C.withSettings(href, settings); }
   function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
   // cost basis plus the WUE footnotes (D9)
+  // living-cost lines for the hover and profile card: where a part came from when it isn't the
+  // school's own on-campus figure (off campus: the school reports no campus housing; est.: state median)
+  function livingLines(s){
+    var lp = s.livingParts, est = s.livingEstimated || [], from = s.livingFrom;
+    function v(i){ return "$" + lp[i].toLocaleString() + (est.indexOf(i) >= 0 ? " (est., " + from + ")" : ""); }
+    return [[s.livingBasis === "off" ? "Food and housing (off campus; no campus housing reported)" : "Food and housing (on campus)", v(1)],
+            ["Books and supplies", v(0)], ["Other expenses", v(2)]];
+  }
   function basisText(s){ return s.costBasis + (s.costFootnotes && s.costFootnotes.length ? " Note: " + s.costFootnotes.join(" ") : ""); }
   var GRADE_MAP = { "A+":97,"A":95,"A-":92,"B+":88,"B":85,"B-":82,"C+":78,"C":75,"C-":72,"D+":68,"D":65,"D-":62,"F":50 };
   function gradeNum(g){ return GRADE_MAP[g]; }
@@ -679,6 +707,7 @@
 
   function fmtMoney(v){
     if(v == null) return "—";
+    if(v === 0) return "$0";   // service academies
     return "$" + (v/1000).toFixed(1).replace(/\.0$/,"") + "K";
   }
   function css(varName){
@@ -991,8 +1020,10 @@
   // ================= 03 cost bar =================
   (function(){
     var host = document.getElementById("costChart");
-    var sorted = schools.filter(function(s){ return s.cost != null; }).sort(function(a,b){ return a.cost - b.cost; });
-    var max = Math.ceil(Math.max.apply(null, sorted.map(function(s){return s.cost;})) / 10000) * 10000;
+    // bars show the total living on campus (tuition + fees where IPEDS has no living costs)
+    function total(s){ return s.totalCost != null ? s.totalCost : s.cost; }
+    var sorted = schools.filter(function(s){ return s.cost != null; }).sort(function(a,b){ return total(a) - total(b); });
+    var max = Math.ceil(Math.max.apply(null, sorted.map(total)) / 10000) * 10000;
     sorted.forEach(function(s){
       var row = document.createElement("div"); row.className = "barrow";
       var name = document.createElement("div");
@@ -1000,16 +1031,51 @@
       name.textContent = s.name;
       var track = document.createElement("div"); track.className = "track";
       var bar = document.createElement("div");
-      bar.className = "bar" + (s.current ? " context" : "");
+      var t = total(s);
+      bar.className = "bar split" + (s.current ? " context" : "");
       bar.style.left = "0%";
-      bar.style.width = (s.cost/max*100) + "%";
+      bar.style.width = (t/max*100) + "%";
+      if (!t) bar.style.minWidth = "6px";   // a $0 service academy keeps a sliver to hover
       bar.tabIndex = 0;
+      bar.setAttribute("aria-label", s.name + ": total $" + t.toLocaleString() + ", tuition and fees $" + s.cost.toLocaleString());
+      var segT = document.createElement("div"); segT.className = "seg tuition";
+      segT.style.width = "calc(" + (s.cost / t * 100) + "% - 1px)";
+      bar.appendChild(segT);
+      if (s.totalCost != null && s.totalCost > s.cost){
+        // the school's own living figures (lighter), then any part filled from a state median (hash marks)
+        var estAmt = s.livingEstimated.reduce(function(sum, i){ return sum + s.livingParts[i]; }, 0);
+        var known = s.totalCost - s.cost - estAmt;
+        if (known > 0){
+          var segL = document.createElement("div"); segL.className = "seg living";
+          segL.style.width = "calc(" + (known / t * 100) + "% - 1px)";
+          bar.appendChild(segL);
+        }
+        if (estAmt > 0){
+          var segE = document.createElement("div"); segE.className = "seg living est";
+          segE.style.flex = "1 1 auto";
+          bar.appendChild(segE);
+          document.getElementById("costLegendEst").hidden = false;
+        } else if (segL){
+          segL.style.width = ""; segL.style.flex = "1 1 auto";
+        }
+      }
       var val = document.createElement("div");
       val.className = "bar-value";
-      val.style.left = "calc(" + (s.cost/max*100) + "% + 8px)";
-      val.textContent = fmtMoney(s.cost);
+      val.style.left = "calc(" + (t/max*100) + "% + 8px)";
+      val.textContent = fmtMoney(t);
       wireTooltip(bar, function(){
-        return [ttTitle(s.name), ttRow("Basis", basisText(s)), ttRow("Est. annual cost", "$" + s.cost.toLocaleString(), s.current?css("--baseline"):css("--series-1"))];
+        var tc = s.current ? css("--baseline") : css("--series-1");
+        var rows = [ttTitle(s.name), ttRow("Basis", basisText(s)), ttRow("Tuition + fees", "$" + s.cost.toLocaleString(), tc)];
+        if (s.livingBasis === "academy"){
+          rows.push(ttRow("Room and board", "covered (service academy)"));
+          rows.push(ttRow("Total per year", "$" + s.totalCost.toLocaleString()));
+        } else if (s.totalCost != null){
+          livingLines(s).forEach(function(l){ rows.push(ttRow(l[0], l[1])); });
+          rows.push(ttRow("Total per year", "$" + s.totalCost.toLocaleString() + (s.livingEstimated.length ? " (part estimated)" : "")));
+        } else {
+          rows.push(ttRow("Living costs", "not reported to IPEDS; bar is tuition + fees only"));
+        }
+        return rows;
       });
       track.appendChild(bar); track.appendChild(val);
       row.appendChild(name); row.appendChild(track);
@@ -1023,6 +1089,8 @@
       tr.appendChild(td(s.name));
       tr.appendChild(td(basisText(s)));
       tr.appendChild(td("$" + s.cost.toLocaleString(), true));
+      tr.appendChild(td(s.totalCost == null ? "—" : "$" + s.totalCost.toLocaleString() +
+        (s.livingEstimated && s.livingEstimated.length ? " (est.)" : s.livingBasis === "off" ? " (off campus)" : "")));
       var srcTd = document.createElement("td");
       addLink(srcTd, s.links.niche, "Niche");
       tr.appendChild(srcTd);
@@ -1291,7 +1359,14 @@
       row.appendChild(kk); row.appendChild(vv);
       return row;
     }
-    side.appendChild(kv("Estimated annual cost", (s.cost == null ? "—" : "$" + s.cost.toLocaleString()) + " (" + basisText(s) + ")"));
+    side.appendChild(kv("Tuition + fees / yr", (s.cost == null ? "—" : "$" + s.cost.toLocaleString()) + " (" + basisText(s) + ")"));
+    if (s.livingBasis === "academy"){
+      side.appendChild(kv("Total cost per year", "$" + s.totalCost.toLocaleString() + " (service academy: room and board covered)"));
+    } else if (s.totalCost != null){
+      side.appendChild(kv("Total cost per year" + (s.livingBasis === "off" ? ", living off campus" : ", living on campus"),
+        "$" + s.totalCost.toLocaleString() + " (tuition + fees, plus " +
+        livingLines(s).map(function(l){ return l[1] + " " + l[0].replace(/ \(.*\)$/, "").toLowerCase(); }).join(", ") + "; IPEDS 2024-25)"));
+    }
     if(HOME && s.ipeds && s.ipeds.lat != null){
       side.appendChild(kv("Distance from home", milesBetween(HOME, s.ipeds).toLocaleString() + " mi from " + HOME.city + ", " + HOME.state + " (straight line)"));
     }
