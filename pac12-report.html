@@ -562,6 +562,7 @@
 <div class="tt" id="tooltip" role="tooltip"></div>
 
 <script src="data/schools.js"></script>
+<script src="data/history.js"></script>
 <script src="compare.js"></script>
 <script>
 (function(){
@@ -1518,6 +1519,13 @@
     if (BEACH && s.links.beachRoster) addLink(srcRow, s.links.beachRoster, "Beach roster");
     if (s.links.aia) srcRow.appendChild(srcLink(s.links.aia, CONFIG.faithShort || "AIA"));
     if (s.links.fca) srcRow.appendChild(srcLink(s.links.fca, "FCA"));
+    // position history page (tools/position_history.py, made for some schools after a build; it lists
+    // them in data/history.js): opens on the viewer's position
+    if (s.researched && (window.SITE_HISTORY || []).indexOf(s.id) >= 0){
+      var hist = srcLink("history-" + s.id + ".html#" + (settings.position || "S"), "Position history");
+      hist.target = "_blank"; hist.rel = "noopener";
+      srcRow.appendChild(hist);
+    }
     card.appendChild(srcRow);
 
     host.appendChild(card);
