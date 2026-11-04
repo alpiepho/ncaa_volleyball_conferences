@@ -196,6 +196,14 @@
     if (BASE) rows.push(["From " + BASE.name, current ? "—" : miles(C.milesBetween(loc, BASE.ipeds))]);
     return rows;
   }
+  // NOAA climate at the nearest stations (compare.js climate*; the report notes give the sources)
+  function climateRows(c){
+    if (!c) return [];
+    var rows = [["Climate", "Jul " + c.julHigh + "° / Jan " + c.janLow + "°F"]];
+    if (c.sky) rows.push(["Sunny days", (c.sky.clear + c.sky.partly) + "/yr"]);
+    return rows;
+  }
+  function climateLink(c){ return c ? [["Climate", C.climateUrl(c)]] : []; }
   function links(s, keys){
     return keys.filter(function(k){ return s.links && s.links[k[0]]; }).map(function(k){ return [k[1], s.links[k[0]]]; });
   }
@@ -211,8 +219,8 @@
         id: s.id, team: s.masseyName, name: s.name, current: s.current, badge: num ? rank : "•", sort: num ? +rank : 99,
         city: loc.city, state: loc.state, locale: loc.locale, lat: loc.lat, lon: loc.lon,
         rows: [["Nat'l rank", "#" + s.natRank], ["Conf. rank", s.confRank == null ? "—" : s.confRank],
-               ["Tuition + fees/yr", money(s.cost)], ["Total, on campus", money(s.totalCost)]].concat(distRows(loc, s.current)),
-        links: links(s, [["niche", "Niche"], ["roster", "Roster"], ["schedule", "Schedule"], ["stats", "Stats"], ["aia", "AIA"], ["fca", "FCA"]]),
+               ["Tuition + fees/yr", money(s.cost)], ["Total, on campus", money(s.totalCost)]].concat(climateRows(s.climate), distRows(loc, s.current)),
+        links: links(s, [["niche", "Niche"], ["roster", "Roster"], ["schedule", "Schedule"], ["stats", "Stats"], ["aia", "AIA"], ["fca", "FCA"]]).concat(climateLink(s.climate)),
         sub: sub
       };
   }
@@ -249,9 +257,10 @@
         rows.push([mj.label, got.length ? got.map(function(c){ var g = rec.programs[c]; return g + " grads/yr" + (g === 0 ? " (new)" : ""); }).join("; ") : "not offered"]);
       });
     }
-    rows = rows.concat(distRows(loc, current));
+    rows = rows.concat(climateRows(rec.climate), distRows(loc, current));
     var lk = [["Niche", t.niche || google("site:niche.com " + full)], ["Roster", google(full + " women's volleyball roster")]];
     if (current && rec.researched) lk = links(rec, [["niche", "Niche"], ["roster", "Roster"], ["schedule", "Schedule"], ["stats", "Stats"]]);
+    lk = lk.concat(climateLink(rec.climate));
     return {
       id: m.toLowerCase().replace(/[^a-z0-9]+/g, "-"), team: m, name: current ? BASE.name : full, current: current,
       badge: order ? String(order) : "", sort: order || 0,
@@ -308,8 +317,13 @@
     ? L.layerGroup([esri("Canvas/World_Dark_Gray_Base"), esri("Canvas/World_Dark_Gray_Reference")])
     : esri("World_Street_Map");
   var terrain = esri("World_Topo_Map");
+  // satellite photos with Esri's place-name and road overlays on top (the imagery has no labels)
+  var satellite = L.layerGroup([esri("World_Imagery"), esri("Reference/World_Transportation"),
+                                esri("Reference/World_Boundaries_and_Places")]);
   streets.addTo(map);
-  L.control.layers({ "Streets": streets, "Terrain (mountains, forests)": terrain }, null, { position: "topright" }).addTo(map);
+  // the full list of Esri's public services: https://server.arcgisonline.com/ArcGIS/rest/services
+  L.control.layers({ "Streets": streets, "Terrain (mountains, forests)": terrain, "Satellite": satellite },
+                   null, { position: "topright" }).addTo(map);
 
   function popupHtml(s){
     var wrap = document.createElement("div");

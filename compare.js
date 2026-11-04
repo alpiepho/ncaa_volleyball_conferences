@@ -260,7 +260,9 @@
       setter: r ? settersOf(r)[0] || null : null,
       // every rostered player with position groups and season stats (OTHER_POSITIONS.md)
       players: r && Array.isArray(r.players) ? r.players : [],
-      links: r ? r.links : { niche: t.niche }
+      links: r ? r.links : { niche: t.niche },
+      // nearest NOAA stations (tools/build_site.py build_climate); null without a location
+      climate: t.climate || null
     };
   }
 
@@ -404,6 +406,27 @@
   function factText(v) { return v === null || v === undefined ? "—" : v ? "Yes" : "No"; }
   // AIA/FCA column: which of the two campus ministries is listed ("AIA", "FCA", "AIA + FCA"), "na" for
   // neither, null when the school hasn't been checked
+  // ------------------------------------------------------------ climate (NOAA)
+  // c: a team's climate (build_climate). Temperatures are the station's 1991-2020 normals; "sunny"
+  // days are NOAA's Comparative Climatic Data clear + partly cloudy days a year.
+  function climateTemps(c) {
+    return c ? "Jul high " + c.julHigh + "°F · Jan low " + c.janLow + "°F" : "—";
+  }
+  function climateSky(c) {
+    var k = c && c.sky;
+    return k ? (k.clear + k.partly) + " sunny days/yr (" + k.clear + " clear, " + k.partly + " partly cloudy)" : null;
+  }
+  function climateWhere(c) {
+    if (!c) return "";
+    function mi(n) { return n < 1 ? "under 1 mi" : n + " mi"; }
+    return "NOAA station " + c.station + " (" + mi(c.mi) + ")" +
+      (c.sky ? "; sunny days: " + c.sky.station + " (" + mi(c.sky.mi) + ")" : "");
+  }
+  // NOAA's normals viewer opens on the station's monthly highs, lows, and precipitation
+  function climateUrl(c) {
+    return c ? "https://www.ncei.noaa.gov/access/us-climate-normals/#dataset=normals-monthly&timeframe=30&station=" + c.id : null;
+  }
+
   function faithText(aia, fca) {
     if ((aia === null || aia === undefined) && (fca === null || fca === undefined)) return null;
     var p = [];
@@ -451,7 +474,7 @@
       confRank: isMember ? s.confRank : "—",
       ipeds: s.ipeds, programs: programLines(offered, act), offeredMajors: offeredMajors,
       offenseNote: s.offenseNote, coachStaff: s.coachStaff,
-      flags: flags, flagDetail: detail, beach: s.beach, links: s.links
+      flags: flags, flagDetail: detail, beach: s.beach, links: s.links, climate: s.climate
     };
     if (s.setter) row.setter = s.setter;
     row.setters = s.setters || [];
@@ -781,6 +804,8 @@
     matchMajors: matchMajors, activeMajors: activeMajors,
     team: team, schoolRecord: schoolRecord,
     resolveCost: resolveCost, costFlag: costFlag, programsFor: programsFor, programLines: programLines,
+    climateTemps: climateTemps, climateSky: climateSky, climateWhere: climateWhere,
+    climateUrl: climateUrl,
     flagCols: flagCols, factYes: factYes, faithText: faithText, beachLabel: beachLabel, beachFlag: beachFlag,
     buildSchool: buildSchool, reportRows: reportRows,
     milesBetween: milesBetween, targetYear: targetYear, setterOpenings: setterOpenings,

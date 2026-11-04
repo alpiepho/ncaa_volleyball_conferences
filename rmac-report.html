@@ -109,6 +109,7 @@
   }
   .brand{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; padding-bottom:10px;}
   .brand h1{font-size:22px; font-weight:700; text-transform:uppercase; letter-spacing:.03em;}
+  .climate-where{font-size:12px; color:var(--text-muted); margin-top:2px;}
   .brand .tag{font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.08em;}
   nav.chips{
     display:flex; gap:6px; overflow-x:auto; padding-bottom:10px;
@@ -968,6 +969,11 @@
       '<a class="srclink" href="' + FCA_URL + '" target="_blank" rel="noopener noreferrer">local staff websites</a> page links a live ' +
       "FCA ministry site for that university" + (fca.length ? "; listed: " + list(fca) + "." : "; no school here has one.") +
       " \"na\" means neither is listed, which doesn't rule out an unlisted or student-led group (many FCA college huddles run through athletics).");
+    notes.push("Climate (profile cards): July high and January low are the 1991-2020 " +
+      '<a class="srclink" href="https://www.ncei.noaa.gov/products/land-based-station/us-climate-normals" target="_blank" rel="noopener noreferrer">NOAA U.S. Climate Normals</a>' +
+      " at the weather station nearest campus (each card's Climate link opens it). Sunny days are clear plus partly cloudy days a year from NOAA's " +
+      '<a class="srclink" href="https://www.ncei.noaa.gov/products/land-based-station/comparative-climatic-data" target="_blank" rel="noopener noreferrer">Comparative Climatic Data</a>' +
+      " (daytime sky cover, long-term record through 2023) for the nearest of about 250 cities, which can be a different town; its distance is shown.");
     var fn = document.getElementById("flagsNotes");
     notes.forEach(function(h){ fn.appendChild(li(h)); });
   })();
@@ -1489,6 +1495,16 @@
       side.appendChild(row);
     })();
 
+    // Climate: the nearest NOAA stations (normals 1991-2020; sunny = clear + partly cloudy days)
+    if (s.climate){
+      var cRow = kv("Climate", C.climateTemps(s.climate));
+      var sky = C.climateSky(s.climate);
+      if (sky){ cRow.lastChild.appendChild(document.createElement("br")); cRow.lastChild.appendChild(document.createTextNode(sky)); }
+      var cWhere = document.createElement("div"); cWhere.className = "climate-where"; cWhere.textContent = C.climateWhere(s.climate);
+      cRow.lastChild.appendChild(cWhere);
+      side.appendChild(cRow);
+    }
+
     var flagLabel = document.createElement("div"); flagLabel.className="k"; flagLabel.style.marginTop="4px"; flagLabel.textContent = "Flags";
     side.appendChild(flagLabel);
     var flagrow = document.createElement("div"); flagrow.className = "flagrow";
@@ -1520,6 +1536,7 @@
     if (BEACH && s.links.beachRoster) addLink(srcRow, s.links.beachRoster, "Beach roster");
     if (s.links.aia) srcRow.appendChild(srcLink(s.links.aia, CONFIG.faithShort || "AIA"));
     if (s.links.fca) srcRow.appendChild(srcLink(s.links.fca, "FCA"));
+    if (s.climate) srcRow.appendChild(srcLink(C.climateUrl(s.climate), "Climate"));
     // position history page (tools/position_history.py, made for some schools after a build; it lists
     // them in data/history.js): opens on the viewer's position
     if (s.researched && (window.SITE_HISTORY || []).indexOf(s.id) >= 0){
