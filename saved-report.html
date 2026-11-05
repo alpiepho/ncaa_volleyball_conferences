@@ -553,15 +553,15 @@
   </section>
 
   <footer class="endnote">
-    <b>How this page works:</b> the list of saved schools is kept only in this browser (tick schools on the index or a map). Each school's facts are from its conference's pull (logs in <code>data/2026/logs/</code>). The comparison row, costs, flags, distances, and majors are computed in your browser from the settings (Edit settings, at the top). Built by <code>tools/build_site.py</code>.
+    <b>How this page works:</b> your four saved lists are kept only in this browser (tick schools on the index or a map); this page shows the one selected under Edit settings. Each school's facts are from its conference's pull (logs in <code>data/2026/logs/</code>). The comparison row, costs, flags, distances, and majors are computed in your browser from the settings (Edit settings, at the top). Built by <code>tools/build_site.py</code>.
   </footer>
 </main>
 
 <div class="tt" id="tooltip" role="tooltip"></div>
 
-<script src="data/schools.js"></script>
+<script src="data/schools.js?v=f963099b"></script>
 <script src="data/history.js"></script>
-<script src="compare.js"></script>
+<script src="compare.js?v=8615d1bf"></script>
 <script>
 (function(){
   "use strict";
@@ -812,7 +812,7 @@
     if (CONFIG.beachHref) document.getElementById("beach-link").href = carry(CONFIG.beachHref);
     else document.getElementById("beach-link").hidden = true;   // saved report: beach links are per school
     document.getElementById("headline").textContent = SAVED
-      ? "Your " + members + " saved school" + (members === 1 ? "" : "s") + (BASE ? ", compared to " + BASE.name : "")
+      ? C.savedName() + ": " + members + " saved school" + (members === 1 ? "" : "s") + (BASE ? ", compared to " + BASE.name : "")
       : "All " + members + " " + CONF.short + " schools" + (BASE ? ", compared to " + BASE.name : "");
     document.getElementById("mainCaption").textContent = BASE ? "Comparison of schools against " + BASE.name : "Comparison of schools";
     if (BASE) document.getElementById("legendCurrent").textContent = BASE.name + " (comparing to)";
@@ -842,11 +842,11 @@
     if (SAVED){
       var editLink = '<a class="srclink" href="' + esc(carry("index.html") + "&saved") + '">Saved schools</a>';
       if (!members){
-        before.push("No schools saved in this browser yet. Tick schools in the conference lists on the index or on a map " +
+        before.push("No schools saved in " + esc(C.savedName()) + " yet. Tick schools in the conference lists on the index or on a map " +
           "(opening a school's Niche or Roster link saves it too), then come back. Edit the list under " + editLink + ".");
         Array.prototype.forEach.call(document.querySelectorAll("section.panel"), function(p){ p.hidden = true; });
       } else {
-        before.push("The " + members + " school" + (members === 1 ? "" : "s") + " saved in this browser (edit the list under " + editLink +
+        before.push("The " + members + " school" + (members === 1 ? "" : "s") + " in your saved list “" + esc(C.savedName()) + "” (pick or edit the list under " + editLink +
           "), each shown with its own conference and conference rank" + (BASE ? ", plus the comparison school" : "") + ".");
         var unres = cands.filter(function(s){ return !s.researched; });
         if (unres.length) before.push(unres.length + " of them " + (unres.length === 1 ? "hasn't" : "haven't") + " been researched yet (" +

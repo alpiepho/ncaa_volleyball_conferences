@@ -163,8 +163,8 @@
   </aside>
 </div>
 
-<script src="../data/schools.js"></script>
-<script src="../compare.js"></script>
+<script src="../data/schools.js?v=f963099b"></script>
+<script src="../compare.js?v=8615d1bf"></script>
 <script>
 (function(){
   "use strict";
@@ -447,7 +447,7 @@
       var a = document.createElement("a"); a.className = "saved-count";
       // the index opens its saved-list editor for "&saved" in the hash
       a.href = C.withSettings(document.getElementById("edit-settings").getAttribute("href").split("#")[0], settings) + "&saved";
-      a.textContent = saved.length + " saved school" + (saved.length === 1 ? "" : "s");
+      a.textContent = saved.length + " saved (" + C.savedName() + ")";
       a.title = "View, copy, or edit the saved list";
       line.appendChild(a);
     }
@@ -456,12 +456,17 @@
   if (MAP.kind === "saved" && (!SCHOOLS.length || SAVED_MISSING.length)){
     var empty = document.createElement("li"); empty.className = "note-item";
     empty.textContent = !saved.length
-      ? "No schools saved in this browser yet. Tick schools on the index or in a conference map's popups, then come back."
+      ? "No schools saved in " + C.savedName() + " yet. Tick schools on the index or in a conference map's popups, then come back."
       : "Not on the map (no IPEDS campus location): " + SAVED_MISSING.join(", ") + ".";
     list.appendChild(empty);
   }
   // a box ticked on the index or another map shows here without a reload
-  C.onSavedChange(function(list){ saved = list; refreshSaved(); });
+  // the saved map draws its pins from the list once, so another list (picked in another tab) reloads it
+  var listShown = C.savedActive();
+  C.onSavedChange(function(list){
+    if (MAP.kind === "saved" && C.savedActive() !== listShown) return location.reload();
+    saved = list; refreshSaved();
+  });
 })();
 </script>
 </body>

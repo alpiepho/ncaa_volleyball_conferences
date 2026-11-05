@@ -321,8 +321,22 @@
     letter-spacing:0.04em;
     color:var(--text-muted);
   }
-  .saved-sec .saved-n{ font-size:13px; color:var(--saved); font-weight:600; }
+  .saved-sec .saved-n{ font-size:13px; color:var(--saved); font-weight:600; white-space:nowrap; }
   .saved-sec .saved-btns{ display:flex; flex-wrap:wrap; gap:8px; margin-left:auto; }
+  /* list picker: a 1-4 segmented control on the title line */
+  .list-pick{ display:inline-flex; margin-left:auto; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+  .list-pick label{ position:relative; cursor:pointer; }
+  .list-pick input{ position:absolute; opacity:0; width:1px; height:1px; }
+  .list-pick span{ display:block; min-width:34px; padding:5px 0; text-align:center; font-size:13px; font-weight:600;
+                   color:var(--text-secondary); background:var(--surface-raised); }
+  .list-pick label + label span{ border-left:1px solid var(--border); }
+  .list-pick input:checked + span{ background:var(--accent); color:#fff; }
+  .list-pick input:focus-visible + span{ outline:2px solid var(--accent); outline-offset:-3px; }
+  .list-pick .has span::after{ content:"•"; margin-left:2px; color:var(--saved); }
+  .list-pick input:checked + span::after{ color:#fff; }
+  .list-row{ flex:1 0 100%; display:flex; align-items:center; gap:10px; }
+  .list-row input{ flex:1; min-width:0; max-width:240px; font:14px/1.3 "Work Sans",sans-serif; color:var(--text-primary);
+                   background:var(--surface); border:1px solid var(--grid); border-radius:6px; padding:6px 10px; }
   .saved-sec .hint{ flex:1 0 100%; font-size:12px; color:var(--text-muted); margin:0; }
   .saved-sec .hint.warn{ color:var(--critical); }
   button:disabled, button:disabled:hover{
@@ -670,11 +684,16 @@
       </div>
       <div class="view-sec" role="group" aria-labelledby="view-title">
         <span class="view-title" id="view-title">Layout</span>
-        <label><input type="checkbox" id="f-multi"> Multiple columns (conferences and reports side by side)</label>
+        <label><input type="checkbox" id="f-multi"> Multiple columns (wide screens)</label>
       </div>
       <div class="saved-sec" aria-labelledby="saved-title">
         <span class="saved-title" id="saved-title">Saved schools</span>
-        <span class="saved-n" id="saved-n"></span>
+        <!-- four lists; everything below and on the other pages uses the selected one -->
+        <div class="list-pick" role="radiogroup" aria-label="Saved list" id="list-pick"></div>
+        <div class="list-row">
+          <input id="list-name" type="text" maxlength="24" spellcheck="false" autocomplete="off" aria-label="Name of the selected list">
+          <span class="saved-n" id="saved-n"></span>
+        </div>
         <div class="saved-btns">
           <button type="button" class="quiet" id="saved-copy">Copy list</button>
           <button type="button" class="quiet" id="saved-edit">Edit list…</button>
@@ -779,9 +798,9 @@
 </div>
 </main>
 
-<script src="data/schools.js"></script>
-<script src="compare.js"></script>
-<script src="data/places.js"></script>
+<script src="data/schools.js?v=f963099b"></script>
+<script src="compare.js?v=8615d1bf"></script>
+<script src="data/places.js?v=9f2e48c7"></script>
 <script>
 (function(){
 "use strict";
@@ -1083,9 +1102,39 @@ function flash(btn, text){
 }
 function plural(n, word){ return n + " " + word + (n === 1 ? "" : "s"); }
 
+// the 1-4 list picker and the selected list's name (SAVE_SCHOOLS.md: four lists)
+function renderListPick(){
+  var host = $("list-pick"), lists = C.savedLists(), active = C.savedActive();
+  host.innerHTML = "";
+  lists.forEach(function(l, i){
+    var lab = el("label", l.count ? "has" : null);
+    lab.title = l.name + " · " + plural(l.count, "school");
+    var r = document.createElement("input");
+    r.type = "radio"; r.name = "saved-list"; r.value = String(i); r.checked = i === active;
+    r.setAttribute("aria-label", l.name + ", " + plural(l.count, "school"));
+    r.addEventListener("change", function(){
+      saved = C.savedSetActive(i);
+      refreshSaved();
+      measureHeader();
+    });
+    lab.appendChild(r);
+    lab.appendChild(el("span", null, String(i + 1)));
+    host.appendChild(lab);
+  });
+  var nm = $("list-name");
+  if (document.activeElement !== nm) nm.value = lists[active].name;
+  nm.placeholder = "List " + (active + 1);
+}
+$("list-name").addEventListener("change", function(){
+  this.value = C.savedSetName(this.value);
+  renderListPick(); renderSummary();
+});
+$("list-name").addEventListener("keydown", function(e){ if (e.key === "Enter"){ e.preventDefault(); this.blur(); } });
+
 function renderSavedSection(){
   var n = saved.length;
-  $("saved-n").textContent = n ? plural(n, "school") : "";
+  renderListPick();
+  $("saved-n").textContent = plural(n, "school");
   $("saved-copy").disabled = !n;
   $("saved-reset").disabled = !n;
   // the saved report/map chips at the top show only when something is saved
@@ -1096,8 +1145,8 @@ function renderSavedSection(){
     h.textContent = "This browser isn't saving the list (private window or blocked storage); copy it before you leave the page.";
   } else if (!h.getAttribute("data-msg")){
     h.className = "hint";
-    h.textContent = n ? "Copy the list to paste into a text or email. Edit it, or paste a list back in, with Edit list."
-                      : "Tick a school in the conference lists or on a map; opening its Niche or Roster link saves it too.";
+    h.textContent = n ? "Copy to send; Edit list to change it or paste one in."
+                      : "Tick schools in the lists or on a map to save them here.";
   }
 }
 // a one-off message in the hint line ("Added 3 schools"), then back to the usual text
@@ -1109,7 +1158,8 @@ function savedMsg(text){
 }
 
 function openEditor(selectAll, note){
-  box.value = C.savedText(saved);
+  box.value = C.savedText(saved, null, C.savedName());
+  $("saved-dlg-title").textContent = "Saved schools: " + C.savedName();
   renderCheck();
   if (note) $("saved-check").insertBefore(el("div", null, note), $("saved-check").firstChild);
   if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
@@ -1169,7 +1219,7 @@ $("dlg-add").addEventListener("click", function(){
 });
 $("dlg-replace").addEventListener("click", function(){
   var r = C.parseSaved(box.value);
-  if (!r.schools.length && saved.length && !window.confirm("Nothing in the box is recognized. Replace your " + plural(saved.length, "saved school") + " with an empty list?")) return;
+  if (!r.schools.length && saved.length && !window.confirm("Nothing in the box is recognized. Replace the " + plural(saved.length, "school") + " in " + C.savedName() + " with an empty list?")) return;
   applyList(r.schools);
   dlg.close();
   savedMsg("List replaced: " + plural(r.schools.length, "school") + (r.unmatched.length ? "; skipped " + plural(r.unmatched.length, "line") + " not recognized." : "."));
@@ -1185,7 +1235,7 @@ $("dlg-copy").addEventListener("click", function(){
 
 $("saved-edit").addEventListener("click", function(){ openEditor(false); });
 $("saved-copy").addEventListener("click", function(){
-  var btn = this, text = C.savedText(saved);
+  var btn = this, text = C.savedText(saved, null, C.savedName());
   copyText(text, function(ok){
     if (ok) return flash(btn, "Copied");
     // no clipboard access here: show the list selected, ready to copy by hand
@@ -1194,7 +1244,7 @@ $("saved-copy").addEventListener("click", function(){
   });
 });
 $("saved-reset").addEventListener("click", function(){
-  if (!window.confirm("Remove all " + plural(saved.length, "saved school") + "? Copy the list first if you want to keep it.")) return;
+  if (!window.confirm("Remove all " + plural(saved.length, "school") + " from " + C.savedName() + "? Copy the list first if you want to keep it.")) return;
   saved = C.savedReset();
   refreshSaved();
   savedMsg("List cleared.");
@@ -1213,7 +1263,7 @@ function renderHints(){
   var sh = $("f-school-hint"), typed = $("f-school").value.trim();
   sh.className = "hint";
   if (typed && (!base || typed !== base.name)){ sh.textContent = "Pick a school from the list."; sh.className = "hint warn"; }
-  else if (!base) sh.textContent = "Empty: reports show every school with no comparison row.";
+  else if (!base) sh.textContent = "Empty: no comparison row.";
   else if (base.researched) sh.textContent = base.division + " · " + base.masseyConf + " · full data";
   else sh.textContent = "Not researched yet: reports show its IPEDS and Massey data, with — for the rest.";
 
@@ -1236,7 +1286,7 @@ function renderHints(){
   var hh = $("f-home-hint"), typedHome = $("f-home").value.trim(), h = settings.home;
   hh.className = "hint";
   if (typedHome && (!h || typedHome !== h.city + ", " + h.state)){ hh.textContent = "Pick a town from the list."; hh.className = "hint warn"; }
-  else if (!h) hh.textContent = "Empty: no distances, and costs use out-of-state rates.";
+  else if (!h) hh.textContent = "Empty: out-of-state rates, no distances.";
   else hh.textContent = "Distances from here; " + (C.STATE_NAMES[h.state] || h.state) + " residency sets in-state and WUE rates.";
 
   var st = $("status");
@@ -1265,7 +1315,7 @@ function renderSummary(){
   });
   if (saved.length){
     s.appendChild(document.createTextNode(" · "));
-    var b = el("button", "saved-count", saved.length + " saved school" + (saved.length === 1 ? "" : "s"));
+    var b = el("button", "saved-count", saved.length + " saved" + " (" + C.savedName() + ")");
     b.type = "button";
     b.title = "View, copy, or edit the saved list";
     b.addEventListener("click", function(){ openEditor(false); });

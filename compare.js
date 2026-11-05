@@ -647,10 +647,15 @@
   }
 
   // ------------------------------------------------------------ saved schools (SAVE_SCHOOLS.md)
-  // A separate key from the settings: {v, schools: [Massey names, in the order saved], updated}.
-  // Not carried in the URL hash (Q3); shared only as plain text (savedText / parseSaved).
-  var SAVED_KEY = "ncaaCompare.saved.v1";
-  var savedMem = null;   // this page's list when storage is blocked
+  // Four named lists, one selected; a separate key from the settings:
+  //   {v: 2, active: 0-3, lists: [{name, schools: [Massey names, in the order saved], updated}, x4]}
+  // Every saved-list call below acts on the selected list. Not carried in the URL hash (Q3); shared
+  // only as plain text (savedText / parseSaved). The single list of v1 ("ncaaCompare.saved.v1") is
+  // moved into List 1 the first time this loads, and that old key is left as it was.
+  var SAVED_KEY = "ncaaCompare.savedLists.v1";
+  var SAVED_KEY_V1 = "ncaaCompare.saved.v1";
+  var SAVED_LISTS = 4, SAVED_NAME_MAX = 24;
+  var savedMem = null;   // this page's lists when storage is blocked
 
   function savedClean(list) {
     var teams = D().teams, seen = {}, out = [];
@@ -660,35 +665,84 @@
     return out;
   }
 
-  // names that are no longer Massey teams (renamed in a later pull) are dropped
-  function savedLoad() {
+  function savedDefaultName(i) { return "List " + (i + 1); }
+  function savedCleanName(name, i) {
+    var n = String(name == null ? "" : name).replace(/\s+/g, " ").trim().slice(0, SAVED_NAME_MAX);
+    return n || savedDefaultName(i);
+  }
+
+  // the stored state, cleaned: always four lists; names that are no longer Massey teams (renamed
+  // in a later pull) are dropped
+  function savedCleanState(raw) {
+    var lists = [];
+    for (var i = 0; i < SAVED_LISTS; i++) {
+      var l = raw && Array.isArray(raw.lists) && raw.lists[i] ? raw.lists[i] : {};
+      lists.push({ name: savedCleanName(l.name, i), schools: savedClean(l.schools), updated: l.updated || null });
+    }
+    var a = raw && typeof raw.active === "number" ? Math.floor(raw.active) : 0;
+    return { v: 2, active: a >= 0 && a < SAVED_LISTS ? a : 0, lists: lists };
+  }
+
+  function savedWrite(state) {
+    savedMem = JSON.parse(JSON.stringify(state));
+    var ls = storage();
+    if (ls) {
+      try { ls.setItem(SAVED_KEY, JSON.stringify(state)); }
+      catch (e) { storageOk = false; }
+    }
+    return state;
+  }
+
+  function savedState() {
     var ls = storage();
     if (ls) {
       try {
         var raw = ls.getItem(SAVED_KEY);
-        if (raw) return savedClean(JSON.parse(raw).schools);
-        return [];
+        if (raw) return savedCleanState(JSON.parse(raw));
+        // first load since lists came in: the old single list becomes List 1
+        var old = ls.getItem(SAVED_KEY_V1), st = savedCleanState(null);
+        if (old) {
+          var o = JSON.parse(old);
+          st.lists[0].schools = savedClean(o.schools);
+          st.lists[0].updated = o.updated || null;
+          return savedWrite(st);
+        }
+        return st;
       } catch (e) { /* fall through */ }
     }
-    return savedMem ? savedMem.slice() : [];
+    return savedCleanState(savedMem);
   }
+
+  function savedLoad() { var st = savedState(); return st.lists[st.active].schools.slice(); }
 
   function savedSave(list) {
-    var out = savedClean(list);
-    savedMem = out.slice();
-    var ls = storage();
-    if (ls) {
-      try { ls.setItem(SAVED_KEY, JSON.stringify({ v: 1, schools: out, updated: new Date().toISOString() })); }
-      catch (e) { storageOk = false; }
-    }
-    return out;
+    var st = savedState(), out = savedClean(list);
+    st.lists[st.active].schools = out;
+    st.lists[st.active].updated = new Date().toISOString();
+    savedWrite(st);
+    return out.slice();
   }
 
-  function savedReset() {
-    savedMem = [];
-    var ls = storage();
-    if (ls) { try { ls.removeItem(SAVED_KEY); } catch (e) { /* ignore */ } }
-    return [];
+  // empties the selected list (its name stays)
+  function savedReset() { return savedSave([]); }
+
+  // which list is selected (0-3), and switching it
+  function savedActive() { return savedState().active; }
+  function savedSetActive(i) {
+    var st = savedState();
+    if (i >= 0 && i < SAVED_LISTS && i !== st.active) { st.active = i; savedWrite(st); }
+    return st.lists[st.active].schools.slice();
+  }
+  // every list's name and size: [{name, count}], in list order
+  function savedLists() {
+    return savedState().lists.map(function (l) { return { name: l.name, count: l.schools.length }; });
+  }
+  function savedName(i) { var st = savedState(); return st.lists[i === undefined ? st.active : i].name; }
+  function savedSetName(name, i) {
+    var st = savedState(), k = i === undefined ? st.active : i;
+    st.lists[k].name = savedCleanName(name, k);
+    savedWrite(st);
+    return st.lists[k].name;
   }
 
   function isSaved(m) { return savedLoad().indexOf(m) >= 0; }
@@ -703,7 +757,7 @@
 
   function toggleSaved(m) { return setSaved(m, !isSaved(m)); }
 
-  // another tab (an index or map opened from this one) changed the list
+  // another tab (an index or map opened from this one) changed a list, its name, or the selection
   function onSavedChange(fn) {
     if (!root.addEventListener) return;
     root.addEventListener("storage", function (e) {
@@ -727,11 +781,12 @@
     return t.getFullYear() + "-" + ("0" + (t.getMonth() + 1)).slice(-2) + "-" + ("0" + t.getDate()).slice(-2);
   }
 
-  // plain text, one school per line: "Name (D1, Conference)" plus " [researched]"
-  function savedText(list, now) {
+  // plain text, one school per line: "Name (D1, Conference)" plus " [researched]"; the "#" header
+  // names the list when a name is given (imports skip "#" lines, so it never changes a list's name)
+  function savedText(list, now, name) {
     var d = D(), sorted = savedSort(list);
-    var lines = ["# NCAA women's volleyball: " + sorted.length + " saved school" + (sorted.length === 1 ? "" : "s") +
-                 " (" + isoDay(now) + ")"];
+    var lines = ["# NCAA women's volleyball: " + (name ? name + ", " : "") + sorted.length + " saved school" +
+                 (sorted.length === 1 ? "" : "s") + " (" + isoDay(now) + ")"];
     sorted.forEach(function (m) {
       var t = d.teams[m];
       lines.push(displayName(m) + " (" + t.division + ", " + t.conf + ")" + (t.researched ? " [researched]" : ""));
@@ -813,7 +868,10 @@
     positionOpenings: positionOpenings, playerStat: playerStat, totalBlocks: totalBlocks, hitPct: hitPct, perSet: perSet,
     positionName: positionName, summary: summary, join: join,
     fold: fold, displayName: displayName, teamWhere: teamWhere, searchSchools: searchSchools,
-    SAVED_KEY: SAVED_KEY, savedLoad: savedLoad, savedSave: savedSave, savedReset: savedReset,
+    SAVED_KEY: SAVED_KEY, SAVED_KEY_V1: SAVED_KEY_V1, SAVED_LISTS: SAVED_LISTS, SAVED_NAME_MAX: SAVED_NAME_MAX,
+    savedLoad: savedLoad, savedSave: savedSave, savedReset: savedReset,
+    savedActive: savedActive, savedSetActive: savedSetActive, savedLists: savedLists,
+    savedName: savedName, savedSetName: savedSetName,
     isSaved: isSaved, setSaved: setSaved, toggleSaved: toggleSaved, onSavedChange: onSavedChange,
     savedSort: savedSort, savedText: savedText, parseSaved: parseSaved, savedRows: savedRows
   };
