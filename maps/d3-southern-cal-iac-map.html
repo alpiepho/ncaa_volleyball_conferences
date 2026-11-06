@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-<head>
+<head><script src="../theme.js?v=6e63a942"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Southern Cal IAC (D3) School Map</title>
@@ -311,8 +311,10 @@
   var ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services/";
   var ESRI_ATTR = 'Tiles &copy; <a href="https://www.esri.com/" target="_blank" rel="noopener">Esri</a> &mdash; Esri, HERE, Garmin, USGS, NGA, EPA, USDA, NPS, OpenStreetMap contributors, and the GIS User Community';
   function esri(name){ return L.tileLayer(ESRI + name + "/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19, attribution: ESRI_ATTR }); }
-  var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches &&
-             document.documentElement.getAttribute("data-theme") !== "light";
+  // the street map follows the theme (theme.js: Auto/Light/Dark); a change in another tab reloads it
+  var dark = window.ncaaTheme ? window.ncaaTheme.isDark()
+           : !!window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  if (window.ncaaTheme) window.ncaaTheme.onchange = function(){ if (window.ncaaTheme.isDark() !== dark) location.reload(); };
   var streets = dark
     ? L.layerGroup([esri("Canvas/World_Dark_Gray_Base"), esri("Canvas/World_Dark_Gray_Reference")])
     : esri("World_Street_Map");

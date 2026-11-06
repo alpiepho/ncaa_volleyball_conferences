@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-<head>
+<head><script src="theme.js?v=6e63a942"></script>
 <meta charset="UTF-8">
 <title>NCAA Women's Volleyball Conferences 2026</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -334,6 +334,8 @@
   .list-pick input:focus-visible + span{ outline:2px solid var(--accent); outline-offset:-3px; }
   .list-pick .has span::after{ content:"•"; margin-left:2px; color:var(--saved); }
   .list-pick input:checked + span::after{ color:#fff; }
+  .theme-pick{ margin-left:0; }
+  .theme-pick span{ padding:5px 12px; }
   .list-row{ flex:1 0 100%; display:flex; align-items:center; gap:10px; }
   .list-row input{ flex:1; min-width:0; max-width:240px; font:14px/1.3 "Work Sans",sans-serif; color:var(--text-primary);
                    background:var(--surface); border:1px solid var(--grid); border-radius:6px; padding:6px 10px; }
@@ -680,6 +682,14 @@
                  aria-controls="f-home-list" placeholder="e.g. Denver, CO" spellcheck="false">
           <ul class="ta-list" id="f-home-list" role="listbox" hidden></ul>
           <p class="hint" id="f-home-hint"></p>
+        </div>
+      </div>
+      <div class="view-sec" role="group" aria-labelledby="theme-title">
+        <span class="view-title" id="theme-title">Theme</span>
+        <div class="list-pick theme-pick" role="radiogroup" aria-labelledby="theme-title">
+          <label title="Follow this device's light or dark setting"><input type="radio" name="theme" value="auto"><span>Auto</span></label>
+          <label><input type="radio" name="theme" value="light"><span>Light</span></label>
+          <label><input type="radio" name="theme" value="dark"><span>Dark</span></label>
         </div>
       </div>
       <div class="view-sec" role="group" aria-labelledby="view-title">
@@ -1041,13 +1051,33 @@ function applyView(v){
   document.body.classList.toggle("single", !multi);
   $("f-multi").checked = multi;
 }
-$("f-multi").addEventListener("change", function(){
-  var v = { multi: this.checked };
+// the view key holds both display options; a change to one keeps the other
+function saveView(change){
+  var v = loadView();
+  Object.keys(change).forEach(function(k){ v[k] = change[k]; });
   try { localStorage.setItem(VIEW_KEY, JSON.stringify(v)); } catch (e) { /* lasts for this page only */ }
-  applyView(v);
+  return v;
+}
+$("f-multi").addEventListener("change", function(){ applyView(saveView({ multi: this.checked, single: undefined })); });
+
+// Theme: Auto / Light / Dark (theme.js applies it on every page, and in other open tabs)
+var themeNow = "auto";
+function applyThemePick(t){
+  themeNow = t;
+  Array.prototype.forEach.call(document.querySelectorAll('input[name="theme"]'), function(r){ r.checked = r.value === t; });
+  window.ncaaTheme.apply(t);
+}
+Array.prototype.forEach.call(document.querySelectorAll('input[name="theme"]'), function(r){
+  r.addEventListener("change", function(){
+    saveView({ theme: r.value === "auto" ? undefined : r.value });
+    applyThemePick(r.value);
+  });
 });
 applyView(loadView());
-window.addEventListener("storage", function(e){ if (e.key === VIEW_KEY) applyView(loadView()); });
+applyThemePick(window.ncaaTheme.get());
+window.addEventListener("storage", function(e){
+  if (e.key === VIEW_KEY){ applyView(loadView()); applyThemePick(window.ncaaTheme.get()); }
+});
 
 // ---------------------------------------------------------------- saved schools: section + editor
 // (SAVE_SCHOOLS.md §7). The editor's text box is both the viewer and the importer.
@@ -1281,7 +1311,7 @@ function renderHints(){
       : " → no IPEDS program matches this; try the program's official name"));
     mm.appendChild(row);
   });
-  if (!settings.majors.trim()) mm.appendChild(el("div", "match", "Empty: reports show no major columns."));
+  if (!settings.majors.trim()) mm.appendChild(el("div", "match", "Empty: no major columns."));
 
   var hh = $("f-home-hint"), typedHome = $("f-home").value.trim(), h = settings.home;
   hh.className = "hint";

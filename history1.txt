@@ -1,0 +1,16 @@
+ 1081  git commit -m "added some weather stats"
+ 1082  git push
+ 1083  cp -r ../ncaa_search_stuff/site2026/* .
+ 1084  git add -A
+ 1085  git commit -m "added more conferences"
+ 1086  git push
+ 1087  cp -r ../ncaa_search_stuff/site2026/* .
+ 1088  git status
+ 1089  git add -A
+ 1090  git commit -m "added 4 saved lists"
+ 1091  git push
+ 1092  meld . ../ncaa_search_stuff/site2026
+ 1093  pwd
+ 1094  ls
+ 1095  vi .gitignore
+ 1096  cp -r ../ncaa_search_stuff/site2026/* .
