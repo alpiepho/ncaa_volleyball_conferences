@@ -863,7 +863,9 @@
   //    sunnyMin: n|null, julyMax: n|null, janMin: n|null,
   //    researched-only (phase 3, from team sites, not Niche):
   //    confRankMax: n|null, openings: bool (the settings' position), offense: ["5-1","6-2","split"],
-  //    beach: bool, faith: bool (AIA or FCA), femaleCoach: bool, includeUnresearched: bool}
+  //    beach: bool, faith: bool (AIA or FCA), femaleCoach: bool, includeUnresearched: bool,
+  //    start from a school (§11): similarTo: Massey name|null, similarLimit: n, similarOff: [row keys],
+  //    similarLevel: "same"|"stronger"|"weaker", similarIncludeSeed: bool}
   // Empty or null = not used. AND across filters, OR within one. While a researched-only filter is set,
   // schools not researched yet are left out unless includeUnresearched (then those filters skip them).
   var FILTER_KEY = "ncaaCompare.filters.v1";
@@ -891,7 +893,8 @@
              types: [], settings: [], states: [], regions: [], costMax: null, costBasis: "tuition",
              distanceMax: null, sunnyMin: null, julyMax: null, janMin: null,
              confRankMax: null, openings: false, offense: [], beach: false, faith: false, femaleCoach: false,
-             includeUnresearched: false };
+             includeUnresearched: false,
+             similarTo: null, similarLimit: SIMILAR_DEFAULT_LIMIT, similarOff: [], similarLevel: "same", similarIncludeSeed: true };
   }
   var OFFENSES = ["5-1", "6-2", "split"];
   // the offense call's family: "5-1" (5-1 and 5-1 leaning), "6-2", "split" (a 3-way split); null if none
@@ -924,6 +927,12 @@
     o.confRankMax = num(f.confRankMax);
     o.offense = arr(f.offense, function (x) { return OFFENSES.indexOf(x) >= 0; });
     ["openings", "beach", "faith", "femaleCoach", "includeUnresearched"].forEach(function (k) { o[k] = f[k] === true; });
+    // a remembered starting school no longer in the data is dropped
+    o.similarTo = typeof f.similarTo === "string" && D().teams[f.similarTo] ? f.similarTo : null;
+    if (SIMILAR_LIMITS.indexOf(+f.similarLimit) >= 0) o.similarLimit = +f.similarLimit;
+    o.similarOff = arr(f.similarOff, function (k) { return SIMILAR_ROWS.some(function (r) { return r.key === k; }); });
+    if (f.similarLevel === "stronger" || f.similarLevel === "weaker") o.similarLevel = f.similarLevel;
+    o.similarIncludeSeed = f.similarIncludeSeed !== false;
     return o;
   }
   function filtersLoad() {
@@ -947,6 +956,7 @@
     ["openings", "beach", "faith", "femaleCoach"].forEach(function (k) { if (f[k]) n++; });
     if (f.confRankMax !== null) n++;
     if (f.offense.length) n++;
+    if (f.similarTo) n++;
     return n;
   }
   function campusSetting(locale) {
@@ -954,12 +964,183 @@
     return m ? m[1].toLowerCase() : null;
   }
 
-  // -> {matches: [Massey names, by division then Massey rank], researched, notResearched,
-  //     skipped: {filter: count of schools left out for missing data}, majors: [{label, cips, schools}],
-  //     unknownMajors: [terms], rank: {from, to, swapped}, homeSet, costRates}
+  // ------------------------------------------------------------ similar schools (FILTER_PLAN.md §11)
+  // Start from a school: each row below scores 0-1 against the starting school and the score is the
+  // weighted average over the rows both schools have. A row a filter is set for stops being scored; the
+  // filter is required instead. The score is about the two schools, never the viewer's settings.
+  // Tuning is here: weight, and "span", the difference that scores 0.
+  var SIMILAR_ROWS = [
+    { key: "level", label: "Volleyball level", weight: 3, span: 0.25 },      // share of the division
+    { key: "size", label: "Size", weight: 2, span: 2 },                      // size bands
+    { key: "type", label: "Public/private", weight: 2 },
+    { key: "cost", label: "Cost", weight: 2, span: Math.LN2 },               // log ratio: twice the price scores 0
+    { key: "academics", label: "Academics", weight: 2, span: 0.5 },          // cosine of the program mixes
+    { key: "kind", label: "School kind", weight: 2, span: 2 },               // KIND_STEP steps
+    { key: "setting", label: "Setting", weight: 1, span: 2 },                // SETTINGS steps
+    { key: "climate", label: "Climate", weight: 1, spans: { jul: 15, jan: 30, sunny: 80 } },
+    { key: "location", label: "Location", weight: 1, span: 1500 }            // miles
+  ];
+  var SIMILAR_LIMITS = [10, 15, 20, 30, 50], SIMILAR_DEFAULT_LIMIT = 20;
+  var SIMILAR_CLOSE = 0.80, SIMILAR_GOOD = 0.65;   // the Close / Good / Loose labels
+  var SIMILAR_MIN_DATA = 0.6;                      // share of the starting school's usable weight a school must have
+  var SIMILAR_LEVEL_SHIFT = 0.15;                  // stronger / weaker move the target by this share of the division
+  // 2021 Carnegie class (IPEDS C21BASIC) -> step; special-focus and two-year classes have none
+  var KIND_STEP = { 15: 0, 16: 1, 17: 2, 18: 3, 19: 3, 20: 3, 22: 4, 23: 4, 21: 5 };
+  var KIND_LABEL = ["R1 research", "R2 research", "doctoral/professional", "master's", "baccalaureate", "arts & sciences"];
+  var mixCache = {};
+
+  function clamp01(x) { return Math.max(0, Math.min(1, x)); }
+  // the share of a school's bachelor's graduates in each 2-digit CIP field; null with no programs
+  function programMix(ip, id) {
+    if (id in mixCache) return mixCache[id];
+    var mix = {}, any = false;
+    Object.keys(ip.programs || {}).forEach(function (c) { var k = c.slice(0, 2); mix[k] = (mix[k] || 0) + ip.programs[c]; any = true; });
+    return (mixCache[id] = any ? mix : null);
+  }
+  function cosine(a, b) {
+    var s = 0, x = 0, y = 0, k;
+    for (k in a) { x += a[k] * a[k]; if (k in b) s += a[k] * b[k]; }
+    for (k in b) y += b[k] * b[k];
+    return x && y ? s / Math.sqrt(x * y) : 0;
+  }
+  function similarFacts(m) {
+    var d = D(), t = d.teams[m], s = schoolRecord(m), ip = t.ipedsId ? d.ipeds[String(t.ipedsId)] : null;
+    var cs = campusSetting(s.ipeds.locale), kind = ip ? KIND_STEP[ip.carnegie] : undefined;
+    return {
+      name: m, division: t.division, rank: t.rank || null,
+      size: ip && ip.size != null ? ip.size : null,
+      isPublic: ip ? ip.control === 1 : null,
+      cost: s.tuitionOutOfState > 0 ? s.tuitionOutOfState : null,
+      mix: ip ? programMix(ip, t.ipedsId) : null,
+      kind: kind === undefined ? null : kind,
+      setting: cs ? SETTINGS.indexOf(cs) : null,
+      climate: s.climate,
+      place: isFinite(s.ipeds.lat) && isFinite(s.ipeds.lon) ? s.ipeds : null
+    };
+  }
+  // the rows the starting school a has data for
+  function similarHas(a, key) {
+    return key === "level" ? a.rank !== null : key === "size" ? a.size !== null : key === "type" ? a.isPublic !== null :
+           key === "cost" ? a.cost !== null : key === "academics" ? a.mix !== null : key === "kind" ? a.kind !== null :
+           key === "setting" ? a.setting !== null : key === "climate" ? !!a.climate : !!a.place;
+  }
+  function similarRow(key) { return SIMILAR_ROWS.filter(function (r) { return r.key === key; })[0]; }
+  // {row key: 0-1} for the rows both schools have; shift moves the volleyball target (a share of the division)
+  function similarParts(a, b, sizes, shift) {
+    var o = {}, near = function (d, span) { return clamp01(1 - Math.abs(d) / span); }, R = similarRow;
+    if (a.rank !== null && b.rank !== null && a.division === b.division) {
+      var n = sizes[a.division], target = Math.max(1, Math.min(n, a.rank + (shift || 0) * n));
+      o.level = near(target - b.rank, R("level").span * n);
+    }
+    if (a.size !== null && b.size !== null) o.size = near(a.size - b.size, R("size").span);
+    if (a.isPublic !== null && b.isPublic !== null) o.type = a.isPublic === b.isPublic ? 1 : 0;
+    if (a.cost !== null && b.cost !== null) o.cost = near(Math.log(a.cost / b.cost), R("cost").span);
+    if (a.mix && b.mix) o.academics = near(1 - cosine(a.mix, b.mix), R("academics").span);
+    if (a.kind !== null && b.kind !== null) o.kind = near(a.kind - b.kind, R("kind").span);
+    if (a.setting !== null && b.setting !== null) o.setting = near(a.setting - b.setting, R("setting").span);
+    if (a.climate && b.climate) {
+      var sp = R("climate").spans, v = [near(a.climate.julHigh - b.climate.julHigh, sp.jul), near(a.climate.janLow - b.climate.janLow, sp.jan)];
+      if (a.climate.sky && b.climate.sky) v.push(near(a.climate.sky.clear + a.climate.sky.partly - b.climate.sky.clear - b.climate.sky.partly, sp.sunny));
+      o.climate = v.reduce(function (x, y) { return x + y; }, 0) / v.length;
+    }
+    if (a.place && b.place) {
+      var mi = milesBetween(a.place, b.place);
+      if (mi !== null) o.location = near(mi, R("location").span);
+    }
+    return o;
+  }
+  // which rows a set filter takes over (it is required, so the row isn't scored)
+  function similarOverrides(f, homeSet) {
+    return {
+      level: f.rankFrom !== null || (f.rankTo !== null && f.rankTo !== "max"),
+      size: f.sizes.length > 0, type: f.types.length > 0, cost: f.costMax !== null,
+      academics: false, kind: false, setting: f.settings.length > 0,
+      climate: f.sunnyMin !== null || f.julyMax !== null || f.janMin !== null,
+      location: f.states.length > 0 || f.regions.length > 0 || (f.distanceMax !== null && homeSet)
+    };
+  }
+  function similarHint(a, key) {
+    if (!similarHas(a, key)) return null;
+    if (key === "level") return a.division + " #" + a.rank;
+    if (key === "size") return SIZE_BANDS[a.size];
+    if (key === "type") return a.isPublic ? "Public" : "Private";
+    if (key === "cost") return "$" + a.cost.toLocaleString("en-US") + " out-of-state";
+    if (key === "academics") return "program mix";
+    if (key === "kind") return KIND_LABEL[a.kind];
+    if (key === "setting") { var s = SETTINGS[a.setting]; return s.charAt(0).toUpperCase() + s.slice(1); }
+    if (key === "climate") return a.climate.julHigh + "° July, " + a.climate.janLow + "° Jan" + (a.climate.sky ? ", " + (a.climate.sky.clear + a.climate.sky.partly) + " sunny days" : "");
+    return [a.place.city, a.place.state].filter(Boolean).join(", ");
+  }
+  // the starting school and what each row will do: {facts, division, weight, active,
+  //   rows: [{key, label, weight, hint, has, on, overridden, active}]}; null with no starting school.
+  // active is false when no row is left to score (the list is then the plain filter list).
+  function similarInfo(f, settings) {
+    f = cleanFilters(f);
+    if (!f.similarTo) return null;
+    var a = similarFacts(f.similarTo), over = similarOverrides(f, !!(settings && settings.home)), weight = 0;
+    var rows = SIMILAR_ROWS.map(function (r) {
+      var has = similarHas(a, r.key), on = f.similarOff.indexOf(r.key) < 0, active = has && on && !over[r.key];
+      if (active) weight += r.weight;
+      return { key: r.key, label: r.label, weight: r.weight, hint: similarHint(a, r.key), has: has, on: on, overridden: over[r.key], active: active };
+    });
+    return { facts: a, name: f.similarTo, division: a.division, weight: weight, active: weight > 0, rows: rows,
+             levelActive: rows[0].active };
+  }
+  function similarCloseness(score) { return score >= SIMILAR_CLOSE ? "Close" : score >= SIMILAR_GOOD ? "Good" : "Loose"; }
+  // short reasons for the preview, heaviest rows first: {alike: [...], differ: [...]}
+  function similarWhy(a, b, parts, rows) {
+    var alike = [], differ = [];
+    var say = {
+      level: ["close in level", "far apart in level"],
+      size: ["same size", "different size"],
+      type: ["both " + (b.isPublic ? "public" : "private"), b.isPublic ? "public" : "private"],
+      cost: ["similar cost", b.cost < a.cost ? "cheaper" : "costlier"],
+      academics: ["similar programs", "different programs"],
+      kind: ["both " + KIND_LABEL[b.kind], KIND_LABEL[b.kind]],
+      setting: ["same setting", SETTINGS[b.setting]],
+      climate: ["similar climate", "different climate"],
+      location: ["nearby", "far away"]
+    };
+    rows.forEach(function (r) {
+      if (!r.active || !(r.key in parts)) return;
+      if (parts[r.key] >= 0.75) alike.push(say[r.key][0]);
+      else if (parts[r.key] <= 0.25) differ.push(say[r.key][1]);
+    });
+    return { alike: alike, differ: differ };
+  }
+  // names passed the filters; -> {names: the list, scored: the same with scores, pool, leftOut}
+  function similarCut(names, sim, f) {
+    var a = sim.facts, sizes = divisionSizes(), leftOut = 0, scored = [];
+    var dir = sim.levelActive && f.similarLevel !== "same" ? f.similarLevel : null;
+    var shift = dir === "stronger" ? -SIMILAR_LEVEL_SHIFT : dir === "weaker" ? SIMILAR_LEVEL_SHIFT : 0;
+    names.forEach(function (m) {
+      if (m === a.name) return;
+      var b = similarFacts(m);
+      // stronger / weaker is required within the division; other divisions can't be compared by rank
+      if (dir && b.division === a.division && (dir === "stronger" ? b.rank >= a.rank : b.rank <= a.rank)) return;
+      var parts = similarParts(a, b, sizes, shift), w = 0, s = 0;
+      sim.rows.forEach(function (r) { if (r.active && r.key in parts) { w += r.weight; s += r.weight * parts[r.key]; } });
+      if (w < SIMILAR_MIN_DATA * sim.weight) { leftOut++; return; }
+      scored.push({ name: m, score: s / w, parts: parts, facts: b });
+    });
+    scored.sort(function (x, y) { return y.score - x.score || x.name.localeCompare(y.name); });
+    var kept = scored.slice(0, f.similarIncludeSeed ? f.similarLimit - 1 : f.similarLimit).map(function (x) {
+      return { name: x.name, score: x.score, closeness: similarCloseness(x.score), parts: x.parts, why: similarWhy(a, x.facts, x.parts, sim.rows) };
+    });
+    if (kept.length && f.similarIncludeSeed) kept.unshift({ name: a.name, seed: true });
+    return { names: kept.map(function (x) { return x.name; }), scored: kept, pool: scored.length, leftOut: leftOut };
+  }
+
+  // -> {matches: [Massey names, by division then Massey rank; closest first from a starting school],
+  //     researched, notResearched, skipped: {filter: count of schools left out for missing data},
+  //     majors: [{label, cips, schools}], unknownMajors: [terms], rank: {from, to, swapped}, homeSet, costRates,
+  //     similar: null | {name, active, limit, scored, pool, leftOut}}
   function filterSchools(f, settings) {
     f = cleanFilters(f); settings = settings || blank();
     var d = D(), home = settings.home || null;
+    var sim = similarInfo(f, settings), scoring = !!(sim && sim.active);
+    // no division ticked (and no conference chosen): the starting school's division, because ranks only compare within one
+    var divisions = f.divisions.length || !scoring || f.confs.length ? f.divisions : [sim.division];
     var majors = matchMajors(f.majors), useMajors = activeMajors(majors);
     var sizes = divisionSizes();
     var from = f.rankFrom, to = f.rankTo === "max" ? null : f.rankTo, swapped = false;
@@ -970,7 +1151,7 @@
     var rOnly = researchedOnlySet(f), leftOut = 0;
     var matches = Object.keys(d.teams).filter(function (m) {
       var t = d.teams[m];
-      if (f.divisions.length && f.divisions.indexOf(t.division) < 0) return false;
+      if (divisions.length && divisions.indexOf(t.division) < 0) return false;
       if (f.confs.length && f.confs.indexOf(t.division + "|" + t.conf) < 0) return false;
       if (from !== null && t.rank < from) return false;
       if (to !== null && to < sizes[t.division] && t.rank > to) return false;
@@ -1056,8 +1237,14 @@
       var ta = d.teams[a], tb = d.teams[b];
       return (DIV_ORDER[ta.division] || 9) - (DIV_ORDER[tb.division] || 9) || ta.rank - tb.rank || a.localeCompare(b);
     });
+    var similar = sim ? { name: sim.name, active: scoring, limit: f.similarLimit, scored: [], pool: 0, leftOut: 0 } : null;
+    if (scoring) {
+      var cut = similarCut(matches, sim, f);
+      matches = cut.names; similar.scored = cut.scored; similar.pool = cut.pool; similar.leftOut = cut.leftOut;
+    }
     var nr = matches.filter(function (m) { return !!d.teams[m].researched; }).length;
     return {
+      similar: similar,
       matches: matches, researched: nr, notResearched: matches.length - nr, skipped: skipped,
       majors: useMajors.map(function (mj, i) { return { label: mj.label, cips: mj.cips, schools: offered[i] }; }),
       unknownMajors: majors.filter(function (mj) { return !mj.cips.length; }).map(function (mj) { return mj.term; }),
@@ -1073,6 +1260,11 @@
   function filterName(f) {
     f = cleanFilters(f);
     var bits = [];
+    var sim = similarInfo(f);
+    if (sim && sim.active) {
+      bits.push(("Like " + f.similarTo).slice(0, SAVED_NAME_MAX));
+      if (f.similarLevel !== "same") bits.push(f.similarLevel);
+    }
     if (f.divisions.length && f.divisions.length < 3) bits.push(f.divisions.slice().sort().join("-"));
     if (f.confs.length === 1) bits.push(f.confs[0].split("|")[1]);
     if (f.regions.length === 1 && !f.states.length) bits.push(f.regions[0]);
@@ -1118,6 +1310,8 @@
     divisionSizes: divisionSizes, blankFilters: blankFilters, cleanFilters: cleanFilters,
     filtersLoad: filtersLoad, filtersSave: filtersSave, filtersActive: filtersActive,
     campusSetting: campusSetting, filterSchools: filterSchools, filterName: filterName,
-    OFFENSES: OFFENSES, offenseKind: offenseKind, researchedOnlySet: researchedOnlySet
+    OFFENSES: OFFENSES, offenseKind: offenseKind, researchedOnlySet: researchedOnlySet,
+    SIMILAR_ROWS: SIMILAR_ROWS, SIMILAR_LIMITS: SIMILAR_LIMITS, similarInfo: similarInfo, similarParts: similarParts,
+    similarFacts: similarFacts
   };
 })(typeof window !== "undefined" ? window : globalThis);
