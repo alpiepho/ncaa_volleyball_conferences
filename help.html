@@ -56,6 +56,7 @@
   h3{ font:600 15px/1.3 "Work Sans",sans-serif; margin:18px 0 4px; }
   p{ margin:0 0 10px; }
   .sub{ color:var(--text-secondary); margin:0 0 18px; }
+  .version{ color:var(--text-secondary); font-size:13px; margin:0 0 4px; }
   ul, ol{ margin:0 0 12px; padding-left:22px; }
   li{ margin:3px 0; }
   b{ font-weight:600; }
@@ -86,6 +87,9 @@
 <body>
 <div class="wrap">
   <a class="home carry" href="index.html">← 00 Home</a>
+  <!-- Site version: bump it with every change to the site that viewers will see (features, layout, help text),
+       e.g. 2.3 -> 2.4; data-only weekly updates don't change it. -->
+  <p class="version">Version 2.7</p>
   <h1>How to use this site</h1>
   <p class="sub">A research tool for comparing NCAA women's volleyball programs (Division I, II, and III) as
     transfer options: volleyball strength, setters and other positions, coaching staff, academics and majors,
@@ -206,12 +210,23 @@
     <li><span class="chip saved">Saved report ↗</span> and <span class="chip saved">Saved map ↗</span> (top of the home
       page) compare just your saved schools, from any conference or division. Schools that haven't been researched
       yet show their basic data (cost, majors, rank, location) with "—" for the rest.</li>
-    <li><b>Edit settings → Saved schools</b>: <b>Copy list</b> copies the list as plain text, ready to paste into a
-      text or email (for example, to ask for those schools to be researched next). <b>Edit list…</b> shows the list
-      and lets you paste one in; <b>Reset list</b> clears it.</li>
-    <li>You can keep <b>four lists</b>: pick one with the <b>1 2 3 4</b> buttons under Edit settings → Saved schools,
+    <li><b>Edit settings → Saved schools → Edit list…</b> shows the list as plain text. In it, <b>Copy</b> copies the
+      list, ready to paste into a text or email (for example, to ask for those schools to be researched next); you can
+      paste a list in and <b>Add to list</b> or <b>Replace list</b>; and <b>Reset list</b> clears it.</li>
+    <li>You can keep <b>six lists</b>: pick one with the <b>1</b>–<b>6</b> buttons under Edit settings → Saved schools,
       and type a name for it (for example "West coast"). Ticking, the saved report and map, and Copy / Edit / Reset
       all use the list that's picked.</li>
+    <li><b>Create list…</b> (next to Edit list…) builds a list from filters over every team, researched or not:
+      division, conference, Massey rank (from / to, where <b>max</b> is the last rank in each division), one or two
+      majors, school size, public or private, cost per year, distance from your home town, region or states, campus
+      setting, sunny days, and July / January temperatures. A count shows how many schools match as you go.
+      <b>Create list</b> puts them in the list that's picked (it asks first if that list already has schools, or if
+      more than 20 match). Cost and distance use the home town in Settings, like the reports. Your filters are
+      remembered in this browser; <b>Reset filters</b> clears them.</li>
+    <li>The <b>Researched schools only</b> group adds conference rank, position openings (a senior or grad among the
+      top players at the position in Settings, as in the reports), offense (5-1, 6-2, 3-way split), beach program,
+      AIA or FCA, and a woman on the coaching staff. Only researched schools have these (none in D3 yet), so while one
+      is set the others are left out, unless you tick <b>Include schools not researched yet</b>.</li>
     <li>The lists are kept only in this browser and aren't part of shared links. Copy a list to move it to another
       device.</li>
   </ul>
@@ -239,14 +254,14 @@
     <li>The lists show one per row, which is easiest to scroll; leave <b>Multiple columns</b> off.</li>
     <li>Bookmark the site, or add it to your home screen (Share → Add to Home Screen on an iPhone).</li>
     <li>On an iPhone, Safari can clear the site's stored settings and saved schools if you don't visit for about a
-      week. Bookmark a <b>Copy link with settings</b> link to keep your settings, and <b>Copy list</b> to keep your saved
+      week. Bookmark a <b>Copy link with settings</b> link to keep your settings, and copy each list (<b>Edit list… → Copy</b>) to keep your saved
       schools somewhere safe.</li>
   </ul>
 
   <p class="foot">Questions or a school you'd like added: send your saved list (Edit settings → Saved schools →
-    Copy list) to whoever shared this site with you.</p>
+    Edit list… → Copy) to whoever shared this site with you.</p>
 </div>
-<script src="compare.js?v=8615d1bf"></script>
+<script src="compare.js?v=4933c158"></script>
 <script>
 // links back carry the viewer's settings, as on every other page
 (function(){

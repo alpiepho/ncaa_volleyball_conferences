@@ -323,7 +323,7 @@
   }
   .saved-sec .saved-n{ font-size:13px; color:var(--saved); font-weight:600; white-space:nowrap; }
   .saved-sec .saved-btns{ display:flex; flex-wrap:wrap; gap:8px; margin-left:auto; }
-  /* list picker: a 1-4 segmented control on the title line */
+  /* list picker: a 1-6 segmented control on the title line */
   .list-pick{ display:inline-flex; margin-left:auto; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
   .list-pick label{ position:relative; cursor:pointer; }
   .list-pick input{ position:absolute; opacity:0; width:1px; height:1px; }
@@ -393,6 +393,50 @@
     .dlg{ height:100%; max-height:none; padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px)); }
     .dlg textarea{ min-height:0; resize:none; }
     .share-dlg .dlg{ height:auto; }
+  }
+
+  /* ---------- Create list…: the filter dialog (FILTER_PLAN.md §4) ---------- */
+  .filter-dlg .dlg{ height:min(760px, calc(100dvh - 34px)); }
+  .fl-body{ flex:1 1 auto; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding-right:2px; }
+  .fl-group{ border:1px solid var(--grid); border-radius:8px; padding:0 10px; background:var(--surface); }
+  .fl-group summary{ cursor:pointer; padding:9px 0; font:600 12px/1.2 "Work Sans",sans-serif; text-transform:uppercase;
+                     letter-spacing:0.04em; color:var(--text-secondary); }
+  .fl-group summary .fl-set{ text-transform:none; letter-spacing:0; font-weight:600; color:var(--accent); margin-left:4px; }
+  .fl-group[open] summary{ border-bottom:1px solid var(--grid); margin-bottom:6px; }
+  .fl-row{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; padding:5px 0; font-size:14px; }
+  .fl-row label{ display:inline-flex; align-items:center; gap:5px; cursor:pointer; }
+  .fl-row input[type=checkbox], .fl-row input[type=radio]{ width:15px; height:15px; margin:0; accent-color:var(--accent); }
+  .fl-k{ flex:0 0 96px; font-size:13px; font-weight:600; color:var(--text-secondary); cursor:default; }
+  .fl-row input.fl-num, .fl-row input.fl-text, .fl-row select{
+    font:14px/1.3 "Work Sans",sans-serif; color:var(--text-primary); background:var(--surface-raised);
+    border:1px solid var(--grid); border-radius:6px; padding:5px 8px; }
+  .fl-row input.fl-num{ width:5.2em; }
+  .fl-row input.fl-num.wide{ width:6.5em; }
+  .fl-row input.fl-text{ flex:1 1 160px; min-width:0; max-width:260px; }
+  .fl-row select{ flex:1 1 180px; min-width:0; max-width:300px; }
+  .fl-note{ flex:1 0 100%; font-size:12px; color:var(--text-muted); padding-left:106px; }
+  .fl-note:empty{ display:none; }
+  .fl-help{ margin:0 0 4px; font-size:12px; color:var(--text-muted); }
+  .fl-incl{ display:flex; flex-wrap:wrap; align-items:center; gap:2px 7px; font-size:14px; cursor:pointer; padding:2px 2px 0; }
+  .fl-incl[hidden]{ display:none; }
+  .fl-incl input{ width:15px; height:15px; margin:0; accent-color:var(--accent); }
+  .fl-incl span{ flex:1 0 100%; padding-left:22px; font-size:12px; color:var(--text-muted); }
+  .fl-note.warn{ color:var(--critical); }
+  .fl-foot{ flex:0 0 auto; border-top:1px solid var(--grid); padding-top:8px; display:flex; flex-direction:column; gap:6px; }
+  .fl-count{ margin:0; font-size:14px; font-weight:600; }
+  .fl-count .ok{ color:var(--saved); }
+  .fl-count .fl-skip{ font-weight:400; font-size:12px; color:var(--text-muted); }
+  .fl-preview{ margin:0; font-size:12px; color:var(--text-secondary); line-height:1.4; overflow:hidden;
+                display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+  .fl-preview:empty, .fl-target:empty{ display:none; }
+  .fl-target{ margin:0; font-size:12px; color:var(--text-secondary); }
+  .fl-target.warn{ color:var(--critical); }
+  .fl-name-row{ padding:0; }
+  @media (max-width:520px){
+    .filter-dlg .dlg{ height:100%; }
+    .fl-k{ flex-basis:100%; }
+    .fl-note{ padding-left:0; }
+    .fl-row input.fl-text, .fl-row select{ max-width:none; }
   }
 
   .settings-foot .status{ flex:1 1 200px; }
@@ -698,16 +742,15 @@
       </div>
       <div class="saved-sec" aria-labelledby="saved-title">
         <span class="saved-title" id="saved-title">Saved schools</span>
-        <!-- four lists; everything below and on the other pages uses the selected one -->
+        <!-- six lists; everything below and on the other pages uses the selected one -->
         <div class="list-pick" role="radiogroup" aria-label="Saved list" id="list-pick"></div>
         <div class="list-row">
           <input id="list-name" type="text" maxlength="24" spellcheck="false" autocomplete="off" aria-label="Name of the selected list">
           <span class="saved-n" id="saved-n"></span>
         </div>
         <div class="saved-btns">
-          <button type="button" class="quiet" id="saved-copy">Copy list</button>
           <button type="button" class="quiet" id="saved-edit">Edit list…</button>
-          <button type="button" class="quiet" id="saved-reset">Reset list</button>
+          <button type="button" class="quiet" id="saved-create">Create list…</button>
         </div>
         <p class="hint" id="saved-hint" aria-live="polite"></p>
       </div>
@@ -731,10 +774,123 @@
         <div class="dlg-check" id="saved-check" aria-live="polite"></div>
         <div class="dlg-foot">
           <button type="button" class="quiet" id="dlg-copy">Copy</button>
+          <button type="button" class="quiet" id="dlg-reset">Reset list</button>
           <span class="spacer"></span>
           <button value="cancel" class="quiet">Cancel</button>
           <button type="button" id="dlg-add">Add to list</button>
           <button type="button" id="dlg-replace">Replace list</button>
+        </div>
+      </form>
+    </dialog>
+    <!-- "Create list…": filter every team into the selected saved list (FILTER_PLAN.md); the groups
+         scroll, the count and buttons stay at the bottom -->
+    <dialog class="saved-dlg filter-dlg" id="filter-dlg" aria-labelledby="filter-dlg-title">
+      <form method="dialog" class="dlg" id="filter-form" autocomplete="off" onsubmit="return false">
+        <div class="dlg-head">
+          <h2 id="filter-dlg-title">Create a list from filters</h2>
+          <button type="button" class="quiet x" id="fl-x" aria-label="Close">✕</button>
+        </div>
+        <div class="fl-body">
+          <p class="dlg-help">Filters apply to all <span id="fl-total"></span> teams. Leave a filter empty to skip it.</p>
+          <details class="fl-group" data-group="vb">
+            <summary>Volleyball <span class="fl-set"></span></summary>
+            <div class="fl-row"><span class="fl-k">Division</span>
+              <label><input type="checkbox" name="fl-div" value="D1"> D1</label>
+              <label><input type="checkbox" name="fl-div" value="D2"> D2</label>
+              <label><input type="checkbox" name="fl-div" value="D3"> D3</label></div>
+            <div class="fl-row"><label class="fl-k" for="fl-conf">Conference</label>
+              <select id="fl-conf"><option value="">Any conference</option></select></div>
+            <div class="fl-row"><span class="fl-k">Massey rank</span>
+              from <input id="fl-rank-from" class="fl-num" type="text" inputmode="numeric" placeholder="1" aria-label="Massey rank from">
+              to <input id="fl-rank-to" class="fl-num" type="text" list="fl-rank-list" placeholder="max" aria-label="Massey rank to (a number or max)">
+              <datalist id="fl-rank-list"><option value="max"><option value="50"><option value="100"><option value="150"><option value="200"><option value="250"><option value="300"></datalist>
+              <span class="fl-note" id="fl-rank-note"></span></div>
+          </details>
+          <details class="fl-group" data-group="ac">
+            <summary>Academics <span class="fl-set"></span></summary>
+            <div class="fl-row"><label class="fl-k" for="fl-major1">Major 1</label>
+              <input id="fl-major1" class="fl-text" type="text" placeholder="e.g. Nursing" spellcheck="false">
+              <span class="fl-note" id="fl-major1-n"></span></div>
+            <div class="fl-row"><label class="fl-k" for="fl-major2">Major 2</label>
+              <input id="fl-major2" class="fl-text" type="text" placeholder="e.g. Kinesiology" spellcheck="false">
+              <span class="fl-note" id="fl-major2-n"></span></div>
+            <div class="fl-row" id="fl-mode-row" hidden><span class="fl-k">Offers</span>
+              <label><input type="radio" name="fl-mode" value="any" checked> either</label>
+              <label><input type="radio" name="fl-mode" value="all"> both</label></div>
+            <div class="fl-row"><span class="fl-k">Size</span>
+              <label><input type="checkbox" name="fl-size" value="1"> &lt;1k</label>
+              <label><input type="checkbox" name="fl-size" value="2"> 1-5k</label>
+              <label><input type="checkbox" name="fl-size" value="3"> 5-10k</label>
+              <label><input type="checkbox" name="fl-size" value="4"> 10-20k</label>
+              <label><input type="checkbox" name="fl-size" value="5"> 20k+</label></div>
+            <div class="fl-row"><span class="fl-k">Type</span>
+              <label><input type="checkbox" name="fl-type" value="public"> Public</label>
+              <label><input type="checkbox" name="fl-type" value="private"> Private</label></div>
+          </details>
+          <details class="fl-group" data-group="cp">
+            <summary>Cost &amp; place <span class="fl-set"></span></summary>
+            <div class="fl-row"><label class="fl-k" for="fl-cost">Cost / yr</label>
+              up to $<input id="fl-cost" class="fl-num wide" type="text" inputmode="numeric" placeholder="any">
+              <label><input type="radio" name="fl-basis" value="tuition" checked> tuition + fees</label>
+              <label><input type="radio" name="fl-basis" value="total"> with living</label>
+              <span class="fl-note" id="fl-cost-note"></span></div>
+            <div class="fl-row"><label class="fl-k" for="fl-dist">Distance</label>
+              within <input id="fl-dist" class="fl-num wide" type="text" inputmode="numeric" placeholder="any"> mi
+              <span class="fl-note" id="fl-dist-note"></span></div>
+            <div class="fl-row"><span class="fl-k">Region</span>
+              <label><input type="checkbox" name="fl-region" value="West"> West</label>
+              <label><input type="checkbox" name="fl-region" value="Midwest"> Midwest</label>
+              <label><input type="checkbox" name="fl-region" value="South"> South</label>
+              <label><input type="checkbox" name="fl-region" value="East"> East</label></div>
+            <div class="fl-row"><label class="fl-k" for="fl-states">States</label>
+              <input id="fl-states" class="fl-text" type="text" placeholder="e.g. ID, UT, WA" spellcheck="false" autocapitalize="characters">
+              <span class="fl-note" id="fl-states-note"></span></div>
+            <div class="fl-row"><span class="fl-k">Setting</span>
+              <label><input type="checkbox" name="fl-setting" value="city"> City</label>
+              <label><input type="checkbox" name="fl-setting" value="suburb"> Suburb</label>
+              <label><input type="checkbox" name="fl-setting" value="town"> Town</label>
+              <label><input type="checkbox" name="fl-setting" value="rural"> Rural</label></div>
+          </details>
+          <details class="fl-group" data-group="cl">
+            <summary>Climate <span class="fl-set"></span></summary>
+            <div class="fl-row"><label class="fl-k" for="fl-sunny">Sunny days</label>
+              at least <input id="fl-sunny" class="fl-num" type="text" inputmode="numeric" placeholder="any"> /yr</div>
+            <div class="fl-row"><label class="fl-k" for="fl-july">July high</label>
+              up to <input id="fl-july" class="fl-num" type="text" inputmode="numeric" placeholder="any"> °F</div>
+            <div class="fl-row"><label class="fl-k" for="fl-jan">January low</label>
+              at least <input id="fl-jan" class="fl-num" type="text" inputmode="numeric" placeholder="any"> °F</div>
+          </details>
+          <details class="fl-group" data-group="rs">
+            <summary>Researched schools only <span class="fl-set"></span></summary>
+            <p class="fl-help" id="fl-rs-help"></p>
+            <div class="fl-row"><label class="fl-k" for="fl-confrank">Conf. rank</label>
+              top <input id="fl-confrank" class="fl-num" type="text" inputmode="numeric" placeholder="any"> in its conference</div>
+            <div class="fl-row"><span class="fl-k">Openings</span>
+              <label><input type="checkbox" id="fl-openings"> <span id="fl-openings-label">a senior among the top players at my position</span></label></div>
+            <div class="fl-row"><span class="fl-k">Offense</span>
+              <label><input type="checkbox" name="fl-offense" value="5-1"> 5-1</label>
+              <label><input type="checkbox" name="fl-offense" value="6-2"> 6-2</label>
+              <label><input type="checkbox" name="fl-offense" value="split"> 3-way split</label></div>
+            <div class="fl-row"><span class="fl-k">Has</span>
+              <label><input type="checkbox" id="fl-beach"> Beach program</label>
+              <label><input type="checkbox" id="fl-faith"> AIA or FCA</label>
+              <label><input type="checkbox" id="fl-coach"> Woman on staff</label></div>
+          </details>
+          <label class="fl-incl" id="fl-incl-row" hidden><input type="checkbox" id="fl-incl"> Include schools not researched yet
+            <span>(the researched-only filters skip them)</span></label>
+        </div>
+        <div class="fl-foot">
+          <p class="fl-count" id="fl-count" aria-live="polite"></p>
+          <p class="fl-preview" id="fl-preview"></p>
+          <div class="fl-row fl-name-row"><label class="fl-k" for="fl-name">Name</label>
+            <input id="fl-name" class="fl-text" type="text" maxlength="24" spellcheck="false"></div>
+          <p class="fl-target" id="fl-target"></p>
+          <div class="dlg-foot">
+            <button type="button" class="quiet" id="fl-reset">Reset filters</button>
+            <span class="spacer"></span>
+            <button type="button" class="quiet" id="fl-cancel">Cancel</button>
+            <button type="button" id="fl-create">Create list</button>
+          </div>
         </div>
       </form>
     </dialog>
@@ -808,8 +964,8 @@
 </div>
 </main>
 
-<script src="data/schools.js?v=8fc1db26"></script>
-<script src="compare.js?v=8615d1bf"></script>
+<script src="data/schools.js?v=5e38b120"></script>
+<script src="compare.js?v=4933c158"></script>
 <script src="data/places.js?v=9f2e48c7"></script>
 <script>
 (function(){
@@ -1132,7 +1288,7 @@ function flash(btn, text){
 }
 function plural(n, word){ return n + " " + word + (n === 1 ? "" : "s"); }
 
-// the 1-4 list picker and the selected list's name (SAVE_SCHOOLS.md: four lists)
+// the 1-6 list picker and the selected list's name (SAVE_SCHOOLS.md: six lists)
 function renderListPick(){
   var host = $("list-pick"), lists = C.savedLists(), active = C.savedActive();
   host.innerHTML = "";
@@ -1165,8 +1321,6 @@ function renderSavedSection(){
   var n = saved.length;
   renderListPick();
   $("saved-n").textContent = plural(n, "school");
-  $("saved-copy").disabled = !n;
-  $("saved-reset").disabled = !n;
   // the saved report/map chips at the top show only when something is saved
   Array.prototype.forEach.call(document.querySelectorAll("a.carry-saved"), function(a){ a.hidden = !n; });
   var h = $("saved-hint");
@@ -1175,7 +1329,7 @@ function renderSavedSection(){
     h.textContent = "This browser isn't saving the list (private window or blocked storage); copy it before you leave the page.";
   } else if (!h.getAttribute("data-msg")){
     h.className = "hint";
-    h.textContent = n ? "Copy to send; Edit list to change it or paste one in."
+    h.textContent = n ? "Edit list to copy, change, or reset it, or paste one in."
                       : "Tick schools in the lists or on a map to save them here.";
   }
 }
@@ -1190,6 +1344,7 @@ function savedMsg(text){
 function openEditor(selectAll, note){
   box.value = C.savedText(saved, null, C.savedName());
   $("saved-dlg-title").textContent = "Saved schools: " + C.savedName();
+  $("dlg-reset").disabled = !saved.length;
   renderCheck();
   if (note) $("saved-check").insertBefore(el("div", null, note), $("saved-check").firstChild);
   if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
@@ -1264,20 +1419,208 @@ $("dlg-copy").addEventListener("click", function(){
 });
 
 $("saved-edit").addEventListener("click", function(){ openEditor(false); });
-$("saved-copy").addEventListener("click", function(){
-  var btn = this, text = C.savedText(saved, null, C.savedName());
-  copyText(text, function(ok){
-    if (ok) return flash(btn, "Copied");
-    // no clipboard access here: show the list selected, ready to copy by hand
-    openEditor(true, "Copying isn't allowed on this page; the list is selected, so copy it with " +
-      (/Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl") + "+C.");
-  });
-});
-$("saved-reset").addEventListener("click", function(){
+// Reset list lives in the editor (next to Copy, so the list can be copied first)
+$("dlg-reset").addEventListener("click", function(){
   if (!window.confirm("Remove all " + plural(saved.length, "school") + " from " + C.savedName() + "? Copy the list first if you want to keep it.")) return;
   saved = C.savedReset();
   refreshSaved();
+  dlg.close();
   savedMsg("List cleared.");
+});
+
+// ---------------------------------------------------------------- Create list…: filters (FILTER_PLAN.md)
+// Every team filtered with Compare.filterSchools; the result fills the selected saved list (asking
+// first when that list has schools, or when more than 20 match). The filters are kept per browser.
+var fdlg = $("filter-dlg"), flTimer = null, flNameTouched = false, flLast = null;
+var FL_LONG = 20;
+var flQ = function(name){ return Array.prototype.slice.call(document.querySelectorAll('#filter-form input[name="' + name + '"]')); };
+var flChecked = function(name){ return flQ(name).filter(function(i){ return i.checked; }).map(function(i){ return i.value; }); };
+var flSetChecked = function(name, vals){ flQ(name).forEach(function(i){ i.checked = vals.map(String).indexOf(i.value) >= 0; }); };
+var flMajor = function(id){ return $(id).value.replace(/,/g, " ").replace(/\s+/g, " ").trim(); };
+
+(function fillConfs(){
+  var sel = $("fl-conf");
+  DIVS.forEach(function(div){
+    var g = document.createElement("optgroup"); g.label = div;
+    Object.keys(D.confUrls[div] || {}).sort().forEach(function(c){
+      var o = document.createElement("option"); o.value = div + "|" + c; o.textContent = c + " (" + div + ")"; g.appendChild(o);
+    });
+    sel.appendChild(g);
+  });
+  $("fl-total").textContent = Object.keys(D.teams).length.toLocaleString();
+  var per = {};
+  Object.keys(D.researched).forEach(function(id){ var d = D.teams[D.researched[id].masseyName].division; per[d] = (per[d] || 0) + 1; });
+  $("fl-rs-help").textContent = "From team sites and standings, for the " + Object.keys(D.researched).length + " researched schools (" +
+    DIVS.map(function(d){ return d + " " + (per[d] || 0); }).join(", ") + "). Position openings use the position in Settings.";
+})();
+
+function flStates(){
+  var good = [], bad = [];
+  $("fl-states").value.split(/[\s,;]+/).forEach(function(t){
+    t = t.trim().toUpperCase();
+    if (!t) return;
+    if (C.STATE_NAMES[t]) { if (good.indexOf(t) < 0) good.push(t); } else bad.push(t);
+  });
+  return {good: good, bad: bad};
+}
+
+function flRead(){
+  var to = $("fl-rank-to").value.trim().toLowerCase();
+  return C.cleanFilters({
+    divisions: flChecked("fl-div"), confs: $("fl-conf").value ? [$("fl-conf").value] : [],
+    rankFrom: $("fl-rank-from").value.trim(), rankTo: to === "max" ? "max" : to,
+    majors: [flMajor("fl-major1"), flMajor("fl-major2")].filter(Boolean).join(", "),
+    majorsMode: flChecked("fl-mode")[0], sizes: flChecked("fl-size").map(Number), types: flChecked("fl-type"),
+    costMax: $("fl-cost").value.replace(/[$,\s]/g, ""), costBasis: flChecked("fl-basis")[0],
+    distanceMax: $("fl-dist").value.replace(/[,\s]/g, ""), regions: flChecked("fl-region"), states: flStates().good,
+    settings: flChecked("fl-setting"), sunnyMin: $("fl-sunny").value.trim(), julyMax: $("fl-july").value.trim(), janMin: $("fl-jan").value.trim(),
+    confRankMax: $("fl-confrank").value.trim(), openings: $("fl-openings").checked, offense: flChecked("fl-offense"),
+    beach: $("fl-beach").checked, faith: $("fl-faith").checked, femaleCoach: $("fl-coach").checked,
+    includeUnresearched: $("fl-incl").checked
+  });
+}
+
+function flWrite(f){
+  var v = function(x){ return x === null || x === undefined ? "" : String(x); };
+  flSetChecked("fl-div", f.divisions);
+  $("fl-conf").value = f.confs[0] || "";
+  $("fl-rank-from").value = v(f.rankFrom); $("fl-rank-to").value = v(f.rankTo);
+  var mj = f.majors.split(",").map(function(t){ return t.trim(); });
+  $("fl-major1").value = mj[0] || ""; $("fl-major2").value = mj[1] || "";
+  flSetChecked("fl-mode", [f.majorsMode]); flSetChecked("fl-size", f.sizes); flSetChecked("fl-type", f.types);
+  $("fl-cost").value = v(f.costMax); flSetChecked("fl-basis", [f.costBasis]);
+  $("fl-dist").value = v(f.distanceMax); flSetChecked("fl-region", f.regions); $("fl-states").value = f.states.join(", ");
+  flSetChecked("fl-setting", f.settings);
+  $("fl-sunny").value = v(f.sunnyMin); $("fl-july").value = v(f.julyMax); $("fl-jan").value = v(f.janMin);
+  $("fl-confrank").value = v(f.confRankMax); $("fl-openings").checked = f.openings; flSetChecked("fl-offense", f.offense);
+  $("fl-beach").checked = f.beach; $("fl-faith").checked = f.faith; $("fl-coach").checked = f.femaleCoach;
+  $("fl-incl").checked = f.includeUnresearched;
+}
+
+// how many filters each group has set, for its heading ("2 set")
+function flGroupCounts(f){
+  var n = function(){ return Array.prototype.filter.call(arguments, Boolean).length; };
+  return {
+    vb: n(f.divisions.length, f.confs.length, f.rankFrom !== null || (f.rankTo !== null && f.rankTo !== "max")),
+    ac: n(flMajor("fl-major1"), flMajor("fl-major2"), f.sizes.length, f.types.length),
+    cp: n(f.costMax !== null, f.distanceMax !== null, f.regions.length, f.states.length, f.settings.length),
+    cl: n(f.sunnyMin !== null, f.julyMax !== null, f.janMin !== null),
+    rs: n(f.confRankMax !== null, f.openings, f.offense.length, f.beach, f.faith, f.femaleCoach)
+  };
+}
+
+function flRender(){
+  var f = flRead(), r = C.filterSchools(f, settings);
+  flLast = {f: f, r: r};
+  C.filtersSave(f);
+  var counts = flGroupCounts(f);
+  Array.prototype.forEach.call(document.querySelectorAll("#filter-form .fl-group"), function(g){
+    var k = counts[g.getAttribute("data-group")];
+    g.querySelector(".fl-set").textContent = k ? "· " + k + " set" : "";
+  });
+  // Massey: where "max" lands for the ticked divisions; a backwards range is swapped
+  var divs = f.divisions.length ? f.divisions.slice().sort() : DIVS;
+  var sizes = divs.map(function(d){ return d + " " + r.rank.sizes[d]; }).join(", ");
+  $("fl-rank-note").textContent = (r.rank.swapped ? "From is above to, so the two were swapped. " : "") +
+    "Ranks are within each division; max is the last rank: " + sizes + ".";
+  // majors: what each box matched, and how many schools offer it
+  ["fl-major1", "fl-major2"].forEach(function(id){
+    var t = flMajor(id), out = $(id + "-n");
+    out.className = "fl-note";
+    if (!t) { out.textContent = ""; return; }
+    var m = C.matchMajors(t)[0];
+    if (!m || !m.cips.length) { out.textContent = "No IPEDS program matches “" + t + "”; it's skipped."; out.className = "fl-note warn"; return; }
+    var hit = r.majors.filter(function(x){ return x.label === m.label; })[0];
+    out.textContent = (m.titles.length > 2 ? m.titles.slice(0, 2).join("; ") + "; +" + (m.titles.length - 2) + " more" : m.titles.join("; ")) +
+      (hit ? " · " + plural(hit.schools, "school") + " offer it" : "");
+  });
+  $("fl-mode-row").hidden = !(flMajor("fl-major1") && flMajor("fl-major2"));
+  // cost and distance depend on the home town in Settings, as the reports do
+  var home = settings.home;
+  $("fl-cost-note").textContent = f.costMax === null ? "" : home
+    ? "At the rate a student from " + home.state + " pays (in-state, WUE, or out-of-state), as in the reports."
+    : "Out-of-state rates: set a home town in Settings for in-state and WUE rates.";
+  $("fl-dist").disabled = !home;
+  $("fl-dist-note").textContent = home ? "of " + home.city + ", " + home.state : "Set a home town in Settings to use this.";
+  var st = flStates();
+  $("fl-states-note").textContent = st.bad.length ? "Not a state code: " + st.bad.join(", ") + " (use two letters, e.g. ID)." : "";
+  $("fl-states-note").className = "fl-note" + (st.bad.length ? " warn" : "");
+  // researched-only: how many there are, the position the openings filter uses, and the include box
+  var spec = C.positionSpec(settings.position);
+  $("fl-openings-label").textContent = settings.position === "S" ? "the main setter is a senior or grad student"
+    : "a senior or grad among the top " + (spec.starters > 1 ? spec.starters + " " + spec.plural.toLowerCase() : spec.one);
+  $("fl-incl-row").hidden = !r.researchedOnly;
+  // the count, a preview, and where the list will go
+  var n = r.matches.length, c = $("fl-count");
+  c.innerHTML = "";
+  if (!n) c.textContent = "No schools match; loosen a filter.";
+  else {
+    c.appendChild(el("span", "ok", plural(n, "school") + " match"));
+    c.appendChild(document.createTextNode(" · " + r.researched + " researched · " + r.notResearched + " not researched"));
+  }
+  // why schools were left out besides the filters themselves: one note
+  var skip = Object.keys(r.skipped).reduce(function(a, k){ return a + r.skipped[k]; }, 0), why = [];
+  if (r.unresearchedLeftOut) why.push(r.unresearchedLeftOut + " not researched left out by the researched-only filters");
+  if (skip) why.push(skip + " left out: no data for a filter");
+  if (why.length) c.appendChild(el("span", "fl-skip", " (" + why.join("; ") + ")"));
+  // first few by division and Massey rank (the "+N more" first, so a long name can't push it out of view)
+  $("fl-preview").textContent = !n ? "" : (n > 4 ? "Top 4 of " + n + ": " : "") + r.matches.slice(0, 4).map(function(m){
+      var t = D.teams[m]; return teamName(m) + " (" + t.division + " #" + t.rank + ")"; }).join(", ");
+  if (!flNameTouched) $("fl-name").value = C.filterName(f);
+  var cur = C.savedName(), tg = $("fl-target");
+  tg.className = "fl-target" + (saved.length ? " warn" : "");
+  tg.textContent = saved.length
+    ? "Replaces the " + plural(saved.length, "school") + " in list " + (C.savedActive() + 1) + ", “" + cur + "” (pick another list in Settings to keep it)."
+    : "Fills list " + (C.savedActive() + 1) + ", now empty.";
+  $("fl-create").disabled = !n;
+}
+function flSoon(){ clearTimeout(flTimer); flTimer = setTimeout(flRender, 150); }
+
+function openFilters(){
+  var f = C.filtersLoad();
+  // first time here: start from the majors in Settings (the first two)
+  if (!C.filtersActive(f) && !f.majors && settings.majors) {
+    f.majors = settings.majors.split(",").map(function(t){ return t.trim(); }).filter(Boolean).slice(0, 2).join(", ");
+  }
+  flWrite(f);
+  flNameTouched = false;
+  var wide = window.matchMedia && window.matchMedia("(min-width:521px)").matches, counts;
+  flRender();
+  counts = flGroupCounts(flLast.f);
+  // open every group on a wide screen; on a phone only the volleyball group and any with filters set
+  Array.prototype.forEach.call(document.querySelectorAll("#filter-form .fl-group"), function(g){
+    var k = g.getAttribute("data-group");
+    g.open = wide || k === "vb" || !!counts[k];
+  });
+  if (fdlg.showModal) fdlg.showModal(); else fdlg.setAttribute("open", "");
+}
+
+$("filter-form").addEventListener("input", function(e){
+  if (e.target.id === "fl-name") { flNameTouched = !!e.target.value.trim(); return; }
+  if (e.target.type === "text") flSoon(); else flRender();
+});
+$("filter-form").addEventListener("change", function(e){ if (e.target.id !== "fl-name") flRender(); });
+$("fl-reset").addEventListener("click", function(){ flWrite(C.blankFilters()); flNameTouched = false; flRender(); });
+$("fl-cancel").addEventListener("click", function(){ fdlg.close(); });
+$("fl-x").addEventListener("click", function(){ fdlg.close(); });
+$("saved-create").addEventListener("click", openFilters);
+
+$("fl-create").addEventListener("click", function(){
+  flRender();
+  var list = flLast.r.matches, n = list.length;
+  if (!n) return;
+  var name = $("fl-name").value.replace(/\s+/g, " ").trim() || C.filterName(flLast.f);
+  var cur = C.savedName(), long = n > FL_LONG, old = saved.length;
+  var ask = long && old ? n + " schools match. That's a long list for the report and map. Replace the " + plural(old, "school") + " in “" + cur + "” with all " + n + "?"
+          : long ? n + " schools match. That's a long list for the report and map. Create a list with all " + n + "?"
+          : old ? "Replace the " + plural(old, "school") + " in “" + cur + "” with the " + plural(n, "new school") + "? Copy it first (Edit list… → Copy) to keep it."
+          : null;
+  if (ask && !window.confirm(ask)) return;
+  saved = C.savedSave(list);
+  C.savedSetName(name);
+  refreshSaved();
+  fdlg.close();
+  savedMsg("Created “" + C.savedName() + "”: " + plural(n, "school") + ".");
 });
 
 function fillForm(){

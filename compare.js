@@ -647,14 +647,15 @@
   }
 
   // ------------------------------------------------------------ saved schools (SAVE_SCHOOLS.md)
-  // Four named lists, one selected; a separate key from the settings:
-  //   {v: 2, active: 0-3, lists: [{name, schools: [Massey names, in the order saved], updated}, x4]}
+  // Six named lists (four until 2026-11-09; stored states with fewer are padded), one selected; a
+  // separate key from the settings:
+  //   {v: 2, active: 0-5, lists: [{name, schools: [Massey names, in the order saved], updated}, x6]}
   // Every saved-list call below acts on the selected list. Not carried in the URL hash (Q3); shared
   // only as plain text (savedText / parseSaved). The single list of v1 ("ncaaCompare.saved.v1") is
   // moved into List 1 the first time this loads, and that old key is left as it was.
   var SAVED_KEY = "ncaaCompare.savedLists.v1";
   var SAVED_KEY_V1 = "ncaaCompare.saved.v1";
-  var SAVED_LISTS = 4, SAVED_NAME_MAX = 24;
+  var SAVED_LISTS = 6, SAVED_NAME_MAX = 24;
   var savedMem = null;   // this page's lists when storage is blocked
 
   function savedClean(list) {
@@ -671,7 +672,7 @@
     return n || savedDefaultName(i);
   }
 
-  // the stored state, cleaned: always four lists; names that are no longer Massey teams (renamed
+  // the stored state, cleaned: always SAVED_LISTS lists; names that are no longer Massey teams (renamed
   // in a later pull) are dropped
   function savedCleanState(raw) {
     var lists = [];
@@ -851,6 +852,245 @@
     return { schools: schools, lines: lines, unmatched: lines.filter(function (l) { return !l.school; }) };
   }
 
+  // ------------------------------------------------------------ filters (FILTER_PLAN.md)
+  // "Create list…": filter every Massey team on facts the site has for all of them (phase 1:
+  // division, conference, Massey rank, majors, size, type, setting, state/region, cost, distance,
+  // climate). The filter object (kept per browser by the index, ncaaCompare.filters.v1):
+  //   {divisions: ["D1",…], confs: ["D1|Big West",…], rankFrom: n|null, rankTo: n|"max"|null,
+  //    majors: "nursing, kinesiology", majorsMode: "any"|"all", sizes: [1-5], types: ["public","private"],
+  //    settings: ["city","suburb","town","rural"], states: ["ID",…], regions: ["West",…],
+  //    costMax: n|null, costBasis: "tuition"|"total", distanceMax: n|null,
+  //    sunnyMin: n|null, julyMax: n|null, janMin: n|null,
+  //    researched-only (phase 3, from team sites, not Niche):
+  //    confRankMax: n|null, openings: bool (the settings' position), offense: ["5-1","6-2","split"],
+  //    beach: bool, faith: bool (AIA or FCA), femaleCoach: bool, includeUnresearched: bool}
+  // Empty or null = not used. AND across filters, OR within one. While a researched-only filter is set,
+  // schools not researched yet are left out unless includeUnresearched (then those filters skip them).
+  var FILTER_KEY = "ncaaCompare.filters.v1";
+  var SIZE_BANDS = { 1: "Under 1,000", 2: "1,000-4,999", 3: "5,000-9,999", 4: "10,000-19,999", 5: "20,000+" };
+  var SETTINGS = ["city", "suburb", "town", "rural"];
+  // U.S. Census regions, with "East" for the Northeast (the reports' word); for every school, from its state
+  var REGIONS = {
+    West: ["AK", "AZ", "CA", "CO", "HI", "ID", "MT", "NV", "NM", "OR", "UT", "WA", "WY"],
+    Midwest: ["IL", "IN", "IA", "KS", "MI", "MN", "MO", "NE", "ND", "OH", "SD", "WI"],
+    South: ["AL", "AR", "DE", "DC", "FL", "GA", "KY", "LA", "MD", "MS", "NC", "OK", "SC", "TN", "TX", "VA", "WV", "PR"],
+    East: ["CT", "ME", "MA", "NH", "NJ", "NY", "PA", "RI", "VT"]
+  };
+  function stateRegion(st) {
+    for (var r in REGIONS) if (REGIONS[r].indexOf(st) >= 0) return r;
+    return null;
+  }
+  // the last rank in each division (its number of ranked teams)
+  function divisionSizes() {
+    var out = {}, t = D().teams;
+    Object.keys(t).forEach(function (m) { var d = t[m].division; out[d] = Math.max(out[d] || 0, t[m].rank || 0); });
+    return out;
+  }
+  function blankFilters() {
+    return { divisions: [], confs: [], rankFrom: null, rankTo: null, majors: "", majorsMode: "any", sizes: [],
+             types: [], settings: [], states: [], regions: [], costMax: null, costBasis: "tuition",
+             distanceMax: null, sunnyMin: null, julyMax: null, janMin: null,
+             confRankMax: null, openings: false, offense: [], beach: false, faith: false, femaleCoach: false,
+             includeUnresearched: false };
+  }
+  var OFFENSES = ["5-1", "6-2", "split"];
+  // the offense call's family: "5-1" (5-1 and 5-1 leaning), "6-2", "split" (a 3-way split); null if none
+  function offenseKind(note) {
+    var n = String(note || "");
+    return /^5-1/.test(n) ? "5-1" : /^6-2/.test(n) ? "6-2" : /^3-way/.test(n) ? "split" : null;
+  }
+  function researchedOnlySet(f) {
+    return f.confRankMax !== null || f.openings || f.offense.length > 0 || f.beach || f.faith || f.femaleCoach;
+  }
+  function num(v) { if (v === "" || v === null || v === undefined) return null; v = +v; return isFinite(v) ? v : null; }
+  function cleanFilters(f) {
+    var o = blankFilters(); f = f || {};
+    var arr = function (v, ok) { return (Array.isArray(v) ? v : []).filter(ok); };
+    o.divisions = arr(f.divisions, function (d) { return DIV_ORDER[d]; });
+    o.confs = arr(f.confs, function (c) { return typeof c === "string" && c.indexOf("|") > 0; });
+    o.rankFrom = num(f.rankFrom);
+    o.rankTo = f.rankTo === "max" ? "max" : num(f.rankTo);
+    o.majors = typeof f.majors === "string" ? f.majors : "";
+    o.majorsMode = f.majorsMode === "all" ? "all" : "any";
+    o.sizes = arr(f.sizes, function (n) { return SIZE_BANDS[n]; }).map(Number);
+    o.types = arr(f.types, function (t) { return t === "public" || t === "private"; });
+    o.settings = arr(f.settings, function (x) { return SETTINGS.indexOf(x) >= 0; });
+    o.states = arr(f.states, function (x) { return STATE_NAMES[x]; });
+    o.regions = arr(f.regions, function (x) { return REGIONS[x]; });
+    o.costMax = num(f.costMax);
+    o.costBasis = f.costBasis === "total" ? "total" : "tuition";
+    o.distanceMax = num(f.distanceMax);
+    o.sunnyMin = num(f.sunnyMin); o.julyMax = num(f.julyMax); o.janMin = num(f.janMin);
+    o.confRankMax = num(f.confRankMax);
+    o.offense = arr(f.offense, function (x) { return OFFENSES.indexOf(x) >= 0; });
+    ["openings", "beach", "faith", "femaleCoach", "includeUnresearched"].forEach(function (k) { o[k] = f[k] === true; });
+    return o;
+  }
+  function filtersLoad() {
+    var ls = storage();
+    try { return cleanFilters(ls ? JSON.parse(ls.getItem(FILTER_KEY)) : null); } catch (e) { return blankFilters(); }
+  }
+  function filtersSave(f) {
+    f = cleanFilters(f);
+    var ls = storage();
+    if (ls) { try { ls.setItem(FILTER_KEY, JSON.stringify(f)); } catch (e) { /* storage full or blocked */ } }
+    return f;
+  }
+  // how many filters are set (for the "N set" group labels and an empty modal's "all schools")
+  function filtersActive(f) {
+    f = cleanFilters(f);
+    var n = 0;
+    ["divisions", "confs", "sizes", "types", "settings", "states", "regions"].forEach(function (k) { if (f[k].length) n++; });
+    ["costMax", "distanceMax", "sunnyMin", "julyMax", "janMin"].forEach(function (k) { if (f[k] !== null) n++; });
+    if (f.rankFrom !== null || (f.rankTo !== null && f.rankTo !== "max")) n++;
+    if (activeMajors(matchMajors(f.majors)).length) n++;
+    ["openings", "beach", "faith", "femaleCoach"].forEach(function (k) { if (f[k]) n++; });
+    if (f.confRankMax !== null) n++;
+    if (f.offense.length) n++;
+    return n;
+  }
+  function campusSetting(locale) {
+    var m = /^(city|suburb|town|rural)/i.exec(String(locale || "").replace(/^(large|midsize|small)\s+/i, ""));
+    return m ? m[1].toLowerCase() : null;
+  }
+
+  // -> {matches: [Massey names, by division then Massey rank], researched, notResearched,
+  //     skipped: {filter: count of schools left out for missing data}, majors: [{label, cips, schools}],
+  //     unknownMajors: [terms], rank: {from, to, swapped}, homeSet, costRates}
+  function filterSchools(f, settings) {
+    f = cleanFilters(f); settings = settings || blank();
+    var d = D(), home = settings.home || null;
+    var majors = matchMajors(f.majors), useMajors = activeMajors(majors);
+    var sizes = divisionSizes();
+    var from = f.rankFrom, to = f.rankTo === "max" ? null : f.rankTo, swapped = false;
+    if (from !== null && to !== null && from > to) { var x = from; from = to; to = x; swapped = true; }
+    var costMajors = matchMajors(settings.majors);   // cost uses the settings' majors, as the reports do (WUE)
+    var skipped = {}, offered = useMajors.map(function () { return 0; });
+    var skip = function (k) { skipped[k] = (skipped[k] || 0) + 1; return false; };
+    var rOnly = researchedOnlySet(f), leftOut = 0;
+    var matches = Object.keys(d.teams).filter(function (m) {
+      var t = d.teams[m];
+      if (f.divisions.length && f.divisions.indexOf(t.division) < 0) return false;
+      if (f.confs.length && f.confs.indexOf(t.division + "|" + t.conf) < 0) return false;
+      if (from !== null && t.rank < from) return false;
+      if (to !== null && to < sizes[t.division] && t.rank > to) return false;
+      var s = schoolRecord(m), ip = t.ipedsId ? d.ipeds[String(t.ipedsId)] : null;
+      if (useMajors.length) {
+        var has = useMajors.map(function (mj) { return mj.cips.some(function (c) { return c in s.programs; }); });
+        has.forEach(function (h, i) { if (h) offered[i]++; });
+        if (!ip) return skip("majors");
+        if (f.majorsMode === "all" ? has.indexOf(false) >= 0 : has.indexOf(true) < 0) return false;
+      }
+      if (f.sizes.length) {
+        if (!ip || ip.size == null) return skip("size");
+        if (f.sizes.indexOf(ip.size) < 0) return false;
+      }
+      if (f.types.length) {
+        if (!ip) return skip("type");
+        if (f.types.indexOf(ip.control === 1 ? "public" : "private") < 0) return false;
+      }
+      if (f.settings.length) {
+        var cs = campusSetting(s.ipeds.locale);
+        if (!cs) return skip("setting");
+        if (f.settings.indexOf(cs) < 0) return false;
+      }
+      if (f.states.length || f.regions.length) {
+        var st = s.ipeds.state;
+        if (!st) return skip("state");
+        var inState = f.states.indexOf(st) >= 0, inRegion = f.regions.indexOf(stateRegion(st)) >= 0;
+        if (!inState && !inRegion) return false;
+      }
+      if (f.distanceMax !== null && home) {
+        var mi = milesBetween(home, s.ipeds);
+        if (mi === null) return skip("distance");
+        if (mi > f.distanceMax) return false;
+      }
+      if (f.costMax !== null) {
+        var c = resolveCost(s, settings, costMajors), cost = c.cost;
+        if (cost !== null && f.costBasis === "total") cost = c.kind === "academy" ? 0 : s.living ? cost + s.living.parts[0] + s.living.parts[1] + s.living.parts[2] : null;
+        if (cost === null) return skip("cost");
+        if (cost > f.costMax) return false;
+      }
+      var cl = s.climate;
+      if (f.sunnyMin !== null) {
+        if (!cl || !cl.sky) return skip("sunny");
+        if (cl.sky.clear + cl.sky.partly < f.sunnyMin) return false;
+      }
+      if (f.julyMax !== null || f.janMin !== null) {
+        if (!cl) return skip("temperature");
+        if (f.julyMax !== null && cl.julHigh > f.julyMax) return false;
+        if (f.janMin !== null && cl.janLow < f.janMin) return false;
+      }
+      if (rOnly) {
+        if (!s.researched) { if (!f.includeUnresearched) { leftOut++; return false; } return true; }
+        if (f.confRankMax !== null) {
+          var cr = parseInt(s.confRank, 10);
+          if (!isFinite(cr)) return skip("confRank");
+          if (cr > f.confRankMax) return false;
+        }
+        if (f.openings) {
+          if (!s.players.length) return skip("openings");
+          var open = settings.position === "S" ? setterOpenings([s]).length > 0 : positionOpenings([s], settings.position).length > 0;
+          if (!open) return false;
+        }
+        if (f.offense.length) {
+          var ok = offenseKind(s.offenseNote);
+          if (!ok) return skip("offense");
+          if (f.offense.indexOf(ok) < 0) return false;
+        }
+        if (f.beach) {
+          if (s.beach === null) return skip("beach");
+          if (!s.beach.program) return false;
+        }
+        if (f.faith) {
+          if (s.aiaChapter === null && s.fcaChapter === null) return skip("faith");
+          if (!s.aiaChapter && !s.fcaChapter) return false;
+        }
+        if (f.femaleCoach) {
+          if (s.femaleCoachOnStaff === null || s.femaleCoachOnStaff === undefined) return skip("femaleCoach");
+          if (!s.femaleCoachOnStaff) return false;
+        }
+      }
+      return true;
+    }).sort(function (a, b) {
+      var ta = d.teams[a], tb = d.teams[b];
+      return (DIV_ORDER[ta.division] || 9) - (DIV_ORDER[tb.division] || 9) || ta.rank - tb.rank || a.localeCompare(b);
+    });
+    var nr = matches.filter(function (m) { return !!d.teams[m].researched; }).length;
+    return {
+      matches: matches, researched: nr, notResearched: matches.length - nr, skipped: skipped,
+      majors: useMajors.map(function (mj, i) { return { label: mj.label, cips: mj.cips, schools: offered[i] }; }),
+      unknownMajors: majors.filter(function (mj) { return !mj.cips.length; }).map(function (mj) { return mj.term; }),
+      rank: { from: from, to: to, swapped: swapped, sizes: sizes },
+      homeSet: !!home, distanceIgnored: f.distanceMax !== null && !home,
+      // researched-only filters set: how many schools not researched yet they left out (0 with includeUnresearched)
+      researchedOnly: rOnly, unresearchedLeftOut: leftOut,
+      costRates: home ? "home" : "out-of-state"
+    };
+  }
+
+  // a short name for the new list from the filters, at most SAVED_NAME_MAX characters
+  function filterName(f) {
+    f = cleanFilters(f);
+    var bits = [];
+    if (f.divisions.length && f.divisions.length < 3) bits.push(f.divisions.slice().sort().join("-"));
+    if (f.confs.length === 1) bits.push(f.confs[0].split("|")[1]);
+    if (f.regions.length === 1 && !f.states.length) bits.push(f.regions[0]);
+    if (f.states.length === 1 && !f.regions.length) bits.push(f.states[0]);
+    var mj = activeMajors(matchMajors(f.majors));
+    if (mj.length) bits.push(mj.map(function (m) { return m.term.toLowerCase(); }).join("/"));
+    if (f.costMax !== null) bits.push("<$" + (f.costMax >= 1000 ? Math.round(f.costMax / 1000) + "k" : f.costMax));
+    if (f.sunnyMin !== null) bits.push(f.sunnyMin + "+ sun");
+    if (f.confRankMax !== null) bits.push("top " + f.confRankMax);
+    if (f.offense.length === 1) bits.push(f.offense[0] === "split" ? "3-way" : f.offense[0]);
+    if (f.openings) bits.push("openings");
+    if (f.beach) bits.push("beach");
+    // whole parts only: a part that doesn't fit is left out rather than cut
+    var name = "";
+    bits.forEach(function (b) { var n = name ? name + " " + b : b; if (n.length <= SAVED_NAME_MAX) name = n; });
+    return name || (bits[0] || "Filtered list").slice(0, SAVED_NAME_MAX);
+  }
+
   root.Compare = {
     KEY: KEY, POSITIONS: POSITIONS, DEFAULTS: DEFAULTS, ALIASES: ALIASES, STATE_NAMES: STATE_NAMES,
     blank: blank, clean: clean, load: load, save: save, reset: reset,
@@ -873,6 +1113,11 @@
     savedActive: savedActive, savedSetActive: savedSetActive, savedLists: savedLists,
     savedName: savedName, savedSetName: savedSetName,
     isSaved: isSaved, setSaved: setSaved, toggleSaved: toggleSaved, onSavedChange: onSavedChange,
-    savedSort: savedSort, savedText: savedText, parseSaved: parseSaved, savedRows: savedRows
+    savedSort: savedSort, savedText: savedText, parseSaved: parseSaved, savedRows: savedRows,
+    FILTER_KEY: FILTER_KEY, SIZE_BANDS: SIZE_BANDS, REGIONS: REGIONS, stateRegion: stateRegion,
+    divisionSizes: divisionSizes, blankFilters: blankFilters, cleanFilters: cleanFilters,
+    filtersLoad: filtersLoad, filtersSave: filtersSave, filtersActive: filtersActive,
+    campusSetting: campusSetting, filterSchools: filterSchools, filterName: filterName,
+    OFFENSES: OFFENSES, offenseKind: offenseKind, researchedOnlySet: researchedOnlySet
   };
 })(typeof window !== "undefined" ? window : globalThis);
