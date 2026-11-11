@@ -613,10 +613,10 @@
 
 <div class="tt" id="tooltip" role="tooltip"></div>
 
-<script src="data/schools.js?v=bc1e15cc"></script>
+<script src="data/schools.js?v=7e97a1c0"></script>
 <script src="data/history.js"></script>
 <script src="data/flights.js?v=1d72d17c"></script>
-<script src="compare.js?v=dce8d242"></script>
+<script src="compare.js?v=b6a4d9fe"></script>
 <script>
 (function(){
   "use strict";
@@ -1649,7 +1649,7 @@
         } else if (e.status === "noTeam"){
           td.textContent = "no team";
         } else {
-          td.textContent = e.avg.toLocaleString() + (e.how === "games" ? " ¹" : "");
+          td.textContent = e.avg.toLocaleString() + (e.how === "games" ? " ¹" : e.how !== "wmt" ? " ²" : "");
           if (e.band) sub(td, e.band + " of " + e.peer);
           if (e.perK != null) sub(td, Math.round(e.perK).toLocaleString() + " per 1,000 students");
           td.title = e.games + " home games, " + e.season + (e.total != null ? ", " + e.total.toLocaleString() + " in all" : "") +
@@ -1669,15 +1669,16 @@
       li("Attendance hasn't been pulled yet (<code>tools/attendance.py</code>).");
       return;
     }
-    li("<strong>Average home crowd per game</strong>, from each school's own athletics site (its season stats page): football " +
-       esc(A.seasons.football) + ", basketball " + esc(A.seasons.mbb) + ", read " + esc(A.pulled) + ". Hover a number for the games it covers. " +
+    li("<strong>Average home crowd per game</strong>, from the schools' official game stats (through WMT, the stats service many athletics sites use): football " +
+       esc(A.seasons.football) + ", basketball " + esc(A.seasons.mbb) + ", read " + esc(A.pulled) +
+       ". Neutral-site games (bowls, tournaments, classics) are left out. Hover a number for the games it covers. " +
        "Sorted by football crowd, the comparison school in its place (highlighted); schools without a football figure follow, by fan support.");
     li("Each sport's band ranks the school among the <strong>researched</strong> schools at the same level: FBS, FCS, or D2 for football, the division for basketball. " +
        "<strong>Fan support</strong> averages two halves over the sports the school has (at least " + C.SPIRIT_MIN_SPORTS + "): crowd size, and crowd per 1,000 undergraduates " +
        "(IPEDS fall " + esc(D.meta.enrollYear) + "). Its band ranks that among researched schools in the same division.");
     li("Bands, colored from green to red: Top 10%, Above average (65th to 90th percentile), Average (35th to 65th), Below average (10th to 35th), Bottom 10%. " +
        "A group of fewer than " + C.SPIRIT_MIN_PEERS + " researched schools gets no band.");
-    li("¹ Added up from the season's game list, where a neutral-site game can't be told from a home game. " +
+    li("² From the school's own athletics site, for a team the stats feed doesn't have. ¹ The same, added up from the season's game list, where a neutral-site game can't be told from a home game. " +
        "<strong>no team</strong>: the school doesn't play that sport. <strong>—</strong>: no figure could be read. Missing sports are skipped, never counted as zero.");
     li("Attendance is what schools report (often tickets distributed), counts alumni and townspeople as well as students, and moves with winning, " +
        "free admission, arena size, and a big-city location. Read it as a rough proxy for school spirit, not a measure of it.");

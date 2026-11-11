@@ -453,6 +453,7 @@
     { key: "football", label: "Football", short: "Football" },
     { key: "mbb", label: "Men's basketball", short: "Men's BB" },
     { key: "wbb", label: "Women's basketball", short: "Women's BB" }
+    // volleyball was tried and dropped (user, 2026-11-11): only the ~50 schools on the WMT stats service have a figure
   ];
   // [lowest percentile, label], best first; bands, not scores, because the measure is rough
   var SPIRIT_BANDS = [[90, "Top 10%"], [65, "Above average"], [35, "Average"], [10, "Below average"], [0, "Bottom 10%"]];
@@ -511,6 +512,7 @@
         e.crowdPct = spiritPct(e.avg, g.crowd); e.band = spiritBand(e.crowdPct);
         e.perKPct = e.perK === null || g.perK.length < SPIRIT_MIN_PEERS ? null : spiritPct(e.perK, g.perK);
         e.perKBand = spiritBand(e.perKPct);
+        if (sp.scored === false) return;
         crowd.push(e.crowdPct);
         if (e.perKPct !== null) per.push(e.perKPct);
       });
