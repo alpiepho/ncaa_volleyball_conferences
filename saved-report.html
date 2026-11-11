@@ -446,7 +446,7 @@
     <ul class="intro-list" id="introList">
       <li>Sources: Niche, Massey Ratings, each conference's own standings page, WICHE's WUE savings finder, IPEDS, and each school's own athletics site. Each conference's pull log is in <code>data/2026/logs/</code>.</li>
     </ul>
-    <div class="mock-note"><span class="dot" aria-hidden="true"></span> Real data as of each conference's pull (Oct 6, 2026 to Nov 8, 2026); costs and majors refreshed from IPEDS on Oct 22, 2026. Links marked <span style="color:var(--series-1); font-weight:600;">↗</span> open the live source page in a new tab.</div>
+    <div class="mock-note"><span class="dot" aria-hidden="true"></span> Real data as of each conference's pull (Oct 6, 2026 to Nov 10, 2026); costs and majors refreshed from IPEDS on Oct 22, 2026. Links marked <span style="color:var(--series-1); font-weight:600;">↗</span> open the live source page in a new tab.</div>
   </div>
 
   <section class="panel" id="table">
@@ -469,7 +469,7 @@
       <li>School name links to its Niche.com profile.</li>
       <li>Conference is each school's own; conference rank is its rank there, from that conference's standings page.</li>
       <li>National rank links to Massey Ratings, which ranks each division separately.</li>
-      <li><strong>Rankings data</strong> as of each conference's pull (Oct 6, 2026 to Nov 8, 2026); see its own report for the exact date.</li>
+      <li><strong>Rankings data</strong> as of each conference's pull (Oct 6, 2026 to Nov 10, 2026); see its own report for the exact date.</li>
       <li><strong>Sched / Roster / Stats</strong> link to the team's own athletics site.</li>
       <li>Academics, Athletics, Campus, and Diversity are real Niche letter grades.</li>
       <li>Composite is computed from those grades plus cost and national rank, using the formula in <code>IDEAS.md</code> §6 with the default weights (25/30/15/20/10), scaled across the schools on this page. Cost depends on the settings, so the composite does too.</li>
@@ -522,7 +522,7 @@
     <div class="card">
       <figure>
         <div id="earningsChart"></div>
-        <figcaption>Niche's real "Median Earnings 5 Years After Graduation" figure (from IPEDS/College Scorecard data) for each school, regardless of major — a general earnings-potential signal, not specific to any major. Hover a bar for the source.</figcaption>
+        <figcaption>Median earnings of graduates 5 years after graduation, from the U.S. Dept. of Education's College Scorecard, for each school regardless of major: a general earnings-potential signal, not specific to any major. Hover a bar for the source.</figcaption>
       </figure>
       <details class="tview">
         <summary>View as table</summary>
@@ -585,9 +585,9 @@
 
 <div class="tt" id="tooltip" role="tooltip"></div>
 
-<script src="data/schools.js?v=5cb13545"></script>
+<script src="data/schools.js?v=bc1e15cc"></script>
 <script src="data/history.js"></script>
-<script src="compare.js?v=1ba35ea0"></script>
+<script src="compare.js?v=52a6610e"></script>
 <script>
 (function(){
   "use strict";
@@ -1181,7 +1181,7 @@
       val.style.left = "calc(" + (s.earnings/max*100) + "% + 8px)";
       val.textContent = fmtMoney(s.earnings);
       wireTooltip(bar, function(){
-        return [ttTitle(s.name), ttRow("Median earnings, 5 yrs out", "$" + s.earnings.toLocaleString(), s.current?css("--baseline"):css("--series-1"))];
+        return [ttTitle(s.name), ttRow("Median earnings, 5 yrs out", "$" + s.earnings.toLocaleString(), s.current?css("--baseline"):css("--series-1")), ttRow("Source", s.earningsSource === "scorecard" ? "College Scorecard (federal)" : "Niche")];
       });
       track.appendChild(bar); track.appendChild(val);
       row.appendChild(name); row.appendChild(track);
@@ -1195,7 +1195,8 @@
       tr.appendChild(td(s.name));
       tr.appendChild(td("$" + s.earnings.toLocaleString(), true));
       var srcTd = document.createElement("td");
-      addLink(srcTd, s.links.niche, "Niche");
+      if (s.earningsSource === "scorecard") addLink(srcTd, s.links.scorecard, "College Scorecard (federal)");
+      else addLink(srcTd, s.links.niche, "Niche");
       tr.appendChild(srcTd);
       tbody.appendChild(tr);
     });

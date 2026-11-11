@@ -242,6 +242,8 @@
       division: t.division, masseyConf: t.conf, confSlug: r ? r.confSlug : null,
       region: r ? r.region : null, tuitionType: tuitionType, costNote: r ? r.costNote || null : null,
       niche: r ? r.niche : null, earnings: r ? r.earnings : null,
+      // "scorecard": federal College Scorecard median 5 years after completion (Niche no longer shows earnings)
+      earningsSource: r && r.earnings != null ? (r.earningsSource || "niche") : null,
       natRank: r ? r.natRank : t.rank, confRank: r ? r.confRank : null,
       // a hand-entered branch campus has no IPEDS locale of its own; leave it blank
       ipeds: { city: loc.city || null, state: loc.state || null, locale: t.campus ? (t.campus.locale || "") : (ip ? ip.locale : ""),
@@ -580,7 +582,7 @@
       livingFrom: s.living ? s.living.from : null,
       totalCost: c.cost == null ? null : c.kind === "academy" ? c.cost
         : s.living ? c.cost + s.living.parts[0] + s.living.parts[1] + s.living.parts[2] : null,
-      earnings: s.earnings, natRank: s.natRank,
+      earnings: s.earnings, earningsSource: s.earningsSource, natRank: s.natRank,
       confRank: isMember ? s.confRank : "—",
       ipeds: s.ipeds, programs: programLines(offered, act), offeredMajors: offeredMajors,
       offenseNote: s.offenseNote, coachStaff: s.coachStaff,
