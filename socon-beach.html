@@ -332,6 +332,15 @@
   .band.band-2{background:var(--grid);}
   .band.band-3{background:color-mix(in srgb, var(--status-serious) 24%, var(--surface));}
   .band.band-4{background:color-mix(in srgb, var(--status-critical) 34%, var(--surface));}
+  /* 09 Flights: an older (DB1B) fare, used where DOT's newer report has no fare for the route */
+  /* 09 Flights: the experimental notice at the top of the panel */
+  .experimental{margin:0 0 14px; padding:10px 14px; border-radius:8px; border-left:4px solid var(--status-warning);
+    background:color-mix(in srgb, var(--status-warning) 18%, var(--surface)); color:var(--text-primary); font-size:13.5px; max-width:900px;}
+  .experimental strong{text-transform:uppercase; letter-spacing:.04em; font-size:12px; margin-right:6px;}
+  a.airline{color:inherit; text-decoration:none;}
+  a.airline::after{content:" ↗"; color:var(--text-muted); font-size:11px;}
+  a.airline:hover, a.airline:focus-visible{text-decoration:underline;}
+  .fare-old{display:inline-block; padding:2px 7px; border-radius:6px; background:color-mix(in srgb, var(--series-2) 24%, var(--surface)); color:var(--text-primary);}
   a.flaglink{text-decoration:none;}
   a.flaglink:hover .flag, a.flaglink:focus-visible .flag{text-decoration:underline;}
   a.flaglink:focus-visible{outline:2px solid var(--series-1); outline-offset:2px; border-radius:6px;}
@@ -512,7 +521,7 @@
 </main>
 <div class="tt" id="tooltip" role="tooltip"></div>
 <script src="data/schools.js?v=bc1e15cc"></script>
-<script src="compare.js?v=52a6610e"></script>
+<script src="compare.js?v=dce8d242"></script>
 <script src="data/beach.js?v=c44ee134"></script>
 <script>
 (function(){

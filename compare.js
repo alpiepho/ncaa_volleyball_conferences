@@ -638,6 +638,150 @@
     return Math.round(2 * r * Math.asin(Math.sqrt(h)));
   }
 
+  // ------------------------------------------------------------ flights (FLIGHTS_PLAN.md)
+  // F = SITE_FLIGHTS {airports: {code: {name, city, state, lat, lon, perMonth}}, routes: [[airline, from, to, perWeek]],
+  //     schools: {id: [{code, miles, role: nearest|busiest|fallback}]}, months, fares: {t1, db1b}} (tools/flights.py);
+  // fares = SITE_FARES[home airport] {t1: {code: [avg, lowAirline, lowFare, largest, perDay]},
+  //     db: {code: [median, tickets, cheapAirline, itsMedian, nonstopMedian, oneStopMedian]}} (data/fares/<code>.js)
+  var AIRLINES = { AA: "American", DL: "Delta", UA: "United", WN: "Southwest", AS: "Alaska", B6: "JetBlue",
+                   F9: "Frontier", G4: "Allegiant", NK: "Spirit", SY: "Sun Country", MX: "Breeze", XP: "Avelo",
+                   HA: "Hawaiian", "3M": "Silver", "9K": "Cape Air", ZW: "Air Wisconsin" };
+  // FLY_HOME: the home airport is the big regional airport (the busiest) within this many miles of home
+  var FLY_NEAR = 75, FLY_HOME = 100, FLY_MIN_TICKETS = 30, FLY_LEG_WEEKLY = 3;
+  function airlineName(c) { return AIRLINES[c] || c; }
+  // each airline's own site (its booking page); the airlines publish no stable link format that fills in a route
+  var AIRLINE_SITES = { AA: "https://www.aa.com/", DL: "https://www.delta.com/", UA: "https://www.united.com/",
+                        WN: "https://www.southwest.com/", AS: "https://www.alaskaair.com/", B6: "https://www.jetblue.com/",
+                        F9: "https://www.flyfrontier.com/", G4: "https://www.allegiantair.com/", NK: "https://www.spirit.com/",
+                        SY: "https://www.suncountry.com/", MX: "https://www.flybreeze.com/", XP: "https://www.aveloair.com/",
+                        HA: "https://www.hawaiianairlines.com/" };
+  function airlineUrl(c) { return AIRLINE_SITES[c] || null; }
+  // a Google Flights search with the route filled in (one-way, no date: the viewer picks it there)
+  function flightSearchUrl(from, to) {
+    return "https://www.google.com/travel/flights?q=" + encodeURIComponent("one way flights from " + from + " to " + to);
+  }
+
+  var flightIdx = null;
+  function flightIndex(F) {
+    if (flightIdx && flightIdx.F === F) return flightIdx;
+    var by = {};
+    F.routes.forEach(function (r) { (by[r[1]] = by[r[1]] || []).push(r); });
+    flightIdx = { F: F, byOrigin: by };
+    return flightIdx;
+  }
+
+  // home airports: the big regional airport (the busiest, flights a month) within 100 miles of home, else the nearest
+  // with flights; and the nearest airport as a smaller alternative when it's a different one (Fort Collins: Denver,
+  // with Cheyenne as the alternative). {main: {code, miles}, alt: {code, miles} | null}
+  function homeAirports(home, F) {
+    if (!home || !F) return null;
+    var best = null, near = null;
+    Object.keys(F.airports).forEach(function (k) {
+      var a = F.airports[k], mi = milesBetween(home, a);
+      if (mi == null) return;
+      if (!near || mi < near.miles) near = { code: k, miles: mi };
+      if (mi <= FLY_HOME && (!best || a.perMonth > F.airports[best.code].perMonth)) best = { code: k, miles: mi };
+    });
+    var main = best || near;
+    return main ? { main: main, alt: near && near.code !== main.code ? near : null } : null;
+  }
+  function homeAirport(home, F) { var h = homeAirports(home, F); return h ? h.main : null; }
+
+  // airlines flying from -> to nonstop, most flights a week first: [{airline, perWeek}]
+  function nonstopAirlines(F, from, to) {
+    return (flightIndex(F).byOrigin[from] || []).filter(function (r) { return r[2] === to; })
+      .sort(function (a, b) { return b[3] - a[3]; }).map(function (r) { return { airline: r[0], perWeek: r[3] }; });
+  }
+
+  // one stop on the same airline: both legs flown at least 3 times a week, and the trip at most 1.5 times the
+  // nonstop distance plus 500 miles (so a short trip through a hub still counts): [{airline, via: [codes]}]
+  function oneStopAirlines(F, from, to) {
+    var ap = F.airports, idx = flightIndex(F).byOrigin, direct = milesBetween(ap[from], ap[to]);
+    if (direct == null) return [];
+    var out = {};
+    (idx[from] || []).forEach(function (leg1) {
+      var hub = leg1[2];
+      if (hub === to || leg1[3] < FLY_LEG_WEEKLY || !ap[hub]) return;
+      var ok = (idx[hub] || []).some(function (leg2) { return leg2[0] === leg1[0] && leg2[2] === to && leg2[3] >= FLY_LEG_WEEKLY; });
+      if (!ok || milesBetween(ap[from], ap[hub]) + milesBetween(ap[hub], ap[to]) > 1.5 * direct + 500) return;
+      (out[leg1[0]] = out[leg1[0]] || []).push(hub);
+    });
+    return Object.keys(out).sort().map(function (c) { return { airline: c, via: out[c].sort() }; });
+  }
+
+  // the fare to show for one school airport from the viewer's home airport (fares for that home airport)
+  function fareAt(F, fares, code) {
+    var t = fares.t1 && fares.t1[code], d = fares.db && fares.db[code];
+    if (t) return { airport: code, source: "t1", period: F.fares.t1, typical: t[0], lowAirline: t[1], low: t[2], tickets: null };
+    if (d) return { airport: code, source: "db1b", period: F.fares.db1b, typical: d[0], lowAirline: d[2], low: d[3], tickets: d[1],
+                    nonstop: d[4], oneStop: d[5] };
+    return null;
+  }
+
+  // everything panel 09 needs for one school row:
+  // {status: nohome|nodata|notresearched|drive|ok, home: {code, miles}, airports: [{code, miles, role, nonstop, oneStop}],
+  //  fare: {airport, source: t1|db1b, period, typical, low, lowAirline, tickets, thin, fallback} | null | "loading"}
+  function schoolFlights(F, faresByHome, home, s) {
+    if (!s.researched) return { status: "notresearched" };
+    if (!F) return { status: "nodata" };
+    var H = homeAirport(home, F);
+    if (!H) return { status: "nohome" };
+    var cands = F.schools[s.id] || [];
+    if (!cands.length) return { status: "nodata", home: H };
+    var near = cands.filter(function (c) { return c.role !== "fallback"; });
+    var fb = cands.filter(function (c) { return c.role === "fallback"; })[0] || null;
+    var homeMiles = milesBetween(home, s.ipeds);
+    if (near.some(function (c) { return c.code === H.code; }) || (homeMiles != null && homeMiles <= FLY_NEAR))
+      return { status: "drive", home: H, miles: homeMiles };
+    function at(c, fallback) {
+      return { code: c.code, miles: c.miles, role: c.role, fallback: !!fallback,
+               nonstop: nonstopAirlines(F, H.code, c.code), oneStop: oneStopAirlines(F, H.code, c.code) };
+    }
+    var airports = near.map(function (c) { return at(c, false); });
+    var any = airports.some(function (a) { return a.nonstop.length || a.oneStop.length; });
+    if (!any && fb && fb.code !== H.code) airports.push(at(fb, true));
+    var fares = faresByHome ? faresByHome[H.code] : null, fare = null;
+    if (faresByHome && !fares) fare = "loading";
+    if (fares) {
+      var tries = near.map(function (c) { return fareAt(F, fares, c.code); }).filter(Boolean);
+      fare = tries.filter(function (f) { return f.source === "t1"; })[0] ||
+             tries.filter(function (f) { return f.tickets >= FLY_MIN_TICKETS; }).sort(function (a, b) { return b.tickets - a.tickets; })[0] || null;
+      if (!fare && fb && fb.code !== H.code) {
+        var f2 = fareAt(F, fares, fb.code);
+        if (f2 && (f2.source === "t1" || f2.tickets >= FLY_MIN_TICKETS)) { fare = f2; fare.fallback = true; }
+      }
+      if (!fare && tries.length) { fare = tries.sort(function (a, b) { return b.tickets - a.tickets; })[0]; fare.thin = true; }
+    }
+    return { status: "ok", home: H, airports: airports, fare: fare };
+  }
+
+  // "$236, from $135 (Frontier)"
+  function fareText(f) {
+    if (!f || f === "loading") return f === "loading" ? "loading…" : "—";
+    var t = "$" + f.typical.toLocaleString();
+    // "99" is DB1B's code for an airline it can't identify: show no "from" price for it
+    if (f.low != null && f.lowAirline && f.lowAirline !== "99" && f.low < f.typical) t += ", from $" + f.low.toLocaleString() + " (" + airlineName(f.lowAirline) + ")";
+    return t;
+  }
+
+  // profile card line: "From DEN: nonstop United, Southwest to SMF · $236, from $135 (Frontier)"
+  function flightsText(x) {
+    if (!x || x.status === "notresearched" || x.status === "nodata") return null;
+    if (x.status === "nohome") return "Set a home town to see flights";
+    if (x.status === "drive") return "Near your home airport (" + x.home.code + ")" + (x.miles != null ? ": " + x.miles + " mi from home" : "") + " · drive";
+    var ns = [], os = [];
+    x.airports.forEach(function (a) {
+      a.nonstop.forEach(function (n) { if (ns.indexOf(airlineName(n.airline)) < 0) ns.push(airlineName(n.airline)); });
+      a.oneStop.forEach(function (o) { if (os.indexOf(airlineName(o.airline)) < 0) os.push(airlineName(o.airline)); });
+    });
+    os = os.filter(function (n) { return ns.indexOf(n) < 0; });
+    var codes = x.airports.map(function (a) { return a.code; }).join("/");
+    var parts = ["From " + x.home.code + " to " + codes + ": " + (ns.length ? "nonstop " + ns.join(", ") : "no nonstop") +
+                 (os.length ? "; one stop " + os.join(", ") : "")];
+    if (x.fare && x.fare !== "loading") parts.push(fareText(x.fare) + (x.fare.source === "db1b" ? " (" + x.fare.period[0] + "-" + x.fare.period[x.fare.period.length - 1] + ")" : ""));
+    return parts.join(" · ");
+  }
+
   // fall of next season: Oct 2026 -> 2027 (§3 target year)
   function targetYear(now) { return (now || new Date()).getFullYear() + 1; }
 
@@ -1428,6 +1572,11 @@
     similarFacts: similarFacts,
     SPIRIT_SPORTS: SPIRIT_SPORTS, SPIRIT_BANDS: SPIRIT_BANDS, SPIRIT_MIN_PEERS: SPIRIT_MIN_PEERS,
     SPIRIT_MIN_SPORTS: SPIRIT_MIN_SPORTS, spiritBand: spiritBand, spiritPct: spiritPct, spiritAll: spiritAll,
-    spiritOf: spiritOf, spiritPeerText: spiritPeerText, spiritText: spiritText
+    spiritOf: spiritOf, spiritPeerText: spiritPeerText, spiritText: spiritText,
+    AIRLINES: AIRLINES, FLY_NEAR: FLY_NEAR, FLY_HOME: FLY_HOME, FLY_MIN_TICKETS: FLY_MIN_TICKETS, airlineName: airlineName,
+    homeAirports: homeAirports,
+    airlineUrl: airlineUrl, flightSearchUrl: flightSearchUrl,
+    homeAirport: homeAirport, nonstopAirlines: nonstopAirlines, oneStopAirlines: oneStopAirlines,
+    schoolFlights: schoolFlights, fareText: fareText, flightsText: flightsText
   };
 })(typeof window !== "undefined" ? window : globalThis);

@@ -1,0 +1,1 @@
+window.SITE_FARES = window.SITE_FARES || {}; window.SITE_FARES["GUF"] = {"t1":{},"db":{"BLV":[62,381,"G4",62,62,null],"CVG":[57,328,"G4",57,57,null],"HOU":[32,39,"G4",32,32,null],"MCI":[47,232,"G4",47,47,null],"TYS":[37,108,"G4",37,37,null],"XNA":[52,340,"G4",52,52,null]}};

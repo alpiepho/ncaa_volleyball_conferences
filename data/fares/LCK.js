@@ -1,0 +1,1 @@
+window.SITE_FARES = window.SITE_FARES || {}; window.SITE_FARES["LCK"] = {"t1":{"FLL":[111,"G4",111,"G4",49]},"db":{"CHS":[37,240,"G4",37,37,null],"FLL":[57,1581,"G4",57,57,null],"MYR":[52,2561,"G4",52,52,null],"SAV":[57,2874,"G4",57,57,null],"SFB":[57,4024,"G4",57,57,null]}};

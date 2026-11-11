@@ -1,0 +1,1 @@
+window.SITE_FARES = window.SITE_FARES || {}; window.SITE_FARES["USA"] = {"t1":{},"db":{"ALB":[57,837,"XP",57,57,null],"BDL":[57,684,"XP",57,57,null],"BNA":[37,79,"XP",37,37,null],"DAB":[42,57,"XP",42,42,null],"FLL":[52,3769,"G4",52,52,null],"ISP":[47,340,"XP",47,47,null],"SFB":[47,3348,"G4",47,47,null]}};

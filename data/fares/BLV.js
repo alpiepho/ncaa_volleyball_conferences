@@ -1,0 +1,1 @@
+window.SITE_FARES = window.SITE_FARES || {}; window.SITE_FARES["BLV"] = {"t1":{},"db":{"FLL":[62,879,"G4",62,62,null],"JAX":[42,1012,"G4",42,42,null],"LAS":[77,1280,"G4",77,77,null],"MYR":[62,616,"G4",62,62,null],"SAV":[57,236,"G4",57,57,null],"SFB":[67,4046,"G4",67,67,null],"TYS":[37,446,"G4",37,37,null]}};

@@ -331,6 +331,15 @@
   .band.band-2{background:var(--grid);}
   .band.band-3{background:color-mix(in srgb, var(--status-serious) 24%, var(--surface));}
   .band.band-4{background:color-mix(in srgb, var(--status-critical) 34%, var(--surface));}
+  /* 09 Flights: an older (DB1B) fare, used where DOT's newer report has no fare for the route */
+  /* 09 Flights: the experimental notice at the top of the panel */
+  .experimental{margin:0 0 14px; padding:10px 14px; border-radius:8px; border-left:4px solid var(--status-warning);
+    background:color-mix(in srgb, var(--status-warning) 18%, var(--surface)); color:var(--text-primary); font-size:13.5px; max-width:900px;}
+  .experimental strong{text-transform:uppercase; letter-spacing:.04em; font-size:12px; margin-right:6px;}
+  a.airline{color:inherit; text-decoration:none;}
+  a.airline::after{content:" ↗"; color:var(--text-muted); font-size:11px;}
+  a.airline:hover, a.airline:focus-visible{text-decoration:underline;}
+  .fare-old{display:inline-block; padding:2px 7px; border-radius:6px; background:color-mix(in srgb, var(--series-2) 24%, var(--surface)); color:var(--text-primary);}
   a.flaglink{text-decoration:none;}
   a.flaglink:hover .flag, a.flaglink:focus-visible .flag{text-decoration:underline;}
   a.flaglink:focus-visible{outline:2px solid var(--series-1); outline-offset:2px; border-radius:6px;}
@@ -433,8 +442,9 @@
       <a href="#flags">06 Flags</a>
       <a href="#profile">07 Profile</a>
       <a href="#spirit">08 Spirit</a>
-      <a id="map-link" href="big10-map.html" target="_blank" rel="noopener">09 Map ↗</a>
-      <a id="beach-link" href="big10-beach.html" target="_blank" rel="noopener">10 Beach ↗</a>
+      <a href="#flights">09 Flights</a>
+      <a id="map-link" href="big10-map.html" target="_blank" rel="noopener">10 Map ↗</a>
+      <a id="beach-link" href="big10-beach.html" target="_blank" rel="noopener">11 Beach ↗</a>
     </nav>
   </div>
 </header>
@@ -580,6 +590,24 @@
     <ul class="sources-note" id="spiritNotes"></ul>
   </section>
 
+  <section class="panel" id="flights">
+    <div class="panel-head"><span class="idx">09</span><h2>Getting there: flights from home</h2></div>
+    <p class="experimental" role="note"><strong>Experimental</strong>This panel is new and rough. Airlines come from recent
+      federal flight records and fares are averages of what people paid, some of them over a year old (orange). Check
+      the airline or the search links before relying on anything here.</p>
+    <p class="question" id="flightsLead">Which airlines fly from your home airport to the airports near each school, nonstop or with one stop, and what does a ticket usually cost?</p>
+    <div class="card scroll-x">
+      <table class="maintable" id="flightsTable">
+        <caption>Airlines and typical one-way fares from the home airport</caption>
+        <thead>
+          <tr><th>School</th><th>Airport</th><th>Nonstop</th><th>One stop</th><th class="num">Fare (one-way)</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <ul class="sources-note" id="flightsNotes"></ul>
+  </section>
+
   <footer class="endnote">
     <b>How this page works:</b> the school facts were pulled on the dates above (log: <code>data/2026/logs/BIG10_RESULTS.md</code>). The comparison row, costs, flags, distances, and majors are computed in your browser from the settings (Edit settings, at the top), which are saved only in this browser. Built by <code>tools/build_site.py</code>.
   </footer>
@@ -589,7 +617,8 @@
 
 <script src="data/schools.js?v=bc1e15cc"></script>
 <script src="data/history.js"></script>
-<script src="compare.js?v=52a6610e"></script>
+<script src="data/flights.js?v=1d72d17c"></script>
+<script src="compare.js?v=dce8d242"></script>
 <script>
 (function(){
   "use strict";
@@ -1532,6 +1561,8 @@
 
     // School spirit from home attendance (08, SPIRIT_PLAN.md)
     if (s.spirit) side.appendChild(kv("School spirit", C.spiritText(s.spirit)));
+    // Flights from the viewer's home airport (09, FLIGHTS_PLAN.md): filled in once the home airport's fares load
+    if (s.researched && window.SITE_FLIGHTS){ var fl = kv("Flights", "…"); fl.lastChild.setAttribute("data-flights", s.id); side.appendChild(fl); }
 
     var flagLabel = document.createElement("div"); flagLabel.className="k"; flagLabel.style.marginTop="4px"; flagLabel.textContent = "Flags";
     side.appendChild(flagLabel);
@@ -1652,6 +1683,138 @@
        "<strong>no team</strong>: the school doesn't play that sport. <strong>—</strong>: no figure could be read. Missing sports are skipped, never counted as zero.");
     li("Attendance is what schools report (often tickets distributed), counts alumni and townspeople as well as students, and moves with winning, " +
        "free admission, arena size, and a big-city location. Read it as a rough proxy for school spirit, not a measure of it.");
+  })();
+
+  // ================= 09 flights (FLIGHTS_PLAN.md) =================
+  (function(){
+    var F = window.SITE_FLIGHTS, tbody = document.querySelector("#flightsTable tbody"), notes = document.getElementById("flightsNotes");
+    function li(html){ var e = document.createElement("li"); e.innerHTML = html; notes.appendChild(e); }
+    function sub(el, text){ var d = document.createElement("span"); d.className = "flag-detail"; d.textContent = text; el.appendChild(d); }
+    // an airline name linking to its own site (hover: flights a week, or where it connects)
+    function airlineLink(code, text, title){
+      var url = C.airlineUrl(code), el = document.createElement(url ? "a" : "span");
+      if (url){ el.href = url; el.target = "_blank"; el.rel = "noopener noreferrer"; el.className = "airline"; }
+      el.textContent = text; el.title = title + (url ? " · opens " + C.airlineName(code) + "'s site" : "");
+      return el;
+    }
+    if (!F){ li("Flights haven't been pulled yet (<code>tools/flights.py</code>)."); return; }
+    var home = settings.home || null, HA = C.homeAirports(home, F), H = HA ? HA.main : null, ALT = HA ? HA.alt : null;
+    var period = function(p){ return Array.isArray(p) ? p[0] + " to " + p[p.length - 1] : p; };
+    function render(){
+      tbody.textContent = "";
+      var info = {};
+      schools.forEach(function(s){ info[s.id] = C.schoolFlights(F, window.SITE_FARES || {}, home, s); });
+      // profile card lines
+      document.querySelectorAll("[data-flights]").forEach(function(el){
+        var x = info[el.getAttribute("data-flights")], t = C.flightsText(x);
+        el.textContent = t || "—";
+        if (x && x.fare && x.fare.source === "db1b"){ el.textContent = ""; var sp = document.createElement("span"); sp.className = "fare-old"; sp.textContent = t; el.appendChild(sp); }
+      });
+      // rows: nonstop schools first (most nonstop airlines), then one stop, then the rest; the comparison school in its place
+      function rank(x){ if (!x || x.status !== "ok") return x && x.status === "drive" ? -1 : 99;
+        var ns = 0, os = 0; x.airports.forEach(function(a){ ns += a.nonstop.length; os += a.oneStop.length; });
+        return ns ? 10 - Math.min(ns, 9) : os ? 20 : 30; }
+      var rows = schools.slice().sort(function(a, b){
+        var ra = rank(info[a.id]), rb = rank(info[b.id]);
+        if (ra !== rb) return ra - rb;
+        var fa = info[a.id].fare, fb = info[b.id].fare;
+        return (fa && fa.typical || 1e9) - (fb && fb.typical || 1e9);
+      });
+      rows.forEach(function(s){
+        var x = info[s.id], tr = document.createElement("tr");
+        if (s.current) tr.className = "current";
+        tr.appendChild(schoolCell(s));
+        function cell(text, cls){ var td = document.createElement("td"); if (cls) td.className = cls; td.textContent = text; tr.appendChild(td); return td; }
+        if (!s.researched){ cell("Not researched"); cell(""); cell(""); cell(""); return tbody.appendChild(tr); }
+        if (x.status === "nohome"){ cell("Set a home town"); cell(""); cell(""); cell(""); return tbody.appendChild(tr); }
+        if (x.status !== "ok" && x.status !== "drive"){ cell("—"); cell(""); cell(""); cell(""); return tbody.appendChild(tr); }
+        if (x.status === "drive"){
+          var d = cell("Near " + x.home.code); sub(d, (x.miles != null ? x.miles + " mi from home" : "") + " · drive");
+          cell("—"); cell("—"); cell("—", "num"); return tbody.appendChild(tr);
+        }
+        var ap = cell("");
+        x.airports.forEach(function(a, i){
+          var A = F.airports[a.code], line = document.createElement("div");
+          line.textContent = a.code + " · " + a.miles + " mi" + (a.fallback ? " (farther, more flights)" : "");
+          line.title = A.name + (A.city ? ", " + A.city : "") + " · about " + A.perMonth.toLocaleString() + " flights a month";
+          ap.appendChild(line);
+          var srch = srcLink(C.flightSearchUrl(x.home.code, a.code), "Search " + x.home.code + "→" + a.code);
+          srch.title = "Google Flights, one-way " + x.home.code + " to " + a.code + " (pick a date there)";
+          var sr = document.createElement("div"); sr.className = "src-row tight"; sr.appendChild(srch);
+          if (ALT && ALT.code !== a.code){
+            var alt = srcLink(C.flightSearchUrl(ALT.code, a.code), "or " + ALT.code + "→" + a.code);
+            alt.title = "Google Flights from the smaller airport near home, " + F.airports[ALT.code].name + " (" + ALT.code + ")";
+            sr.appendChild(alt);
+          }
+          ap.appendChild(sr);
+        });
+        var ns = cell(""), os = cell(""), seen = {};
+        x.airports.forEach(function(a){
+          a.nonstop.forEach(function(n){
+            seen[n.airline] = 1;
+            var e = document.createElement("div");
+            e.appendChild(airlineLink(n.airline, C.airlineName(n.airline) + (x.airports.length > 1 ? " to " + a.code : ""),
+              "About " + Math.round(n.perWeek) + " flights a week from " + x.home.code + " to " + a.code));
+            ns.appendChild(e);
+          });
+        });
+        x.airports.forEach(function(a){
+          a.oneStop.forEach(function(o){
+            if (seen[o.airline]) return;
+            seen[o.airline] = 1;
+            var e = document.createElement("div");
+            e.appendChild(airlineLink(o.airline, C.airlineName(o.airline),
+              "Connecting in " + o.via.join(", ") + (x.airports.length > 1 ? " to " + a.code : "")));
+            os.appendChild(e);
+          });
+        });
+        if (!ns.childNodes.length) ns.textContent = "—";
+        if (!os.childNodes.length) os.textContent = "—";
+        var fc = cell("", "num"), f = x.fare;
+        if (f === "loading") fc.textContent = "loading…";
+        else if (!f) fc.textContent = "—";
+        else {
+          var v = document.createElement("span"); v.textContent = C.fareText(f);
+          if (f.source === "db1b") v.className = "fare-old";
+          fc.appendChild(v);
+          sub(fc, (f.source === "t1" ? period(f.period) + " (DOT)" : period(f.period) + ", older") + (x.airports.length > 1 ? " · to " + f.airport : "") +
+                  (f.thin ? " · few tickets" : ""));
+          fc.title = (f.source === "t1"
+            ? "DOT Consumer Airfare Report (" + f.period + "): average one-way fare " + x.home.code + "-" + f.airport + "; the low-fare airline's average"
+            : "Older: BTS DB1B 10% ticket sample, " + period(f.period) + " (" + f.tickets.toLocaleString() + " tickets): median one-way fare " + x.home.code + "-" + f.airport +
+              "; the cheapest airline's median. DOT's newer report doesn't cover this route." +
+              (f.nonstop ? " Nonstop median $" + f.nonstop + "." : "") + (f.oneStop ? " One-stop median $" + f.oneStop + "." : ""));
+        }
+        tbody.appendChild(tr);
+      });
+    }
+    var lead = document.getElementById("flightsLead");
+    if (H){
+      var A = F.airports[H.code];
+      lead.textContent = "From " + A.name + " (" + H.code + "), " + H.miles + " mi from " + home.city + ", " + home.state +
+        (ALT ? " (smaller and closer: " + F.airports[ALT.code].name + " (" + ALT.code + "), " + ALT.miles + " mi, in the search links)" : "") +
+        ": which airlines fly to the airports near each school, nonstop or with one stop, and what does a ticket usually cost?";
+      if (!(window.SITE_FARES && window.SITE_FARES[H.code])){
+        window.SITE_FARES = window.SITE_FARES || {};
+        var sc = document.createElement("script");
+        sc.src = "data/fares/" + H.code + ".js?v=" + encodeURIComponent(F.fares.t1 + "-" + F.fares.db1b.join(""));
+        sc.onload = render;
+        sc.onerror = function(){ window.SITE_FARES[H.code] = {t1: {}, db: {}}; render(); };
+        document.head.appendChild(sc);
+      }
+    }
+    render();
+    li("<strong>Home airport:</strong> the big regional airport, the busiest within " + C.FLY_HOME + " miles of your home town (set on the index page), else the nearest with scheduled flights; " +
+       "a smaller, closer airport is offered as an alternative search" + (ALT ? " (\"or " + ALT.code + "→…\")" : "") + ", but airlines and fares are from the main one. " +
+       "<strong>School airports:</strong> the nearest with scheduled flights, and the busiest within " + C.FLY_NEAR + " miles if different; a farther, busier airport is added when neither has a nonstop or one-stop flight.");
+    li("<strong>Airlines</strong> from BTS on-time data, " + esc(F.months[0]) + " to " + esc(F.months[F.months.length - 1]) +
+       ": every scheduled domestic flight under the airline that sells it (regional partners under its name). Major airlines only: American, Delta, United, Southwest, Alaska, JetBlue, Frontier, Allegiant. " +
+       "Nonstop: flown at least weekly. One stop: same airline, both legs at least 3 times a week, not a long detour. Hover an airline for flights a week or the connecting airports. " +
+       "Each airline links to its own site; <strong>Search</strong> under an airport opens Google Flights with the route filled in (pick a date there).");
+    li("<strong>Fares</strong> are average one-way fares people paid (all fare classes, booked any time), not a quote for a date: the typical fare, and the cheapest airline's. " +
+       "From DOT's Consumer Airfare Report (" + esc(F.fares.t1) + ") where it covers the route; otherwise " +
+       "<span class=\"fare-old\">in orange</span>, the older BTS DB1B 10% ticket sample (" + esc(period(F.fares.db1b)) + ", median fares). " +
+       "<strong>few tickets</strong>: fewer than " + C.FLY_MIN_TICKETS + " sample tickets. <strong>drive</strong>: the school is near your home airport.");
   })();
 
   // print/save as PDF: browsers name the file after the title, so use the page's file name
