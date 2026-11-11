@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-<head><script src="theme.js"></script>
+<head><script src="theme.js?v=6e63a942"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sacramento State Position History</title>
@@ -327,6 +327,13 @@
   :root[data-theme="dark"] .flag.warning{color:var(--status-warning);}
   .flag.critical{background:color-mix(in srgb, var(--status-critical) 16%, var(--surface)); color:var(--status-critical);}
   .flag.pending{background:var(--grid); color:var(--text-muted); font-style:italic;}
+  /* 08 School spirit: fan support band, best (band-0) to worst (band-4) */
+  .band{display:inline-block; font-size:11.5px; font-weight:700; padding:3px 8px; border-radius:6px; color:var(--text-primary);}
+  .band.band-0{background:color-mix(in srgb, var(--status-good) 38%, var(--surface));}
+  .band.band-1{background:color-mix(in srgb, var(--status-good) 16%, var(--surface));}
+  .band.band-2{background:var(--grid);}
+  .band.band-3{background:color-mix(in srgb, var(--status-serious) 24%, var(--surface));}
+  .band.band-4{background:color-mix(in srgb, var(--status-critical) 34%, var(--surface));}
   a.flaglink{text-decoration:none;}
   a.flaglink:hover .flag, a.flaglink:focus-visible .flag{text-decoration:underline;}
   a.flaglink:focus-visible{outline:2px solid var(--series-1); outline-offset:2px; border-radius:6px;}
@@ -2367,7 +2374,7 @@
     <p class="question" style="margin-top:14px;">Liberos and defensive specialists are one list; the roster's label is shown on each player.</p>
   </section>
 </div>
-  <p class="question">Pulled 2026-11-09 from https://hornetsports.com (Big West file in <code>data/2026/conferences/</code>).</p>
+  <p class="question">Pulled 2026-11-11 from https://hornetsports.com (Big West file in <code>data/2026/conferences/</code>).</p>
 </main>
 <script>
   (function(){

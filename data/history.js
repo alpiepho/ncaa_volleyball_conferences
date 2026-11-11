@@ -1,1 +1,1 @@
-window.SITE_HISTORY = [];
+window.SITE_HISTORY = ["sac","texastech"];
