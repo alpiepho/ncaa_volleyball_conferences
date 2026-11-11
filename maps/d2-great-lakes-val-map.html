@@ -163,8 +163,8 @@
   </aside>
 </div>
 
-<script src="../data/schools.js?v=7e97a1c0"></script>
-<script src="../compare.js?v=b6a4d9fe"></script>
+<script src="../data/schools.js?v=8ffb3481"></script>
+<script src="../compare.js?v=069024ae"></script>
 <script>
 (function(){
   "use strict";
@@ -209,6 +209,9 @@
   }
 
   function reportPoints(){ return C.reportRows(MAP.slug, settings).map(rowPoint); }
+  // athletic gear brand, researched schools that have one looked up (SPONSOR_PLAN.md)
+  function gearRows(g){ var t = C.gearText(g); return t ? [["Gear", t]] : []; }
+
   function rowPoint(s){
       var rank = String(s.confRank == null ? "" : s.confRank).split(" ")[0], num = /^\d+$/.test(rank);
       var loc = s.ipeds;
@@ -219,7 +222,7 @@
         id: s.id, team: s.masseyName, name: s.name, current: s.current, badge: num ? rank : "•", sort: num ? +rank : 99,
         city: loc.city, state: loc.state, locale: loc.locale, lat: loc.lat, lon: loc.lon,
         rows: [["Nat'l rank", "#" + s.natRank], ["Conf. rank", s.confRank == null ? "—" : s.confRank],
-               ["Tuition + fees/yr", money(s.cost)], ["Total, on campus", money(s.totalCost)]].concat(climateRows(s.climate), distRows(loc, s.current)),
+               ["Tuition + fees/yr", money(s.cost)], ["Total, on campus", money(s.totalCost)]].concat(gearRows(s.gear), climateRows(s.climate), distRows(loc, s.current)),
         links: links(s, [["niche", "Niche"], ["roster", "Roster"], ["schedule", "Schedule"], ["stats", "Stats"], ["aia", "AIA"], ["fca", "FCA"]]).concat(climateLink(s.climate)),
         sub: sub
       };
@@ -257,7 +260,7 @@
         rows.push([mj.label, got.length ? got.map(function(c){ var g = rec.programs[c]; return g + " grads/yr" + (g === 0 ? " (new)" : ""); }).join("; ") : "not offered"]);
       });
     }
-    rows = rows.concat(climateRows(rec.climate), distRows(loc, current));
+    rows = rows.concat(gearRows(rec.gear), climateRows(rec.climate), distRows(loc, current));
     var lk = [["Niche", t.niche || google("site:niche.com " + full)], ["Roster", google(full + " women's volleyball roster")]];
     if (current && rec.researched) lk = links(rec, [["niche", "Niche"], ["roster", "Roster"], ["schedule", "Schedule"], ["stats", "Stats"]]);
     lk = lk.concat(climateLink(rec.climate));

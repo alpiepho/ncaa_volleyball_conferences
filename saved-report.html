@@ -339,6 +339,10 @@
   a.airline{color:inherit; text-decoration:none;}
   a.airline::after{content:" ↗"; color:var(--text-muted); font-size:11px;}
   a.airline:hover, a.airline:focus-visible{text-decoration:underline;}
+  .gear-none{color:var(--text-muted); font-style:italic;}
+  .gear-next{display:inline-block; padding:1px 6px; border-radius:6px; background:color-mix(in srgb, var(--series-2) 24%, var(--surface)); color:var(--text-primary); text-decoration:none;}
+  .gear-next.gear-renewed, .gear-next.gear-reported{background:var(--grid);}
+  a.gear-next::after{content:" ↗"; color:var(--text-muted); font-size:11px;}
   .fare-old{display:inline-block; padding:2px 7px; border-radius:6px; background:color-mix(in srgb, var(--series-2) 24%, var(--surface)); color:var(--text-primary);}
   a.flaglink{text-decoration:none;}
   a.flaglink:hover .flag, a.flaglink:focus-visible .flag{text-decoration:underline;}
@@ -613,10 +617,10 @@
 
 <div class="tt" id="tooltip" role="tooltip"></div>
 
-<script src="data/schools.js?v=7e97a1c0"></script>
+<script src="data/schools.js?v=8ffb3481"></script>
 <script src="data/history.js"></script>
 <script src="data/flights.js?v=1d72d17c"></script>
-<script src="compare.js?v=b6a4d9fe"></script>
+<script src="compare.js?v=069024ae"></script>
 <script>
 (function(){
   "use strict";
@@ -1561,6 +1565,24 @@
     if (s.spirit) side.appendChild(kv("School spirit", C.spiritText(s.spirit)));
     // Flights from the viewer's home airport (09, FLIGHTS_PLAN.md): filled in once the home airport's fares load
     if (s.researched && window.SITE_FLIGHTS){ var fl = kv("Flights", "…"); fl.lastChild.setAttribute("data-flights", s.id); side.appendChild(fl); }
+    // Athletic gear brand (SPONSOR_PLAN.md): brand linked to its source, a coming change highlighted
+    var gp = C.gearParts(s.gear);
+    if (gp){
+      var gRow = kv("Gear", ""), gV = gRow.lastChild;
+      if (s.gear.note) gV.title = s.gear.note;
+      if (gp.muted){ gV.className += " gear-none"; gV.textContent = gp.brand; }
+      else if (gp.url){ var ga = document.createElement("a"); ga.className = "srclink"; ga.href = gp.url;
+        ga.target = "_blank"; ga.rel = "noopener noreferrer"; ga.textContent = gp.brand; gV.appendChild(ga); }
+      else gV.textContent = gp.brand;
+      if (gp.extra) gV.appendChild(document.createTextNode(" · " + gp.extra));
+      if (gp.next){
+        gV.appendChild(document.createTextNode(" · "));
+        var gn = document.createElement(gp.nextUrl ? "a" : "span"); gn.className = "gear-next gear-" + gp.nextKind; gn.textContent = gp.next;
+        if (gp.nextUrl){ gn.href = gp.nextUrl; gn.target = "_blank"; gn.rel = "noopener noreferrer"; }
+        gV.appendChild(gn);
+      }
+      side.appendChild(gRow);
+    }
 
     var flagLabel = document.createElement("div"); flagLabel.className="k"; flagLabel.style.marginTop="4px"; flagLabel.textContent = "Flags";
     side.appendChild(flagLabel);

@@ -919,6 +919,12 @@
               <label><input type="checkbox" name="fl-offense" value="5-1"> 5-1</label>
               <label><input type="checkbox" name="fl-offense" value="6-2"> 6-2</label>
               <label><input type="checkbox" name="fl-offense" value="split"> 3-way split</label></div>
+            <div class="fl-row"><span class="fl-k">Gear</span>
+              <label><input type="checkbox" name="fl-gear" value="Nike"> Nike</label>
+              <label><input type="checkbox" name="fl-gear" value="Adidas"> Adidas</label>
+              <label><input type="checkbox" name="fl-gear" value="Under Armour"> Under Armour</label>
+              <label><input type="checkbox" name="fl-gear" value="New Balance"> New Balance</label>
+              <label><input type="checkbox" name="fl-gear" value="other"> Other</label></div>
             <div class="fl-row"><span class="fl-k">Has</span>
               <label><input type="checkbox" id="fl-beach"> Beach program</label>
               <label><input type="checkbox" id="fl-faith"> AIA or FCA</label>
@@ -1013,8 +1019,8 @@
 </div>
 </main>
 
-<script src="data/schools.js?v=7e97a1c0"></script>
-<script src="compare.js?v=b6a4d9fe"></script>
+<script src="data/schools.js?v=8ffb3481"></script>
+<script src="compare.js?v=069024ae"></script>
 <script src="data/places.js?v=9f2e48c7"></script>
 <script>
 (function(){
@@ -1501,7 +1507,7 @@ var flMajor = function(id){ return $(id).value.replace(/,/g, " ").replace(/\s+/g
   var per = {};
   Object.keys(D.researched).forEach(function(id){ var d = D.teams[D.researched[id].masseyName].division; per[d] = (per[d] || 0) + 1; });
   $("fl-rs-help").textContent = "From team sites and standings, for the " + Object.keys(D.researched).length + " researched schools (" +
-    DIVS.map(function(d){ return d + " " + (per[d] || 0); }).join(", ") + "). Position openings use the position in Settings.";
+    DIVS.map(function(d){ return d + " " + (per[d] || 0); }).join(", ") + "). Position openings use the position in Settings. Gear counts this year's brand and an announced switch for next year.";
   // the starting school's rows and limits, from the one table in compare.js
   C.SIMILAR_ROWS.forEach(function(r){
     var box = $("fl-sim-rows"), lab = el("label"), inp = el("input");
@@ -1555,7 +1561,7 @@ function flRead(){
     costMax: $("fl-cost").value.replace(/[$,\s]/g, ""), costBasis: flChecked("fl-basis")[0],
     distanceMax: $("fl-dist").value.replace(/[,\s]/g, ""), regions: flChecked("fl-region"), states: flStates().good,
     settings: flChecked("fl-setting"), sunnyMin: $("fl-sunny").value.trim(), julyMax: $("fl-july").value.trim(), janMin: $("fl-jan").value.trim(),
-    confRankMax: $("fl-confrank").value.trim(), openings: $("fl-openings").checked, offense: flChecked("fl-offense"),
+    confRankMax: $("fl-confrank").value.trim(), openings: $("fl-openings").checked, offense: flChecked("fl-offense"), gear: flChecked("fl-gear"),
     beach: $("fl-beach").checked, faith: $("fl-faith").checked, femaleCoach: $("fl-coach").checked,
     includeUnresearched: $("fl-incl").checked,
     similarTo: flSeed, similarLimit: $("fl-sim-limit").value,
@@ -1576,7 +1582,7 @@ function flWrite(f){
   $("fl-dist").value = v(f.distanceMax); flSetChecked("fl-region", f.regions); $("fl-states").value = f.states.join(", ");
   flSetChecked("fl-setting", f.settings);
   $("fl-sunny").value = v(f.sunnyMin); $("fl-july").value = v(f.julyMax); $("fl-jan").value = v(f.janMin);
-  $("fl-confrank").value = v(f.confRankMax); $("fl-openings").checked = f.openings; flSetChecked("fl-offense", f.offense);
+  $("fl-confrank").value = v(f.confRankMax); $("fl-openings").checked = f.openings; flSetChecked("fl-offense", f.offense); flSetChecked("fl-gear", f.gear);
   $("fl-beach").checked = f.beach; $("fl-faith").checked = f.faith; $("fl-coach").checked = f.femaleCoach;
   $("fl-incl").checked = f.includeUnresearched;
   flSetSeed(f.similarTo);
@@ -1594,7 +1600,7 @@ function flGroupCounts(f){
     ac: n(flMajor("fl-major1"), flMajor("fl-major2"), f.sizes.length, f.types.length),
     cp: n(f.costMax !== null, f.distanceMax !== null, f.regions.length, f.states.length, f.settings.length),
     cl: n(f.sunnyMin !== null, f.julyMax !== null, f.janMin !== null),
-    rs: n(f.confRankMax !== null, f.openings, f.offense.length, f.beach, f.faith, f.femaleCoach)
+    rs: n(f.confRankMax !== null, f.openings, f.offense.length, f.gear.length, f.beach, f.faith, f.femaleCoach)
   };
 }
 

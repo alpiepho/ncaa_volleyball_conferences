@@ -340,6 +340,10 @@
   a.airline{color:inherit; text-decoration:none;}
   a.airline::after{content:" ↗"; color:var(--text-muted); font-size:11px;}
   a.airline:hover, a.airline:focus-visible{text-decoration:underline;}
+  .gear-none{color:var(--text-muted); font-style:italic;}
+  .gear-next{display:inline-block; padding:1px 6px; border-radius:6px; background:color-mix(in srgb, var(--series-2) 24%, var(--surface)); color:var(--text-primary); text-decoration:none;}
+  .gear-next.gear-renewed, .gear-next.gear-reported{background:var(--grid);}
+  a.gear-next::after{content:" ↗"; color:var(--text-muted); font-size:11px;}
   .fare-old{display:inline-block; padding:2px 7px; border-radius:6px; background:color-mix(in srgb, var(--series-2) 24%, var(--surface)); color:var(--text-primary);}
   a.flaglink{text-decoration:none;}
   a.flaglink:hover .flag, a.flaglink:focus-visible .flag{text-decoration:underline;}
@@ -520,8 +524,8 @@
   <code>tools/beach_check.py</code>. Program list cross-checked against the NCAA Directory (women's beach volleyball). Full pull log in <code>data/2026/logs/WCC_RESULTS.md</code>.</footer>
 </main>
 <div class="tt" id="tooltip" role="tooltip"></div>
-<script src="data/schools.js?v=7e97a1c0"></script>
-<script src="compare.js?v=b6a4d9fe"></script>
+<script src="data/schools.js?v=8ffb3481"></script>
+<script src="compare.js?v=069024ae"></script>
 <script src="data/beach.js?v=c44ee134"></script>
 <script>
 (function(){

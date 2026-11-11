@@ -267,6 +267,8 @@
       climate: t.climate || null,
       // school spirit from home attendance (SPIRIT_PLAN.md); null if not researched or not pulled yet
       spirit: r ? spiritOf(r.id) : null,
+      // athletic gear brand (SPONSOR_PLAN.md); null if not researched or not looked up yet
+      gear: r ? r.gear || null : null,
       undergrads: ip ? ip.undergrads || null : null
     };
   }
@@ -589,7 +591,7 @@
       ipeds: s.ipeds, programs: programLines(offered, act), offeredMajors: offeredMajors,
       offenseNote: s.offenseNote, coachStaff: s.coachStaff,
       flags: flags, flagDetail: detail, beach: s.beach, links: s.links, climate: s.climate,
-      spirit: s.spirit, undergrads: s.undergrads
+      spirit: s.spirit, undergrads: s.undergrads, gear: s.gear
     };
     if (s.setter) row.setter = s.setter;
     row.setters = s.setters || [];
@@ -782,6 +784,49 @@
                  (os.length ? "; one stop " + os.join(", ") : "")];
     if (x.fare && x.fare !== "loading") parts.push(fareText(x.fare) + (x.fare.source === "db1b" ? " (" + x.fare.period[0] + "-" + x.fare.period[x.fare.period.length - 1] + ")" : ""));
     return parts.join(" · ");
+  }
+
+  // ------------------------------------------------------------ gear brand (SPONSOR_PLAN.md)
+  var MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
+                "November", "December"];
+  // "2027-07-01" -> "July 2027"; "2027" -> "2027"
+  function gearWhen(s) {
+    var m = /^(\d{4})(?:-(\d{2}))?/.exec(s || "");
+    return !m ? "" : m[2] ? MONTHS[+m[2] - 1] + " " + m[1] : m[1];
+  }
+  // the athletic year a deal ends in, "2026-27" -> "June 2027"
+  function gearEnds(y) {
+    var m = /^(\d{4})-(\d{2})$/.exec(y || "");
+    return m ? "June " + m[1].slice(0, 2) + m[2] : "";
+  }
+  // {brand, extra, next, nextKind, muted, url, nextUrl} for the profile line and map popup. year: the gear pull's athletic year
+  // ("2026-27", SITE_DATA.meta.gear.year); a deal whose `through` is that year, with nothing next, "ends June 2027".
+  // A dealer (BSN Sports) is never in here: it stays in data/2026/gear.json.
+  function gearParts(g, year) {
+    if (!g) return null;
+    if (year === undefined) { var d = root.SITE_DATA; year = d && d.meta && d.meta.gear ? d.meta.gear.year : null; }
+    var out = { brand: g.brand || null, extra: null, next: null, nextKind: null, muted: !g.brand, url: g.source || null, nextUrl: null };
+    if (!g.brand) { out.brand = g.mixed ? "varies by team" : "not found"; return out; }
+    if (g.volleyball && g.volleyball !== g.brand) out.extra = "volleyball: " + g.volleyball;
+    var n = g.next;
+    if (n && n.brand && n.status === "reported") {
+      out.next = n.brand + " from " + gearWhen(n.from) + " (reported)"; out.nextKind = "reported";
+    } else if (n && n.brand && n.brand !== g.brand) {
+      out.next = "switches to " + n.brand + " " + gearWhen(n.from); out.nextKind = "switch";
+    } else if (n && n.brand) {
+      out.next = "renewed from " + gearWhen(n.from); out.nextKind = "renewed";
+    } else if (g.ends) {
+      out.next = "deal ends " + gearWhen(g.ends); out.nextKind = "ending";
+    } else if ((n && n.status === "ending") || (g.through && year && g.through === year)) {
+      out.next = "deal ends " + gearEnds(g.through || year); out.nextKind = "ending";
+    }
+    if (out.next) out.nextUrl = (n && n.source) || null;
+    return out;
+  }
+  // one line: "Under Armour · switches to Adidas July 2027"
+  function gearText(g, year) {
+    var p = gearParts(g, year);
+    return p ? [p.brand, p.extra, p.next].filter(Boolean).join(" · ") : null;
   }
 
   // fall of next season: Oct 2026 -> 2027 (§3 target year)
@@ -1151,7 +1196,7 @@
     return { divisions: [], confs: [], rankFrom: null, rankTo: null, majors: "", majorsMode: "any", sizes: [],
              types: [], settings: [], states: [], regions: [], costMax: null, costBasis: "tuition",
              distanceMax: null, sunnyMin: null, julyMax: null, janMin: null,
-             confRankMax: null, openings: false, offense: [], beach: false, faith: false, femaleCoach: false,
+             confRankMax: null, openings: false, offense: [], gear: [], beach: false, faith: false, femaleCoach: false,
              includeUnresearched: false,
              similarTo: null, similarLimit: SIMILAR_DEFAULT_LIMIT, similarOff: [], similarLevel: "same", similarIncludeSeed: true };
   }
@@ -1161,8 +1206,18 @@
     var n = String(note || "");
     return /^5-1/.test(n) ? "5-1" : /^6-2/.test(n) ? "6-2" : /^3-way/.test(n) ? "split" : null;
   }
+  // the gear filter's choices; any other brand (Capelli Sport, Macron) is "other"
+  var GEAR_BRANDS = ["Nike", "Adidas", "Under Armour", "New Balance", "other"];
+  function gearKind(brand) { return !brand ? null : GEAR_BRANDS.indexOf(brand) >= 0 && brand !== "other" ? brand : "other"; }
+  // the brands a school counts as for the filter: this year's, plus next year's when a switch is announced or reported
+  function gearKinds(g) {
+    if (!g || !g.brand) return [];
+    var k = [gearKind(g.brand)];
+    if (g.next && g.next.brand && g.next.status !== "ending" && k.indexOf(gearKind(g.next.brand)) < 0) k.push(gearKind(g.next.brand));
+    return k;
+  }
   function researchedOnlySet(f) {
-    return f.confRankMax !== null || f.openings || f.offense.length > 0 || f.beach || f.faith || f.femaleCoach;
+    return f.confRankMax !== null || f.openings || f.offense.length > 0 || f.gear.length > 0 || f.beach || f.faith || f.femaleCoach;
   }
   function num(v) { if (v === "" || v === null || v === undefined) return null; v = +v; return isFinite(v) ? v : null; }
   function cleanFilters(f) {
@@ -1185,6 +1240,7 @@
     o.sunnyMin = num(f.sunnyMin); o.julyMax = num(f.julyMax); o.janMin = num(f.janMin);
     o.confRankMax = num(f.confRankMax);
     o.offense = arr(f.offense, function (x) { return OFFENSES.indexOf(x) >= 0; });
+    o.gear = arr(f.gear, function (x) { return GEAR_BRANDS.indexOf(x) >= 0; });
     ["openings", "beach", "faith", "femaleCoach", "includeUnresearched"].forEach(function (k) { o[k] = f[k] === true; });
     // a remembered starting school no longer in the data is dropped
     o.similarTo = typeof f.similarTo === "string" && D().teams[f.similarTo] ? f.similarTo : null;
@@ -1215,6 +1271,7 @@
     ["openings", "beach", "faith", "femaleCoach"].forEach(function (k) { if (f[k]) n++; });
     if (f.confRankMax !== null) n++;
     if (f.offense.length) n++;
+    if (f.gear.length) n++;
     if (f.similarTo) n++;
     return n;
   }
@@ -1478,6 +1535,11 @@
           if (!ok) return skip("offense");
           if (f.offense.indexOf(ok) < 0) return false;
         }
+        if (f.gear.length) {
+          var gk = gearKinds(s.gear);
+          if (!gk.length) return skip("gear");
+          if (!gk.some(function (k) { return f.gear.indexOf(k) >= 0; })) return false;
+        }
         if (f.beach) {
           if (s.beach === null) return skip("beach");
           if (!s.beach.program) return false;
@@ -1535,6 +1597,7 @@
     if (f.confRankMax !== null) bits.push("top " + f.confRankMax);
     if (f.offense.length === 1) bits.push(f.offense[0] === "split" ? "3-way" : f.offense[0]);
     if (f.openings) bits.push("openings");
+    if (f.gear.length === 1) bits.push(f.gear[0] === "other" ? "other brand" : f.gear[0]);
     if (f.beach) bits.push("beach");
     // whole parts only: a part that doesn't fit is left out rather than cut
     var name = "";
@@ -1570,6 +1633,7 @@
     filtersLoad: filtersLoad, filtersSave: filtersSave, filtersActive: filtersActive,
     campusSetting: campusSetting, filterSchools: filterSchools, filterName: filterName,
     OFFENSES: OFFENSES, offenseKind: offenseKind, researchedOnlySet: researchedOnlySet,
+    GEAR_BRANDS: GEAR_BRANDS, gearKind: gearKind, gearKinds: gearKinds,
     SIMILAR_ROWS: SIMILAR_ROWS, SIMILAR_LIMITS: SIMILAR_LIMITS, similarInfo: similarInfo, similarParts: similarParts,
     similarFacts: similarFacts,
     SPIRIT_SPORTS: SPIRIT_SPORTS, SPIRIT_BANDS: SPIRIT_BANDS, SPIRIT_MIN_PEERS: SPIRIT_MIN_PEERS,
@@ -1579,6 +1643,7 @@
     homeAirports: homeAirports,
     airlineUrl: airlineUrl, flightSearchUrl: flightSearchUrl,
     homeAirport: homeAirport, nonstopAirlines: nonstopAirlines, oneStopAirlines: oneStopAirlines,
-    schoolFlights: schoolFlights, fareText: fareText, flightsText: flightsText
+    schoolFlights: schoolFlights, fareText: fareText, flightsText: flightsText,
+    gearParts: gearParts, gearText: gearText
   };
 })(typeof window !== "undefined" ? window : globalThis);
