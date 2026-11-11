@@ -324,6 +324,13 @@
   :root[data-theme="dark"] .flag.warning{color:var(--status-warning);}
   .flag.critical{background:color-mix(in srgb, var(--status-critical) 16%, var(--surface)); color:var(--status-critical);}
   .flag.pending{background:var(--grid); color:var(--text-muted); font-style:italic;}
+  /* 08 School spirit: fan support band, best (band-0) to worst (band-4) */
+  .band{display:inline-block; font-size:11.5px; font-weight:700; padding:3px 8px; border-radius:6px; color:var(--text-primary);}
+  .band.band-0{background:color-mix(in srgb, var(--status-good) 38%, var(--surface));}
+  .band.band-1{background:color-mix(in srgb, var(--status-good) 16%, var(--surface));}
+  .band.band-2{background:var(--grid);}
+  .band.band-3{background:color-mix(in srgb, var(--status-serious) 24%, var(--surface));}
+  .band.band-4{background:color-mix(in srgb, var(--status-critical) 34%, var(--surface));}
   a.flaglink{text-decoration:none;}
   a.flaglink:hover .flag, a.flaglink:focus-visible .flag{text-decoration:underline;}
   a.flaglink:focus-visible{outline:2px solid var(--series-1); outline-offset:2px; border-radius:6px;}
@@ -425,8 +432,9 @@
       <a id="nav-setters" href="#setters">05 Setters</a>
       <a href="#flags">06 Flags</a>
       <a href="#profile">07 Profile</a>
-      <a id="map-link" href="pac12-map.html" target="_blank" rel="noopener">08 Map ↗</a>
-      <a id="beach-link" href="pac12-beach.html" target="_blank" rel="noopener">09 Beach ↗</a>
+      <a href="#spirit">08 Spirit</a>
+      <a id="map-link" href="pac12-map.html" target="_blank" rel="noopener">09 Map ↗</a>
+      <a id="beach-link" href="pac12-beach.html" target="_blank" rel="noopener">10 Beach ↗</a>
     </nav>
   </div>
 </header>
@@ -555,6 +563,24 @@
     <div id="profileCard" class="profile-stack"></div>
   </section>
 
+  <section class="panel" id="spirit">
+    <div class="panel-head"><span class="idx">08</span><h2>School spirit (fan support)</h2></div>
+    <p class="question">Which schools turn out for their teams? Home crowds at football and men's and women's basketball, as a rough proxy for school spirit.</p>
+    <div class="card scroll-x">
+      <table class="maintable" id="spiritTable">
+        <caption>School spirit from home attendance</caption>
+        <thead>
+          <tr>
+            <th>School</th><th>Fan support</th><th class="num">Football</th><th class="num">Men's basketball</th>
+            <th class="num">Women's basketball</th><th class="num">Undergraduates</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <ul class="sources-note" id="spiritNotes"></ul>
+  </section>
+
   <footer class="endnote">
     <b>How this page works:</b> the school facts were pulled on the dates above (log: <code>data/2026/logs/PAC12_RESULTS.md</code>). The comparison row, costs, flags, distances, and majors are computed in your browser from the settings (Edit settings, at the top), which are saved only in this browser. Built by <code>tools/build_site.py</code>.
   </footer>
@@ -562,9 +588,9 @@
 
 <div class="tt" id="tooltip" role="tooltip"></div>
 
-<script src="data/schools.js?v=d6084557"></script>
+<script src="data/schools.js?v=5cb13545"></script>
 <script src="data/history.js"></script>
-<script src="compare.js?v=9ad4eb06"></script>
+<script src="compare.js?v=1ba35ea0"></script>
 <script>
 (function(){
   "use strict";
@@ -1504,6 +1530,9 @@
       side.appendChild(cRow);
     }
 
+    // School spirit from home attendance (08, SPIRIT_PLAN.md)
+    if (s.spirit) side.appendChild(kv("School spirit", C.spiritText(s.spirit)));
+
     var flagLabel = document.createElement("div"); flagLabel.className="k"; flagLabel.style.marginTop="4px"; flagLabel.textContent = "Flags";
     side.appendChild(flagLabel);
     var flagrow = document.createElement("div"); flagrow.className = "flagrow";
@@ -1547,6 +1576,82 @@
 
     host.appendChild(card);
     });
+  })();
+
+  // ================= 08 school spirit (SPIRIT_PLAN.md) =================
+  (function(){
+    var tbody = document.querySelector("#spiritTable tbody");
+    var A = D.meta.attendance;
+    function sub(el, text){ var d = document.createElement("span"); d.className = "flag-detail"; d.textContent = text; el.appendChild(d); }
+    // by average football crowd, the comparison school in its place (highlighted, not first); schools
+    // without a football figure after them, by fan support, and schools without either last
+    function football(s){ var e = s.spirit && s.spirit.sports.football; return e && e.status === "ok" ? e.avg : null; }
+    function score(s){ return s.spirit && s.spirit.score != null ? s.spirit.score : -1; }
+    var rows = schools.slice().sort(function(a, b){
+      var fa = football(a), fb = football(b);
+      if ((fa == null) !== (fb == null)) return fa == null ? 1 : -1;
+      return fa != null ? fb - fa : score(b) - score(a);
+    });
+    var BAND_CLASS = {};
+    C.SPIRIT_BANDS.forEach(function(b, i){ BAND_CLASS[b[1]] = "band band-" + i; });
+    rows.forEach(function(s){
+      var tr = document.createElement("tr");
+      if (s.current) tr.className = "current";
+      tr.appendChild(schoolCell(s));
+      var sp = s.spirit;
+      var fan = document.createElement("td");
+      if (!s.researched) fan.textContent = "Not researched";
+      else if (!sp) fan.textContent = "—";
+      else if (!sp.band){
+        fan.textContent = "—";
+        var read = C.SPIRIT_SPORTS.filter(function(x){ return sp.sports[x.key].status === "ok"; }).length;
+        sub(fan, !read ? "attendance not published on its site" : sp.score == null ? "fewer than " + C.SPIRIT_MIN_SPORTS + " sports to rate" : "too few researched peers");
+      } else {
+        var b = document.createElement("span"); b.className = BAND_CLASS[sp.band]; b.textContent = sp.band; fan.appendChild(b);
+        sub(fan, "Crowds: " + C.spiritBand(sp.crowd) + (sp.perStudent != null ? " · per student: " + C.spiritBand(sp.perStudent) : ""));
+      }
+      tr.appendChild(fan);
+      C.SPIRIT_SPORTS.forEach(function(x){
+        var td = document.createElement("td"); td.className = "num";
+        var e = sp ? sp.sports[x.key] : null;
+        if (!e || e.status === "unread"){
+          td.textContent = "—";
+          if (e) td.title = "Not published on the school's stats page, or the page couldn't be read";
+        } else if (e.status === "noTeam"){
+          td.textContent = "no team";
+        } else {
+          td.textContent = e.avg.toLocaleString() + (e.how === "games" ? " ¹" : "");
+          if (e.band) sub(td, e.band + " of " + e.peer);
+          if (e.perK != null) sub(td, Math.round(e.perK).toLocaleString() + " per 1,000 students");
+          td.title = e.games + " home games, " + e.season + (e.total != null ? ", " + e.total.toLocaleString() + " in all" : "") +
+            ". Ranked among " + e.n + " researched " + C.spiritPeerText(x.key, e) + " teams.";
+        }
+        tr.appendChild(td);
+      });
+      var ug = document.createElement("td"); ug.className = "num";
+      ug.textContent = s.undergrads ? s.undergrads.toLocaleString() : "—";
+      tr.appendChild(ug);
+      tbody.appendChild(tr);
+    });
+
+    var notes = document.getElementById("spiritNotes");
+    function li(html){ var e = document.createElement("li"); e.innerHTML = html; notes.appendChild(e); }
+    if (!A){
+      li("Attendance hasn't been pulled yet (<code>tools/attendance.py</code>).");
+      return;
+    }
+    li("<strong>Average home crowd per game</strong>, from each school's own athletics site (its season stats page): football " +
+       esc(A.seasons.football) + ", basketball " + esc(A.seasons.mbb) + ", read " + esc(A.pulled) + ". Hover a number for the games it covers. " +
+       "Sorted by football crowd, the comparison school in its place (highlighted); schools without a football figure follow, by fan support.");
+    li("Each sport's band ranks the school among the <strong>researched</strong> schools at the same level: FBS, FCS, or D2 for football, the division for basketball. " +
+       "<strong>Fan support</strong> averages two halves over the sports the school has (at least " + C.SPIRIT_MIN_SPORTS + "): crowd size, and crowd per 1,000 undergraduates " +
+       "(IPEDS fall " + esc(D.meta.enrollYear) + "). Its band ranks that among researched schools in the same division.");
+    li("Bands, colored from green to red: Top 10%, Above average (65th to 90th percentile), Average (35th to 65th), Below average (10th to 35th), Bottom 10%. " +
+       "A group of fewer than " + C.SPIRIT_MIN_PEERS + " researched schools gets no band.");
+    li("¹ Added up from the season's game list, where a neutral-site game can't be told from a home game. " +
+       "<strong>no team</strong>: the school doesn't play that sport. <strong>—</strong>: no figure could be read. Missing sports are skipped, never counted as zero.");
+    li("Attendance is what schools report (often tickets distributed), counts alumni and townspeople as well as students, and moves with winning, " +
+       "free admission, arena size, and a big-city location. Read it as a rough proxy for school spirit, not a measure of it.");
   })();
 
   // print/save as PDF: browsers name the file after the title, so use the page's file name

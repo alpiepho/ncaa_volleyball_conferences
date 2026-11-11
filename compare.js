@@ -262,7 +262,10 @@
       players: r && Array.isArray(r.players) ? r.players : [],
       links: r ? r.links : { niche: t.niche },
       // nearest NOAA stations (tools/build_site.py build_climate); null without a location
-      climate: t.climate || null
+      climate: t.climate || null,
+      // school spirit from home attendance (SPIRIT_PLAN.md); null if not researched or not pulled yet
+      spirit: r ? spiritOf(r.id) : null,
+      undergrads: ip ? ip.undergrads || null : null
     };
   }
 
@@ -437,6 +440,113 @@
   // a fact column shows green for a positive fact: "Yes" (female coach) or a listed ministry
   function factYes(d) { return d === "Yes" || /^(AIA|FCA)/.test(d || ""); }
 
+  // ------------------------------------------------------------ school spirit (SPIRIT_PLAN.md)
+  // Home attendance at football and men's and women's basketball, from each researched school's own
+  // athletics site (tools/attendance.py), as a proxy for school spirit. Each sport is ranked among the
+  // researched schools that play it at the same level (football: FBS, FCS, or D2; basketball: the
+  // division), by average crowd and by crowd per 1,000 undergraduates. A school's score is the mean of
+  // the two halves (mean crowd percentile, mean per-student percentile) over the sports it has, at least
+  // SPIRIT_MIN_SPORTS of them; its band ranks that score among researched schools in its division.
+  var SPIRIT_SPORTS = [
+    { key: "football", label: "Football", short: "Football" },
+    { key: "mbb", label: "Men's basketball", short: "Men's BB" },
+    { key: "wbb", label: "Women's basketball", short: "Women's BB" }
+  ];
+  // [lowest percentile, label], best first; bands, not scores, because the measure is rough
+  var SPIRIT_BANDS = [[90, "Top 10%"], [65, "Above average"], [35, "Average"], [10, "Below average"], [0, "Bottom 10%"]];
+  var SPIRIT_MIN_PEERS = 10, SPIRIT_MIN_SPORTS = 2;
+
+  function spiritBand(p) {
+    if (p === null || p === undefined) return null;
+    for (var i = 0; i < SPIRIT_BANDS.length; i++) if (p >= SPIRIT_BANDS[i][0]) return SPIRIT_BANDS[i][1];
+    return SPIRIT_BANDS[SPIRIT_BANDS.length - 1][1];
+  }
+
+  // percentile of v among list (which includes v), 0 = lowest, 100 = highest; ties share the middle rank
+  function spiritPct(v, list) {
+    if (list.length < 2) return null;
+    var below = 0, same = 0;
+    list.forEach(function (x) { if (x < v) below++; else if (x === v) same++; });
+    return 100 * (below + (same - 1) / 2) / (list.length - 1);
+  }
+
+  function mean(xs) { return xs.reduce(function (a, b) { return a + b; }, 0) / xs.length; }
+
+  var spiritCache = null;
+  // researched id -> {division, undergrads, sports: {key: entry}, score, pct, band, crowd, perStudent, counted}
+  // entry: {status: "ok", avg, games, total, season, how, url, peer, perK, n, crowdPct, band, perKPct, perKBand}
+  //        | {status: "noTeam"} | {status: "unread"}
+  function spiritAll() {
+    if (spiritCache) return spiritCache;
+    var d = D(), out = {}, groups = {};
+    Object.keys(d.researched).forEach(function (id) {
+      var r = d.researched[id], a = r.attendance;
+      if (!a) return;
+      var t = d.teams[r.masseyName], ip = t && t.ipedsId ? d.ipeds[String(t.ipedsId)] : null;
+      var ug = ip && ip.undergrads ? ip.undergrads : null;
+      var s = out[id] = { division: t.division, undergrads: ug, sports: {} };
+      SPIRIT_SPORTS.forEach(function (sp) {
+        var f = a[sp.key];
+        if (f && f.noTeam) { s.sports[sp.key] = { status: "noTeam" }; return; }
+        if (!f || !f.games) { s.sports[sp.key] = { status: "unread" }; return; }
+        var peer = sp.key === "football" ? (f.level || t.division) : t.division;
+        var e = s.sports[sp.key] = { status: "ok", avg: f.avg, games: f.games, total: f.total, season: f.season,
+                                     how: f.how, url: f.url || null, peer: peer, perK: ug ? f.avg / ug * 1000 : null };
+        var g = groups[sp.key + "|" + peer] = groups[sp.key + "|" + peer] || { crowd: [], perK: [] };
+        g.crowd.push(e.avg);
+        if (e.perK !== null) g.perK.push(e.perK);
+      });
+    });
+    var scores = {};
+    Object.keys(out).forEach(function (id) {
+      var s = out[id], crowd = [], per = [];
+      SPIRIT_SPORTS.forEach(function (sp) {
+        var e = s.sports[sp.key];
+        if (e.status !== "ok") return;
+        var g = groups[sp.key + "|" + e.peer];
+        e.n = g.crowd.length;
+        if (e.n < SPIRIT_MIN_PEERS) { e.crowdPct = e.perKPct = e.band = e.perKBand = null; return; }
+        e.crowdPct = spiritPct(e.avg, g.crowd); e.band = spiritBand(e.crowdPct);
+        e.perKPct = e.perK === null || g.perK.length < SPIRIT_MIN_PEERS ? null : spiritPct(e.perK, g.perK);
+        e.perKBand = spiritBand(e.perKPct);
+        crowd.push(e.crowdPct);
+        if (e.perKPct !== null) per.push(e.perKPct);
+      });
+      s.counted = crowd.length;
+      s.crowd = crowd.length ? mean(crowd) : null;
+      s.perStudent = per.length ? mean(per) : null;
+      s.score = crowd.length < SPIRIT_MIN_SPORTS ? null : s.perStudent === null ? s.crowd : (s.crowd + s.perStudent) / 2;
+      if (s.score !== null) (scores[s.division] = scores[s.division] || []).push(s.score);
+    });
+    Object.keys(out).forEach(function (id) {
+      var s = out[id], list = scores[s.division] || [];
+      s.peers = list.length;
+      s.pct = s.score === null || list.length < SPIRIT_MIN_PEERS ? null : spiritPct(s.score, list);
+      s.band = spiritBand(s.pct);
+    });
+    spiritCache = out;
+    return out;
+  }
+
+  function spiritOf(id) { return id ? spiritAll()[id] || null : null; }
+
+  // who a sport's band compares against, e.g. "FBS football" or "D1 men's basketball"
+  function spiritPeerText(key, e) {
+    var sp = SPIRIT_SPORTS.filter(function (x) { return x.key === key; })[0];
+    return e.peer + " " + (key === "football" ? "football" : sp.label.charAt(0).toLowerCase() + sp.label.slice(1));
+  }
+
+  // one line for the profile card
+  function spiritText(s) {
+    if (!s) return null;
+    var parts = SPIRIT_SPORTS.filter(function (sp) { return s.sports[sp.key].status === "ok"; }).map(function (sp) {
+      return sp.short + " " + s.sports[sp.key].avg.toLocaleString("en-US");
+    });
+    var crowds = parts.length ? " (average home crowd: " + parts.join(", ") + ")" : "";
+    if (!s.band) return (s.score === null ? "Not enough sports to rate" : "Too few researched peers to rate") + crowds;
+    return s.band + " of researched " + s.division + " schools" + crowds;
+  }
+
   // ------------------------------------------------------------ report rows
   // The row a report page renders (was build_reports.build_school). conf: the
   // report's conference from SITE_DATA.conferences, or null.
@@ -474,7 +584,8 @@
       confRank: isMember ? s.confRank : "—",
       ipeds: s.ipeds, programs: programLines(offered, act), offeredMajors: offeredMajors,
       offenseNote: s.offenseNote, coachStaff: s.coachStaff,
-      flags: flags, flagDetail: detail, beach: s.beach, links: s.links, climate: s.climate
+      flags: flags, flagDetail: detail, beach: s.beach, links: s.links, climate: s.climate,
+      spirit: s.spirit, undergrads: s.undergrads
     };
     if (s.setter) row.setter = s.setter;
     row.setters = s.setters || [];
@@ -1312,6 +1423,9 @@
     campusSetting: campusSetting, filterSchools: filterSchools, filterName: filterName,
     OFFENSES: OFFENSES, offenseKind: offenseKind, researchedOnlySet: researchedOnlySet,
     SIMILAR_ROWS: SIMILAR_ROWS, SIMILAR_LIMITS: SIMILAR_LIMITS, similarInfo: similarInfo, similarParts: similarParts,
-    similarFacts: similarFacts
+    similarFacts: similarFacts,
+    SPIRIT_SPORTS: SPIRIT_SPORTS, SPIRIT_BANDS: SPIRIT_BANDS, SPIRIT_MIN_PEERS: SPIRIT_MIN_PEERS,
+    SPIRIT_MIN_SPORTS: SPIRIT_MIN_SPORTS, spiritBand: spiritBand, spiritPct: spiritPct, spiritAll: spiritAll,
+    spiritOf: spiritOf, spiritPeerText: spiritPeerText, spiritText: spiritText
   };
 })(typeof window !== "undefined" ? window : globalThis);
