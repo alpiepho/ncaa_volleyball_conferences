@@ -1175,16 +1175,29 @@
   var FILTER_KEY = "ncaaCompare.filters.v1";
   var SIZE_BANDS = { 1: "Under 1,000", 2: "1,000-4,999", 3: "5,000-9,999", 4: "10,000-19,999", 5: "20,000+" };
   var SETTINGS = ["city", "suburb", "town", "rural"];
-  // U.S. Census regions, with "East" for the Northeast (the reports' word); for every school, from its state
+  // U.S. Census regions, with "East" for the Northeast (the reports' word), plus DE, MD, WV, and DC, which the
+  // conference files call East too (user, 2026-11-12); for every school, from its state
   var REGIONS = {
     West: ["AK", "AZ", "CA", "CO", "HI", "ID", "MT", "NV", "NM", "OR", "UT", "WA", "WY"],
     Midwest: ["IL", "IN", "IA", "KS", "MI", "MN", "MO", "NE", "ND", "OH", "SD", "WI"],
-    South: ["AL", "AR", "DE", "DC", "FL", "GA", "KY", "LA", "MD", "MS", "NC", "OK", "SC", "TN", "TX", "VA", "WV", "PR"],
-    East: ["CT", "ME", "MA", "NH", "NJ", "NY", "PA", "RI", "VT"]
+    South: ["AL", "AR", "FL", "GA", "KY", "LA", "MS", "NC", "OK", "SC", "TN", "TX", "VA", "PR"],
+    East: ["CT", "ME", "MA", "NH", "NJ", "NY", "PA", "RI", "VT", "DE", "MD", "WV", "DC"]
   };
   function stateRegion(st) {
     for (var r in REGIONS) if (REGIONS[r].indexOf(st) >= 0) return r;
     return null;
+  }
+  // a conference's region: the one most of its teams (Massey names) are in, by campus state;
+  // a tie names both ("Midwest/South"); null when no team has a state (Simon Fraser alone, say)
+  function confRegion(teams) {
+    var d = D(), n = {}, top = 0;
+    (teams || []).forEach(function (m) {
+      var t = d.teams[m], loc = t && (t.campus || (t.ipedsId ? d.ipeds[String(t.ipedsId)] : null));
+      var r = loc ? stateRegion(loc.state) : null;
+      if (r) { n[r] = (n[r] || 0) + 1; top = Math.max(top, n[r]); }
+    });
+    var best = Object.keys(REGIONS).filter(function (r) { return n[r] === top && top > 0; });
+    return best.length ? best.join("/") : null;
   }
   // the last rank in each division (its number of ranked teams)
   function divisionSizes() {
@@ -1628,7 +1641,7 @@
     savedName: savedName, savedSetName: savedSetName,
     isSaved: isSaved, setSaved: setSaved, toggleSaved: toggleSaved, onSavedChange: onSavedChange,
     savedSort: savedSort, savedText: savedText, parseSaved: parseSaved, savedRows: savedRows,
-    FILTER_KEY: FILTER_KEY, SIZE_BANDS: SIZE_BANDS, REGIONS: REGIONS, stateRegion: stateRegion,
+    FILTER_KEY: FILTER_KEY, SIZE_BANDS: SIZE_BANDS, REGIONS: REGIONS, stateRegion: stateRegion, confRegion: confRegion,
     divisionSizes: divisionSizes, blankFilters: blankFilters, cleanFilters: cleanFilters,
     filtersLoad: filtersLoad, filtersSave: filtersSave, filtersActive: filtersActive,
     campusSetting: campusSetting, filterSchools: filterSchools, filterName: filterName,

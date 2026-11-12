@@ -504,6 +504,8 @@
   /* single column: the division after each school name, so a long scroll keeps its place */
   .div-tag{ display:none; }
   body.single .div-tag{ display:inline; margin-left:6px; font-size:11px; font-weight:400; color:var(--text-muted); }
+  /* the region most of a conference's schools are in, after its title in every layout */
+  .region-tag{ margin-left:4px; font-size:11px; font-weight:400; color:var(--text-muted); }
   .card{
     background:var(--surface-raised);
     border:1px solid var(--border);
@@ -1020,7 +1022,7 @@
 </main>
 
 <script src="data/schools.js?v=8ffb3481"></script>
-<script src="compare.js?v=069024ae"></script>
+<script src="compare.js?v=ba70646c"></script>
 <script src="data/places.js?v=9f2e48c7"></script>
 <script>
 (function(){
@@ -1863,6 +1865,7 @@ function renderReportCard(host, slug){
   var head = el("div", "card-head");
   var h3 = el("h3", null, c.indexTitle || c.title);
   h3.appendChild(el("span", "div-tag", c.division));
+  addRegion(h3, c.schools.map(function(id){ return D.researched[id].masseyName; }));
   head.appendChild(h3);
   head.appendChild(el("span", "count", c.schools.length + " schools"));
   card.appendChild(head);
@@ -1887,12 +1890,19 @@ function renderReportCard(host, slug){
   host.appendChild(card);
 }
 
+// " - west": the region most of the conference's schools are in (C.confRegion, the Create list's regions)
+function addRegion(host, teams){
+  var r = C.confRegion(teams);
+  if (r) host.appendChild(el("span", "region-tag", "- " + r.toLowerCase()));
+}
+
 function renderMiniCard(host, div, confName){
   var teams = (TEAMS_BY_CONF[div] || {})[confName] || [];
   var card = el("div", "mini-card" + (teams.indexOf(settings.school) >= 0 ? " has-current" : ""));
   var h4 = el("h4");
   var title = el("span", null, confName);
   title.appendChild(el("span", "div-tag", div));
+  addRegion(title, teams);
   h4.appendChild(title);
   var n = el("span", "n", teams.length);
   n.appendChild(el("span", "n-saved"));
@@ -2042,6 +2052,7 @@ window.addEventListener("hashchange", function(){
     renderAll();
   }
   openSavedFromHash();
+  showTeamFromHash();
 });
 
 // a map's "N saved schools" link lands here with "saved" in the hash: open the list editor
@@ -2049,6 +2060,35 @@ function openSavedFromHash(){
   if (!/(^#|&)saved(&|$)/.test(location.hash)) return;
   try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { /* ignore */ }
   if (!dlg.open) openEditor(false);
+}
+
+// "?q=<school>" (links from outside, e.g. the *_MAJORS.md lists; "#team=<school>" works too): as if the viewer typed
+// it into "Find a school" and picked the first match, so a displayed name or a Massey name works. Runs after the page
+// has laid out (on load), so the scroll lands. With no match the text stays in the box and its list opens.
+function findQuery(){
+  var q = null;
+  try { q = new URLSearchParams(location.search).get("q"); } catch (e) { /* old browser */ }
+  if (!q){
+    var m = /(?:^#|&)team=([^&]+)/.exec(location.hash);
+    if (m) try { q = decodeURIComponent(m[1].replace(/\+/g, " ")); } catch (e) { q = null; }
+  }
+  return q && q.trim();
+}
+function showTeamFromHash(){
+  var q = findQuery();
+  if (!q) return;
+  var box = $("find-school"), it = searchSchools(q)[0];
+  if (it){
+    box.value = it.label;
+    goToSchool(it.value);
+  } else {
+    box.value = q;
+    box.dispatchEvent(new Event("input", { bubbles: true }));   // shows "no match" the same way typing does
+  }
+}
+function showTeamAfterLoad(){
+  if (document.readyState === "complete") setTimeout(showTeamFromHash, 60);
+  else window.addEventListener("load", function(){ setTimeout(showTeamFromHash, 60); });
 }
 
 // a box ticked in another tab (a map opened from here) shows without a reload
@@ -2067,6 +2107,7 @@ renderFooter();
 renderAll();
 // settings start hidden; "Edit settings" (and the intro) point to them
 openSavedFromHash();
+showTeamAfterLoad();
 })();
 </script>
 </body>
