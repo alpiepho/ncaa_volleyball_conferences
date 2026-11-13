@@ -269,6 +269,9 @@
       spirit: r ? spiritOf(r.id) : null,
       // athletic gear brand (SPONSOR_PLAN.md); null if not researched or not looked up yet
       gear: r ? r.gear || null : null,
+      // academic calendar (CALENDAR_PLAN.md): IPEDS system for every school, dates when researched and read
+      calsys: ip ? ip.calsys || null : null,
+      calendar: r ? r.calendar || null : null,
       undergrads: ip ? ip.undergrads || null : null
     };
   }
@@ -591,7 +594,7 @@
       ipeds: s.ipeds, programs: programLines(offered, act), offeredMajors: offeredMajors,
       offenseNote: s.offenseNote, coachStaff: s.coachStaff,
       flags: flags, flagDetail: detail, beach: s.beach, links: s.links, climate: s.climate,
-      spirit: s.spirit, undergrads: s.undergrads, gear: s.gear
+      spirit: s.spirit, undergrads: s.undergrads, gear: s.gear, calsys: s.calsys, calendar: s.calendar
     };
     if (s.setter) row.setter = s.setter;
     row.setters = s.setters || [];
@@ -827,6 +830,41 @@
   function gearText(g, year) {
     var p = gearParts(g, year);
     return p ? [p.brand, p.extra, p.next].filter(Boolean).join(" · ") : null;
+  }
+
+  // ------------------------------------------------------------ academic calendar (CALENDAR_PLAN.md)
+  var SHORT_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  var CALSYS_TEXT = { semester: "Semesters", quarter: "Quarters", "4-1-4": "Semesters + January term",
+                      trimester: "Trimesters", other: "Other calendar", "differs by program": "Calendar varies by program",
+                      continuous: "Continuous enrollment" };
+  // "2026-12-14" -> "Dec 14"; a range in one month "Dec 14-18", across months "Dec 30-Jan 2"
+  function calDay(s) { var m = /^\d{4}-(\d{2})-(\d{2})$/.exec(s || ""); return m ? SHORT_MONTHS[+m[1] - 1] + " " + (+m[2]) : ""; }
+  function calRange(a, b) {
+    if (!a) return "";
+    if (!b || b === a) return calDay(a);
+    return a.slice(0, 7) === b.slice(0, 7) ? calDay(a) + "-" + (+b.slice(8)) : calDay(a) + "-" + calDay(b);
+  }
+  // {system, finals, janTerm, next, url, muted, note} for the profile line and map popup; null when nothing is known.
+  // system: the calendar.json override, else IPEDS (calsys). muted: no dates read yet (system from IPEDS alone).
+  function calendarParts(cal, calsys) {
+    var sys = (cal && cal.system) || calsys;
+    if (!sys && !cal) return null;
+    var out = { system: CALSYS_TEXT[sys] || (sys ? sys : "Calendar"), finals: null, janTerm: null, next: null,
+                url: cal ? cal.source || null : null, muted: true, note: cal ? cal.note || null : null };
+    if (!cal) { out.system += " (IPEDS)"; return out; }
+    if (cal.fallFinals) out.finals = "fall finals " + calRange(cal.fallFinals[0], cal.fallFinals[1]);
+    if (cal.janTerm) {
+      out.janTerm = cal.janTerm.term + " " + calRange(cal.janTerm.from, cal.janTerm.to);
+      if (sys === "semester" || sys === "4-1-4") out.system = "Semesters";
+    }
+    if (cal.next && cal.next.begins) out.next = cal.next.term.toLowerCase() + " begins " + calDay(cal.next.begins);
+    out.muted = !(out.finals || out.next || out.janTerm);
+    return out;
+  }
+  // one line: "Semesters · fall finals Dec 14-18 · spring semester begins Jan 11"
+  function calendarText(cal, calsys) {
+    var p = calendarParts(cal, calsys);
+    return p ? [p.system, p.finals, p.janTerm, p.next].filter(Boolean).join(" · ") : null;
   }
 
   // fall of next season: Oct 2026 -> 2027 (§3 target year)
@@ -1657,6 +1695,6 @@
     airlineUrl: airlineUrl, flightSearchUrl: flightSearchUrl,
     homeAirport: homeAirport, nonstopAirlines: nonstopAirlines, oneStopAirlines: oneStopAirlines,
     schoolFlights: schoolFlights, fareText: fareText, flightsText: flightsText,
-    gearParts: gearParts, gearText: gearText
+    gearParts: gearParts, gearText: gearText, calendarParts: calendarParts, calendarText: calendarText
   };
 })(typeof window !== "undefined" ? window : globalThis);

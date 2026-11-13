@@ -298,7 +298,10 @@
   .src-row.tight{gap:8px; margin-top:6px;}
   .src-row .srclink{font-size:10.5px; font-weight:600; color:var(--text-muted);}
   .src-row .srclink:hover, .src-row .srclink:focus-visible{color:var(--series-1);}
-  td.school span.schoolname{font-weight:600;}
+  td.school span.schoolname, td.school a.schoolname{font-weight:600;}
+  td.school a.schoolname{color:inherit; text-decoration:underline dotted; text-underline-offset:3px;}
+  td.school a.schoolname:hover, td.school a.schoolname:focus-visible{color:var(--series-1); text-decoration-style:solid;}
+  .profile{scroll-margin-top:96px;}
   .sources-note{font-size:12px; color:var(--text-secondary); margin-top:10px; line-height:1.5;}
   ul.sources-note{ padding-left:18px; margin:10px 0 0; }
   ul.sources-note li{ margin-bottom:7px; }
@@ -617,10 +620,10 @@
 
 <div class="tt" id="tooltip" role="tooltip"></div>
 
-<script src="data/schools.js?v=8ffb3481"></script>
+<script src="data/schools.js?v=4b5ca806"></script>
 <script src="data/history.js"></script>
 <script src="data/flights.js?v=1d72d17c"></script>
-<script src="compare.js?v=ba70646c"></script>
+<script src="compare.js?v=0d60a9be"></script>
 <script>
 (function(){
   "use strict";
@@ -697,10 +700,14 @@
   // append a source link only when the school has one
   function addLink(row, url, label){ if(url) row.appendChild(srcLink(url, label)); }
 
-  // school name with its source links (01 Table, 06 Flags)
-  function schoolCell(s){
+  // in-page anchor of a school's 07 Profile card
+  function profileId(s){ return "profile-" + s.id; }
+
+  // school name with its source links (01 Table, 06 Flags); toProfile links the name to its 07 Profile card
+  function schoolCell(s, toProfile){
     var cell = document.createElement("td"); cell.className = "school";
-    var name = document.createElement("span"); name.className = "schoolname"; name.textContent = s.name;
+    var name = document.createElement(toProfile ? "a" : "span"); name.className = "schoolname"; name.textContent = s.name;
+    if (toProfile){ name.href = "#" + profileId(s); name.title = "Go to " + s.name + "'s profile card (07 Profile)"; }
     cell.appendChild(name);
     var chips = document.createElement("div"); chips.className = "src-row tight";
     addLink(chips, s.links.schedule, "Sched");
@@ -1047,7 +1054,7 @@
         return el;
       }
 
-      tr.appendChild(schoolCell(s));
+      tr.appendChild(schoolCell(s, true));
 
       var confTd = document.createElement("td");
       confTd.appendChild(srcLink(s.links.standings, s.conf));
@@ -1407,6 +1414,7 @@
     var host = document.getElementById("profileCard");
     byComposite.forEach(function(s){
     var card = document.createElement("div"); card.className = "profile" + (s.current ? " current" : "");
+    card.id = profileId(s);
 
     var top = document.createElement("div"); top.className = "profile-top";
     var left = document.createElement("div");
@@ -1582,6 +1590,19 @@
         gV.appendChild(gn);
       }
       side.appendChild(gRow);
+    }
+
+    // Academic calendar (CALENDAR_PLAN.md): term system, fall finals, next term's start; linked to the registrar's page
+    var cp = C.calendarParts(s.calendar, s.calsys);
+    if (cp){
+      var calRow = kv("Calendar", ""), calV = calRow.lastChild;
+      if (cp.note) calV.title = cp.note;
+      var calText = [cp.system, cp.finals, cp.janTerm, cp.next].filter(Boolean).join(" · ");
+      if (cp.muted) { calV.className += " gear-none"; calV.textContent = calText; }
+      else if (cp.url){ var ca = document.createElement("a"); ca.className = "srclink"; ca.href = cp.url;
+        ca.target = "_blank"; ca.rel = "noopener noreferrer"; ca.textContent = calText; calV.appendChild(ca); }
+      else calV.textContent = calText;
+      side.appendChild(calRow);
     }
 
     var flagLabel = document.createElement("div"); flagLabel.className="k"; flagLabel.style.marginTop="4px"; flagLabel.textContent = "Flags";

@@ -299,7 +299,10 @@
   .src-row.tight{gap:8px; margin-top:6px;}
   .src-row .srclink{font-size:10.5px; font-weight:600; color:var(--text-muted);}
   .src-row .srclink:hover, .src-row .srclink:focus-visible{color:var(--series-1);}
-  td.school span.schoolname{font-weight:600;}
+  td.school span.schoolname, td.school a.schoolname{font-weight:600;}
+  td.school a.schoolname{color:inherit; text-decoration:underline dotted; text-underline-offset:3px;}
+  td.school a.schoolname:hover, td.school a.schoolname:focus-visible{color:var(--series-1); text-decoration-style:solid;}
+  .profile{scroll-margin-top:96px;}
   .sources-note{font-size:12px; color:var(--text-secondary); margin-top:10px; line-height:1.5;}
   ul.sources-note{ padding-left:18px; margin:10px 0 0; }
   ul.sources-note li{ margin-bottom:7px; }
@@ -524,8 +527,8 @@
   <code>tools/beach_check.py</code>. Program list cross-checked against the NCAA Directory (women's beach volleyball). Full pull log in <code>data/2026/logs/CAA_RESULTS.md</code>.</footer>
 </main>
 <div class="tt" id="tooltip" role="tooltip"></div>
-<script src="data/schools.js?v=8ffb3481"></script>
-<script src="compare.js?v=ba70646c"></script>
+<script src="data/schools.js?v=4b5ca806"></script>
+<script src="compare.js?v=0d60a9be"></script>
 <script src="data/beach.js?v=c44ee134"></script>
 <script>
 (function(){
