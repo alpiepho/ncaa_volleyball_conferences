@@ -1384,7 +1384,7 @@
     byComposite.forEach(function(s){
       var tr = document.createElement("tr");
       if(s.current) tr.className = "current";
-      tr.appendChild(schoolCell(s));
+      tr.appendChild(schoolCell(s, true));
       order.forEach(function(k){
         var td = document.createElement("td");
         var span = document.createElement("span");
