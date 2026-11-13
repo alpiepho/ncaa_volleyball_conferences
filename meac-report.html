@@ -299,8 +299,8 @@
   .src-row .srclink{font-size:10.5px; font-weight:600; color:var(--text-muted);}
   .src-row .srclink:hover, .src-row .srclink:focus-visible{color:var(--series-1);}
   td.school span.schoolname, td.school a.schoolname{font-weight:600;}
-  td.school a.schoolname{color:inherit; text-decoration:underline dotted; text-underline-offset:3px;}
-  td.school a.schoolname:hover, td.school a.schoolname:focus-visible{color:var(--series-1); text-decoration-style:solid;}
+  a.schoolname{color:inherit; text-decoration:underline dotted; text-underline-offset:3px;}
+  a.schoolname:hover, a.schoolname:focus-visible{color:var(--series-1); text-decoration-style:solid;}
   .profile{scroll-margin-top:96px;}
   .sources-note{font-size:12px; color:var(--text-secondary); margin-top:10px; line-height:1.5;}
   ul.sources-note{ padding-left:18px; margin:10px 0 0; }
@@ -704,6 +704,12 @@
 
   // in-page anchor of a school's 07 Profile card
   function profileId(s){ return "profile-" + s.id; }
+  // school name linking to its 07 Profile card (05 cards)
+  function profileLink(s){
+    var a = document.createElement("a"); a.className = "schoolname"; a.textContent = s.name;
+    a.href = "#" + profileId(s); a.title = "Go to " + s.name + "'s profile card (07 Profile)";
+    return a;
+  }
 
   // school name with its source links (01 Table, 06 Flags); toProfile links the name to its 07 Profile card
   function schoolCell(s, toProfile){
@@ -1090,7 +1096,7 @@
       var row = document.createElement("div"); row.className = "barrow";
       var name = document.createElement("div");
       name.className = "name" + (s.current ? " current" : "");
-      name.textContent = s.name;
+      name.appendChild(profileLink(s));
       var track = document.createElement("div"); track.className = "track";
       var bar = document.createElement("div");
       bar.className = "bar" + (s.current ? " context" : "");
@@ -1112,7 +1118,7 @@
     var tbody = document.querySelector("#rankTable tbody");
     byComposite.forEach(function(s){
       var tr = document.createElement("tr");
-      var td1 = document.createElement("td"); td1.textContent = s.name + (s.current ? " (comparing to)" : "");
+      var td1 = document.createElement("td"); td1.appendChild(profileLink(s)); if (s.current) td1.appendChild(document.createTextNode(" (comparing to)"));
       var td2 = document.createElement("td"); td2.className="strong"; td2.textContent = compText(s);
       var td3 = document.createElement("td"); addLink(td3, s.links.niche, "Niche");
       tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
@@ -1131,7 +1137,7 @@
       var row = document.createElement("div"); row.className = "barrow";
       var name = document.createElement("div");
       name.className = "name" + (s.current ? " current" : "");
-      name.textContent = s.name;
+      name.appendChild(profileLink(s));
       var track = document.createElement("div"); track.className = "track";
       var bar = document.createElement("div");
       var t = total(s);
@@ -1189,7 +1195,7 @@
     sorted.forEach(function(s){
       var tr = document.createElement("tr");
       function td(v, strong){ var el=document.createElement("td"); if(strong) el.className="strong"; el.textContent=v; return el; }
-      tr.appendChild(td(s.name));
+      var nm = document.createElement("td"); nm.appendChild(profileLink(s)); tr.appendChild(nm);
       tr.appendChild(td(basisText(s)));
       tr.appendChild(td("$" + s.cost.toLocaleString(), true));
       tr.appendChild(td(s.totalCost == null ? "—" : "$" + s.totalCost.toLocaleString() +
@@ -1211,7 +1217,7 @@
       var row = document.createElement("div"); row.className = "barrow";
       var name = document.createElement("div");
       name.className = "name" + (s.current ? " current" : "");
-      name.textContent = s.name;
+      name.appendChild(profileLink(s));
       var track = document.createElement("div"); track.className = "track";
       var bar = document.createElement("div");
       bar.className = "bar" + (s.current ? " context" : "");
@@ -1234,7 +1240,7 @@
     sorted.forEach(function(s){
       var tr = document.createElement("tr");
       function td(v, strong){ var el=document.createElement("td"); if(strong) el.className="strong"; el.textContent=v; return el; }
-      tr.appendChild(td(s.name));
+      var nm = document.createElement("td"); nm.appendChild(profileLink(s)); tr.appendChild(nm);
       tr.appendChild(td("$" + s.earnings.toLocaleString(), true));
       var srcTd = document.createElement("td");
       if (s.earningsSource === "scorecard") addLink(srcTd, s.links.scorecard, "College Scorecard (federal)");
@@ -1261,7 +1267,8 @@
       card.className = "setcard" + (s.current ? " current" : "");
 
       var school = document.createElement("div"); school.className = "school";
-      school.textContent = s.name + (s.current ? " · comparing to" : "");
+      school.appendChild(profileLink(s));
+      if (s.current) school.appendChild(document.createTextNode(" · comparing to"));
       var region = document.createElement("span"); region.className="region"; region.textContent = s.conf;
       school.appendChild(region);
       card.appendChild(school);
@@ -1333,7 +1340,8 @@
       var card = document.createElement("div");
       card.className = "setcard" + (s.current ? " current" : "");
       var school = document.createElement("div"); school.className = "school";
-      school.textContent = s.name + (s.current ? " · comparing to" : "");
+      school.appendChild(profileLink(s));
+      if (s.current) school.appendChild(document.createTextNode(" · comparing to"));
       var region = document.createElement("span"); region.className = "region"; region.textContent = s.conf;
       school.appendChild(region);
       card.appendChild(school);
@@ -1671,7 +1679,7 @@
     rows.forEach(function(s){
       var tr = document.createElement("tr");
       if (s.current) tr.className = "current";
-      tr.appendChild(schoolCell(s));
+      tr.appendChild(schoolCell(s, true));
       var sp = s.spirit;
       var fan = document.createElement("td");
       if (!s.researched) fan.textContent = "Not researched";
@@ -1767,7 +1775,7 @@
       rows.forEach(function(s){
         var x = info[s.id], tr = document.createElement("tr");
         if (s.current) tr.className = "current";
-        tr.appendChild(schoolCell(s));
+        tr.appendChild(schoolCell(s, true));
         function cell(text, cls){ var td = document.createElement("td"); if (cls) td.className = cls; td.textContent = text; tr.appendChild(td); return td; }
         if (!s.researched){ cell("Not researched"); cell(""); cell(""); cell(""); return tbody.appendChild(tr); }
         if (x.status === "nohome"){ cell("Set a home town"); cell(""); cell(""); cell(""); return tbody.appendChild(tr); }
