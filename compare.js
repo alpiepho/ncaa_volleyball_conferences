@@ -988,16 +988,19 @@
     return hits.slice(0, limit === undefined ? 12 : limit).map(function (h) { return h[1]; });
   }
 
-  // ------------------------------------------------------------ saved schools (SAVE_SCHOOLS.md)
-  // Six named lists (four until 2026-11-09; stored states with fewer are padded), one selected; a
-  // separate key from the settings:
-  //   {v: 2, active: 0-5, lists: [{name, schools: [Massey names, in the order saved], updated}, x6]}
-  // Every saved-list call below acts on the selected list. Not carried in the URL hash (Q3); shared
-  // only as plain text (savedText / parseSaved). The single list of v1 ("ncaaCompare.saved.v1") is
-  // moved into List 1 the first time this loads, and that old key is left as it was.
-  var SAVED_KEY = "ncaaCompare.savedLists.v1";
+  // ------------------------------------------------------------ saved schools (SAVE_SCHOOLS.md, SAVED_DROPDOWN.md)
+  // One to SAVED_MAX named lists, one selected, each with a lasting id (positions shift when a list is deleted);
+  // a separate key from the settings:
+  //   {v: 3, active: "<id>", lists: [{id, name, schools: [Massey names, in the order saved], updated}, 1-12]}
+  // Every saved-list call below acts on the selected list unless given an id. Not carried in the URL hash (Q3);
+  // shared only as plain text (savedText / parseSaved).
+  // Earlier keys are read once and left as they were (SAVED_DROPDOWN.md §3.1-3.2): the six-slot lists of
+  // "ncaaCompare.savedLists.v1" (v: 2; lists never used are dropped), else the single list of "ncaaCompare.saved.v1".
+  // A new key, so a page built before lists could be deleted (still open in another tab) can't pad them back to six.
+  var SAVED_KEY = "ncaaCompare.savedLists.v2";
+  var SAVED_KEY_V2 = "ncaaCompare.savedLists.v1";
   var SAVED_KEY_V1 = "ncaaCompare.saved.v1";
-  var SAVED_LISTS = 6, SAVED_NAME_MAX = 24;
+  var SAVED_MAX = 12, SAVED_NAME_MAX = 24;
   var savedMem = null;   // this page's lists when storage is blocked
 
   function savedClean(list) {
@@ -1008,22 +1011,47 @@
     return out;
   }
 
+  function savedNewId() { return "l" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
   function savedDefaultName(i) { return "List " + (i + 1); }
   function savedCleanName(name, i) {
     var n = String(name == null ? "" : name).replace(/\s+/g, " ").trim().slice(0, SAVED_NAME_MAX);
     return n || savedDefaultName(i);
   }
+  // the first "List N" no list is called yet
+  function savedFreeName(lists) {
+    var used = {};
+    lists.forEach(function (l) { used[l.name] = true; });
+    for (var i = 0; ; i++) if (!used[savedDefaultName(i)]) return savedDefaultName(i);
+  }
 
-  // the stored state, cleaned: always SAVED_LISTS lists; names that are no longer Massey teams (renamed
-  // in a later pull) are dropped
+  // the stored state, cleaned: 1 to SAVED_MAX lists, each with an id; names that are no longer Massey teams
+  // (renamed in a later pull) are dropped; an unknown selection falls back to the first list
   function savedCleanState(raw) {
-    var lists = [];
-    for (var i = 0; i < SAVED_LISTS; i++) {
-      var l = raw && Array.isArray(raw.lists) && raw.lists[i] ? raw.lists[i] : {};
-      lists.push({ name: savedCleanName(l.name, i), schools: savedClean(l.schools), updated: l.updated || null });
-    }
-    var a = raw && typeof raw.active === "number" ? Math.floor(raw.active) : 0;
-    return { v: 2, active: a >= 0 && a < SAVED_LISTS ? a : 0, lists: lists };
+    var lists = [], ids = {};
+    (raw && Array.isArray(raw.lists) ? raw.lists : []).slice(0, SAVED_MAX).forEach(function (l, i) {
+      l = l || {};
+      var id = typeof l.id === "string" && l.id && !ids[l.id] ? l.id : savedNewId();
+      ids[id] = true;
+      lists.push({ id: id, name: savedCleanName(l.name, i), schools: savedClean(l.schools), updated: l.updated || null });
+    });
+    if (!lists.length) lists.push({ id: savedNewId(), name: savedDefaultName(0), schools: [], updated: null });
+    var active = raw && typeof raw.active === "string" && ids[raw.active] ? raw.active : lists[0].id;
+    return { v: 3, active: active, lists: lists };
+  }
+
+  // the six-slot state of SAVED_KEY_V2 as a list of lists: a slot never used (empty, still its default name, and
+  // not the selected one) is dropped; order, names, and the selection are kept
+  function savedFromV2(o) {
+    var act = o && typeof o.active === "number" ? Math.floor(o.active) : 0, keep = [], active = null;
+    (o && Array.isArray(o.lists) ? o.lists : []).forEach(function (l, i) {
+      l = l || {};
+      var name = savedCleanName(l.name, i), schools = savedClean(l.schools);
+      if (i !== act && !schools.length && name === savedDefaultName(i)) return;
+      var id = savedNewId() + i;
+      if (i === act) active = id;
+      keep.push({ id: id, name: name, schools: schools, updated: l.updated || null });
+    });
+    return savedCleanState({ active: active, lists: keep });
   }
 
   function savedWrite(state) {
@@ -1042,7 +1070,9 @@
       try {
         var raw = ls.getItem(SAVED_KEY);
         if (raw) return savedCleanState(JSON.parse(raw));
-        // first load since lists came in: the old single list becomes List 1
+        // first load of this version: the six-slot lists, else the single list of v1, else one empty list
+        var v2 = ls.getItem(SAVED_KEY_V2);
+        if (v2) return savedWrite(savedFromV2(JSON.parse(v2)));
         var old = ls.getItem(SAVED_KEY_V1), st = savedCleanState(null);
         if (old) {
           var o = JSON.parse(old);
@@ -1056,12 +1086,19 @@
     return savedCleanState(savedMem);
   }
 
-  function savedLoad() { var st = savedState(); return st.lists[st.active].schools.slice(); }
+  // the list for an id (or, for one more release, a position), else the selected one
+  function savedFind(st, which) {
+    if (typeof which === "number") return st.lists[which] || null;
+    if (typeof which === "string") return st.lists.filter(function (l) { return l.id === which; })[0] || null;
+    return savedFind(st, st.active);
+  }
+
+  function savedLoad() { var st = savedState(); return savedFind(st).schools.slice(); }
 
   function savedSave(list) {
-    var st = savedState(), out = savedClean(list);
-    st.lists[st.active].schools = out;
-    st.lists[st.active].updated = new Date().toISOString();
+    var st = savedState(), l = savedFind(st), out = savedClean(list);
+    l.schools = out;
+    l.updated = new Date().toISOString();
     savedWrite(st);
     return out.slice();
   }
@@ -1069,23 +1106,52 @@
   // empties the selected list (its name stays)
   function savedReset() { return savedSave([]); }
 
-  // which list is selected (0-3), and switching it
-  function savedActive() { return savedState().active; }
-  function savedSetActive(i) {
-    var st = savedState();
-    if (i >= 0 && i < SAVED_LISTS && i !== st.active) { st.active = i; savedWrite(st); }
-    return st.lists[st.active].schools.slice();
+  // which list is selected (its id, or its position in the list order), and switching it (by id; a position is
+  // still accepted); an unknown id or position changes nothing
+  function savedActiveId() { return savedState().active; }
+  function savedActive() { var st = savedState(); return st.lists.indexOf(savedFind(st)); }
+  function savedSetActive(which) {
+    var st = savedState(), l = savedFind(st, which === undefined ? null : which);
+    if (l && l.id !== st.active) { st.active = l.id; savedWrite(st); }
+    return savedFind(st).schools.slice();
   }
-  // every list's name and size: [{name, count}], in list order
+  // every list's id, name, and size: [{id, name, count}], in list order
   function savedLists() {
-    return savedState().lists.map(function (l) { return { name: l.name, count: l.schools.length }; });
+    return savedState().lists.map(function (l) { return { id: l.id, name: l.name, count: l.schools.length }; });
   }
-  function savedName(i) { var st = savedState(); return st.lists[i === undefined ? st.active : i].name; }
-  function savedSetName(name, i) {
-    var st = savedState(), k = i === undefined ? st.active : i;
-    st.lists[k].name = savedCleanName(name, k);
+  function savedName(which) { var st = savedState(), l = savedFind(st, which); return (l || savedFind(st)).name; }
+  function savedSetName(name, which) {
+    var st = savedState(), l = savedFind(st, which) || savedFind(st);
+    l.name = savedCleanName(name, st.lists.indexOf(l));
     savedWrite(st);
-    return st.lists[k].name;
+    return l.name;
+  }
+
+  // a new empty list ("List N", or the name given), selected; its id, or null at SAVED_MAX lists
+  function savedNew(name) {
+    var st = savedState();
+    if (st.lists.length >= SAVED_MAX) return null;
+    var l = { id: savedNewId(), name: name ? savedCleanName(name, st.lists.length) : savedFreeName(st.lists), schools: [], updated: null };
+    st.lists.push(l);
+    st.active = l.id;
+    savedWrite(st);
+    return l.id;
+  }
+
+  // removes a list (the selected one when no id); the list before it is selected (the next one if it was first).
+  // The only list is emptied and renamed "List 1" instead, so there is always a list. Returns the selected id.
+  function savedDelete(which) {
+    var st = savedState(), l = savedFind(st, which === undefined ? null : which);
+    if (!l) return st.active;
+    var i = st.lists.indexOf(l);
+    if (st.lists.length === 1) {
+      l.name = savedDefaultName(0); l.schools = []; l.updated = new Date().toISOString();
+    } else {
+      st.lists.splice(i, 1);
+      if (st.active === l.id) st.active = st.lists[Math.max(0, i - 1)].id;
+    }
+    savedWrite(st);
+    return st.active;
   }
 
   function isSaved(m) { return savedLoad().indexOf(m) >= 0; }
@@ -1673,9 +1739,10 @@
     positionOpenings: positionOpenings, playerStat: playerStat, totalBlocks: totalBlocks, hitPct: hitPct, perSet: perSet,
     positionName: positionName, summary: summary, join: join,
     fold: fold, displayName: displayName, teamWhere: teamWhere, searchSchools: searchSchools,
-    SAVED_KEY: SAVED_KEY, SAVED_KEY_V1: SAVED_KEY_V1, SAVED_LISTS: SAVED_LISTS, SAVED_NAME_MAX: SAVED_NAME_MAX,
+    SAVED_KEY: SAVED_KEY, SAVED_KEY_V2: SAVED_KEY_V2, SAVED_KEY_V1: SAVED_KEY_V1, SAVED_MAX: SAVED_MAX, SAVED_NAME_MAX: SAVED_NAME_MAX,
     savedLoad: savedLoad, savedSave: savedSave, savedReset: savedReset,
-    savedActive: savedActive, savedSetActive: savedSetActive, savedLists: savedLists,
+    savedActive: savedActive, savedActiveId: savedActiveId, savedSetActive: savedSetActive, savedLists: savedLists,
+    savedNew: savedNew, savedDelete: savedDelete,
     savedName: savedName, savedSetName: savedSetName,
     isSaved: isSaved, setSaved: setSaved, toggleSaved: toggleSaved, onSavedChange: onSavedChange,
     savedSort: savedSort, savedText: savedText, parseSaved: parseSaved, savedRows: savedRows,

@@ -323,7 +323,20 @@
   }
   .saved-sec .saved-n{ font-size:13px; color:var(--saved); font-weight:600; white-space:nowrap; }
   .saved-sec .saved-btns{ display:flex; flex-wrap:wrap; gap:8px; margin-left:auto; }
-  /* list picker: a 1-6 segmented control on the title line */
+  /* saved-list dropdown (SAVED_DROPDOWN.md): the current list checked; renaming is in the editor (.dlg-name);
+     .list-pick is still the Theme buttons */
+  .dlg .dlg-name{ flex:0 0 auto; margin:2px 0 0; }
+  .list-row.saved-line select{ min-width:130px; }
+  .saved-line .saved-btns{ margin-left:0; flex:0 0 auto; }
+  .dlg .dlg-name label{ font-size:13px; font-weight:600; color:var(--text-secondary); }
+  .saved-sec .saved-title{ flex:1 0 100%; }
+  .list-row select{ flex:1 1 auto; width:0; max-width:360px; min-width:0; height:34px; box-sizing:border-box; font:14px/1.3 "Work Sans",sans-serif;
+    color:var(--text-primary); background:var(--surface); border:1px solid var(--grid); border-radius:6px;
+    padding:0 13px 0 7px; text-overflow:ellipsis; }
+  .list-row select:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
+  .fl-dest{ flex-wrap:wrap; gap:4px 12px; }
+  .fl-dest label{ display:inline-flex; align-items:center; gap:5px; font-size:13px; }
+  /* list picker: a segmented control (Theme) */
   .list-pick{ display:inline-flex; margin-left:auto; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
   .list-pick label{ position:relative; cursor:pointer; }
   .list-pick input{ position:absolute; opacity:0; width:1px; height:1px; }
@@ -336,8 +349,8 @@
   .list-pick input:checked + span::after{ color:#fff; }
   .theme-pick{ margin-left:0; }
   .theme-pick span{ padding:5px 12px; }
-  .list-row{ flex:1 0 100%; display:flex; align-items:center; gap:10px; }
-  .list-row input{ flex:1; min-width:0; max-width:240px; font:14px/1.3 "Work Sans",sans-serif; color:var(--text-primary);
+  .list-row{ flex:1 0 100%; display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; }
+  .list-row input{ flex:1 1 auto; width:0; max-width:300px; min-width:0; height:34px; box-sizing:border-box; font:14px/1.3 "Work Sans",sans-serif; color:var(--text-primary);
                    background:var(--surface); border:1px solid var(--grid); border-radius:6px; padding:6px 10px; }
   .saved-sec .hint{ flex:1 0 100%; font-size:12px; color:var(--text-muted); margin:0; }
   .saved-sec .hint.warn{ color:var(--critical); }
@@ -760,15 +773,16 @@
       </div>
       <div class="saved-sec" aria-labelledby="saved-title">
         <span class="saved-title" id="saved-title">Saved schools</span>
-        <!-- six lists; everything below and on the other pages uses the selected one -->
-        <div class="list-pick" role="radiogroup" aria-label="Saved list" id="list-pick"></div>
-        <div class="list-row">
-          <input id="list-name" type="text" maxlength="24" spellcheck="false" autocomplete="off" aria-label="Name of the selected list">
+        <!-- up to 12 lists (SAVED_DROPDOWN.md); everything below and on the other pages uses the selected one -->
+        <!-- one line: the dropdown, the green school count, and the two buttons; the buttons wrap under them on a
+             narrow screen -->
+        <div class="list-row saved-line">
+          <select id="list-pick" aria-label="Saved list"></select>
           <span class="saved-n" id="saved-n"></span>
-        </div>
-        <div class="saved-btns">
-          <button type="button" class="quiet" id="saved-edit">Edit list…</button>
-          <button type="button" class="quiet" id="saved-create">Create list…</button>
+          <div class="saved-btns">
+            <button type="button" class="quiet" id="saved-edit">Edit list…</button>
+            <button type="button" class="quiet" id="saved-create">Create list…</button>
+          </div>
         </div>
         <p class="hint" id="saved-hint" aria-live="polite"></p>
       </div>
@@ -784,15 +798,18 @@
     <dialog class="saved-dlg" id="saved-dlg" aria-labelledby="saved-dlg-title">
       <form method="dialog" class="dlg">
         <div class="dlg-head">
-          <h2 id="saved-dlg-title">Saved schools</h2>
+          <h2 id="saved-dlg-title">Edit list</h2>
           <button value="cancel" class="quiet x" aria-label="Close">✕</button>
         </div>
+        <div class="list-row dlg-name"><label for="list-name">Name</label>
+          <input id="list-name" type="text" maxlength="24" spellcheck="false" autocomplete="off"></div>
         <p class="dlg-help" id="saved-dlg-help">One school per line. Paste a list here to load it. Lines starting with # are notes.</p>
         <textarea id="saved-text" spellcheck="false" autocomplete="off" aria-describedby="saved-dlg-help saved-check"></textarea>
         <div class="dlg-check" id="saved-check" aria-live="polite"></div>
         <div class="dlg-foot">
           <button type="button" class="quiet" id="dlg-copy">Copy</button>
           <button type="button" class="quiet" id="dlg-reset">Reset list</button>
+          <button type="button" class="quiet" id="dlg-delete">Delete list</button>
           <span class="spacer"></span>
           <button value="cancel" class="quiet">Cancel</button>
           <button type="button" id="dlg-add">Add to list</button>
@@ -941,6 +958,9 @@
           <ol class="fl-sim-list" id="fl-sim-list" hidden></ol>
           <div class="fl-row fl-name-row"><label class="fl-k" for="fl-name">Name</label>
             <input id="fl-name" class="fl-text" type="text" maxlength="24" spellcheck="false"></div>
+          <div class="fl-row fl-dest" role="radiogroup" aria-labelledby="fl-dest-k"><span class="fl-k" id="fl-dest-k">Put in</span>
+            <label><input type="radio" name="fl-dest" value="new" id="fl-dest-new"> <span id="fl-dest-new-t">a new list</span></label>
+            <label><input type="radio" name="fl-dest" value="cur" id="fl-dest-cur"> <span id="fl-dest-cur-t"></span></label></div>
           <p class="fl-target" id="fl-target"></p>
           <div class="dlg-foot">
             <button type="button" class="quiet" id="fl-reset">Reset filters</button>
@@ -1022,7 +1042,7 @@
 </main>
 
 <script src="data/schools.js?v=4b5ca806"></script>
-<script src="compare.js?v=0d60a9be"></script>
+<script src="compare.js?v=9429ab66"></script>
 <script src="data/places.js?v=9f2e48c7"></script>
 <script>
 (function(){
@@ -1345,31 +1365,43 @@ function flash(btn, text){
 }
 function plural(n, word){ return n + " " + word + (n === 1 ? "" : "s"); }
 
-// the 1-6 list picker and the selected list's name (SAVE_SCHOOLS.md: six lists)
+// the saved-list dropdown (SAVED_DROPDOWN.md): one option per list, "✓ Name (count)" for the current one, then
+// "+ New list"; the name is edited in the editor
 function renderListPick(){
-  var host = $("list-pick"), lists = C.savedLists(), active = C.savedActive();
-  host.innerHTML = "";
-  lists.forEach(function(l, i){
-    var lab = el("label", l.count ? "has" : null);
-    lab.title = l.name + " · " + plural(l.count, "school");
-    var r = document.createElement("input");
-    r.type = "radio"; r.name = "saved-list"; r.value = String(i); r.checked = i === active;
-    r.setAttribute("aria-label", l.name + ", " + plural(l.count, "school"));
-    r.addEventListener("change", function(){
-      saved = C.savedSetActive(i);
-      refreshSaved();
-      measureHeader();
-    });
-    lab.appendChild(r);
-    lab.appendChild(el("span", null, String(i + 1)));
-    host.appendChild(lab);
+  var sel = $("list-pick"), lists = C.savedLists(), active = C.savedActiveId(), cur = null;
+  sel.innerHTML = "";
+  lists.forEach(function(l){
+    var o = el("option", null, (l.id === active ? "✓ " : "\u2003") + l.name + " (" + l.count + ")");
+    o.value = l.id;
+    if (l.id === active) { o.selected = true; cur = l; }
+    sel.appendChild(o);
   });
-  var nm = $("list-name");
-  if (document.activeElement !== nm) nm.value = lists[active].name;
-  nm.placeholder = "List " + (active + 1);
+  var line = el("option", null, "──────────");
+  line.disabled = true; line.value = "";
+  sel.appendChild(line);
+  var full = lists.length >= C.SAVED_MAX;
+  var add = el("option", null, full ? "+ New list (" + C.SAVED_MAX + " max)" : "+ New list");
+  add.value = "+new"; add.disabled = full;
+  sel.appendChild(add);
+  sel.title = cur ? cur.name + " · " + plural(cur.count, "school") : "";
 }
+$("list-pick").addEventListener("change", function(){
+  if (this.value === "+new"){
+    if (C.savedNew()){
+      saved = C.savedLoad();
+      refreshSaved(); measureHeader();
+      openEditor(false, null, true);
+    } else renderListPick();
+    return;
+  }
+  saved = C.savedSetActive(this.value);
+  refreshSaved();
+  measureHeader();
+});
+// renaming, in the editor: saved when the field changes (Enter commits it without closing the editor)
 $("list-name").addEventListener("change", function(){
   this.value = C.savedSetName(this.value);
+  box.value = C.savedText(saved, null, C.savedName());
   renderListPick(); renderSummary();
 });
 $("list-name").addEventListener("keydown", function(e){ if (e.key === "Enter"){ e.preventDefault(); this.blur(); } });
@@ -1398,16 +1430,17 @@ function savedMsg(text){
   savedMsg.t = setTimeout(function(){ h.removeAttribute("data-msg"); renderSavedSection(); }, 4000);
 }
 
-function openEditor(selectAll, note){
+function openEditor(selectAll, note, nameFirst){
   box.value = C.savedText(saved, null, C.savedName());
-  $("saved-dlg-title").textContent = "Saved schools: " + C.savedName();
+  $("list-name").value = C.savedName();
   $("dlg-reset").disabled = !saved.length;
   renderCheck();
   if (note) $("saved-check").insertBefore(el("div", null, note), $("saved-check").firstChild);
   if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
   // no focus in the text box on open (a phone would pop the keyboard over the list), except for the
   // copy fallback, where the text must be selected to copy it by hand
-  if (selectAll) { box.focus(); box.select(); }
+  if (nameFirst) { $("list-name").focus(); $("list-name").select(); }
+  else if (selectAll) { box.focus(); box.select(); }
   else box.scrollTop = box.scrollHeight;
 }
 
@@ -1476,6 +1509,20 @@ $("dlg-copy").addEventListener("click", function(){
 });
 
 $("saved-edit").addEventListener("click", function(){ openEditor(false); });
+// Delete list (SAVED_DROPDOWN.md §5.2): asks first unless the list is empty; the only list is emptied instead
+$("dlg-delete").addEventListener("click", function(){
+  var name = C.savedName(), n = saved.length, only = C.savedLists().length === 1;
+  var ask = only
+    ? "“" + name + "” is your only list" + (n ? " (" + plural(n, "school") + ")" : "") + "; it will be emptied and renamed List 1." +
+      (n ? " Copy the list first if you might want it back." : "")
+    : n ? "Delete “" + name + "” and its " + plural(n, "school") + "? Copy the list first if you might want it back." : null;
+  if ((only || n) && !window.confirm(ask)) return;
+  C.savedDelete();
+  saved = C.savedLoad();
+  refreshSaved(); measureHeader();
+  dlg.close();
+  savedMsg(only ? "List emptied." : "Deleted “" + name + "”.");
+});
 // Reset list lives in the editor (next to Copy, so the list can be copied first)
 $("dlg-reset").addEventListener("click", function(){
   if (!window.confirm("Remove all " + plural(saved.length, "school") + " from " + C.savedName() + "? Copy the list first if you want to keep it.")) return;
@@ -1726,11 +1773,16 @@ function flRender(){
   $("fl-preview").textContent = !n || scoring ? "" : (n > 4 ? "Top 4 of " + n + ": " : "") + r.matches.slice(0, 4).map(function(m){
       var t = D.teams[m]; return teamName(m) + " (" + t.division + " #" + t.rank + ")"; }).join(", ");
   if (!flNameTouched) $("fl-name").value = C.filterName(f);
-  var cur = C.savedName(), tg = $("fl-target");
-  tg.className = "fl-target" + (saved.length ? " warn" : "");
-  tg.textContent = saved.length
-    ? "Replaces the " + plural(saved.length, "school") + " in list " + (C.savedActive() + 1) + ", “" + cur + "” (pick another list in Settings to keep it)."
-    : "Fills list " + (C.savedActive() + 1) + ", now empty.";
+  var cur = C.savedName(), tg = $("fl-target"), full = C.savedLists().length >= C.SAVED_MAX;
+  $("fl-dest-new").disabled = full;
+  $("fl-dest-new-t").textContent = full ? "a new list (" + C.SAVED_MAX + " max)" : "a new list";
+  if (full) $("fl-dest-cur").checked = true;
+  $("fl-dest-cur-t").textContent = "“" + cur + "”" + (saved.length ? " (replaces its " + plural(saved.length, "school") + ")" : " (empty)");
+  var toCur = $("fl-dest-cur").checked;
+  tg.className = "fl-target" + (toCur && saved.length ? " warn" : "");
+  tg.textContent = !toCur ? "Makes a new list and picks it; “" + cur + "” stays as it is."
+    : saved.length ? "Replaces the " + plural(saved.length, "school") + " in “" + cur + "”."
+    : "Fills “" + cur + "”, now empty.";
   $("fl-create").disabled = !n;
 }
 function flSoon(){ clearTimeout(flTimer); flTimer = setTimeout(flRender, 150); }
@@ -1743,6 +1795,9 @@ function openFilters(){
   }
   flWrite(f);
   flNameTouched = false;
+  // a new list by default; the selected list when it's empty or no more lists fit (SAVED_DROPDOWN.md §5.4)
+  var toCur = !saved.length || C.savedLists().length >= C.SAVED_MAX;
+  $("fl-dest-new").checked = !toCur; $("fl-dest-cur").checked = toCur;
   var wide = window.matchMedia && window.matchMedia("(min-width:521px)").matches, counts;
   flRender();
   counts = flGroupCounts(flLast.f);
@@ -1771,12 +1826,14 @@ $("fl-create").addEventListener("click", function(){
   if (!n) return;
   var name = $("fl-name").value.replace(/\s+/g, " ").trim() || C.filterName(flLast.f);
   // from a starting school the viewer chose the number, so only the replace question applies
-  var cur = C.savedName(), long = n > FL_LONG && !(flLast.r.similar && flLast.r.similar.active), old = saved.length;
+  var toNew = $("fl-dest-new").checked && !$("fl-dest-new").disabled;
+  var cur = C.savedName(), long = n > FL_LONG && !(flLast.r.similar && flLast.r.similar.active), old = toNew ? 0 : saved.length;
   var ask = long && old ? n + " schools match. That's a long list for the report and map. Replace the " + plural(old, "school") + " in “" + cur + "” with all " + n + "?"
           : long ? n + " schools match. That's a long list for the report and map. Create a list with all " + n + "?"
           : old ? "Replace the " + plural(old, "school") + " in “" + cur + "” with the " + plural(n, "new school") + "? Copy it first (Edit list… → Copy) to keep it."
           : null;
   if (ask && !window.confirm(ask)) return;
+  if (toNew && !C.savedNew(name)) return;
   saved = C.savedSave(list);
   C.savedSetName(name);
   refreshSaved();

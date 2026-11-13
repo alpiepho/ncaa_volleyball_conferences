@@ -164,7 +164,7 @@
 </div>
 
 <script src="data/schools.js?v=4b5ca806"></script>
-<script src="compare.js?v=0d60a9be"></script>
+<script src="compare.js?v=9429ab66"></script>
 <script>
 (function(){
   "use strict";
@@ -467,9 +467,9 @@
   }
   // a box ticked on the index or another map shows here without a reload
   // the saved map draws its pins from the list once, so another list (picked in another tab) reloads it
-  var listShown = C.savedActive();
+  var listShown = C.savedActiveId();
   C.onSavedChange(function(list){
-    if (MAP.kind === "saved" && C.savedActive() !== listShown) return location.reload();
+    if (MAP.kind === "saved" && C.savedActiveId() !== listShown) return location.reload();
     saved = list; refreshSaved();
   });
 })();
