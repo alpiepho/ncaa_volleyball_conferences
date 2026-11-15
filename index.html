@@ -1041,7 +1041,7 @@
 </div>
 </main>
 
-<script src="data/schools.js?v=4b5ca806"></script>
+<script src="data/schools.js?v=d30e73ef"></script>
 <script src="compare.js?v=9429ab66"></script>
 <script src="data/places.js?v=9f2e48c7"></script>
 <script>
@@ -1854,7 +1854,7 @@ function renderHints(){
   var sh = $("f-school-hint"), typed = $("f-school").value.trim();
   sh.className = "hint";
   if (typed && (!base || typed !== base.name)){ sh.textContent = "Pick a school from the list."; sh.className = "hint warn"; }
-  else if (!base) sh.textContent = "Empty: no comparison row.";
+  else if (!base) sh.textContent = "Optional: a current school or a favorite. Empty: no comparison row.";
   else if (base.researched) sh.textContent = base.division + " · " + base.masseyConf + " · full data";
   else sh.textContent = "Not researched yet: reports show its IPEDS and Massey data, with — for the rest.";
 

@@ -527,7 +527,7 @@
           <span class="item" id="costLegendEst" hidden><span class="swatch living est"></span>Estimated (state median; the school doesn't report it)</span>
         </div>
         <div id="costChart"></div>
-        <figcaption>Total cost per year living on campus, sticker price before aid. The solid part is tuition + fees at the rate that would apply for the home town and majors in the settings (in-state, WUE, or private); the lighter part adds on-campus food and housing, books, and other expenses. Hover or tap a bar for the breakdown (tap elsewhere to close). IPEDS 2024-25, the latest federal data; a school's own site may show this year's rate.</figcaption>
+        <figcaption>Total cost per year living on campus, sticker price before aid. The solid part is tuition + fees at the rate that would apply for the home town and majors in the settings (in-state, WUE, or private); the lighter part adds on-campus food and housing, books, and other expenses. WUE is shown under each program's rules for transfer students; first-year students may qualify at more schools. Hover or tap a bar for the breakdown (tap elsewhere to close). IPEDS 2024-25, the latest federal data; a school's own site may show this year's rate.</figcaption>
       </figure>
       <details class="tview">
         <summary>View as table</summary>
@@ -623,7 +623,7 @@
 
 <div class="tt" id="tooltip" role="tooltip"></div>
 
-<script src="data/schools.js?v=4b5ca806"></script>
+<script src="data/schools.js?v=d30e73ef"></script>
 <script src="data/history.js"></script>
 <script src="data/flights.js?v=1d72d17c"></script>
 <script src="compare.js?v=9429ab66"></script>
@@ -940,8 +940,8 @@
       before.push(esc(BASE.name) + " is not " + a_or_an(CONF.memberName) + " " + esc(CONF.memberName) +
         " volleyball member; its conference is " + esc(baseConf) + ". This is a \"what if\" comparison.");
       if (BASE.division !== CONF.division){
-        before.push(esc(BASE.name) + " plays " + BASE.division + ", so this is a hypothetical about changing divisions " +
-          "(and NCAA transfer rules between divisions), not just conferences.");
+        before.push(esc(BASE.name) + " plays " + BASE.division + ", so this compares programs in different divisions, " +
+          "whose NCAA rules differ, not just different conferences.");
       }
     }
     if (BASE && !BASE.researched && !(SAVED && !members)){
@@ -1014,6 +1014,7 @@
       "WUE where the school's WUE program takes transfers and covers at least one listed major, otherwise out-of-state; " +
       "private schools at their flat rate. In-state, out-of-state, and private prices are IPEDS 2024-25 tuition + fees; WUE rates are " +
       '<a class="srclink" href="' + WUE_URL + '" target="_blank" rel="noopener noreferrer">WICHE\'s own</a>. ' +
+      "WUE is shown under each program's rules for transfer students; first-year students may qualify at more schools. " +
       "Good = " + fmtMoney(b.goodAtOrBelow).replace(".0K", "K") + " or less (or a public school in the home state); Watch = up to " +
       fmtMoney(b.watchAtOrBelow).replace(".0K", "K") + "; Dealbreaker above that.");
     if (BASE) notes.push(esc(BASE.name) + " is shown at its sticker price too, for a fair comparison; actual aid varies.");
