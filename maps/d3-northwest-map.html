@@ -204,6 +204,8 @@
     return rows;
   }
   function climateLink(c){ return c ? [["Climate", C.climateUrl(c)]] : []; }
+  // a Google search for aerial campus tour videos on YouTube (they exist for nearly every campus), by the full IPEDS name
+  function tourLink(name){ return [["Tour", google("youtube aerial tour of " + name)]]; }
   function links(s, keys){
     return keys.filter(function(k){ return s.links && s.links[k[0]]; }).map(function(k){ return [k[1], s.links[k[0]]]; });
   }
@@ -228,7 +230,7 @@
         city: loc.city, state: loc.state, locale: loc.locale, lat: loc.lat, lon: loc.lon,
         rows: [["Nat'l rank", "#" + s.natRank], ["Conf. rank", s.confRank == null ? "—" : s.confRank],
                ["Tuition + fees/yr", money(s.cost)], ["Total, on campus", money(s.totalCost)]].concat(campusRows(s.area, s.current), gearRows(s.gear), climateRows(s.climate), distRows(loc, s.current)),
-        links: links(s, [["niche", "Niche"], ["roster", "Roster"], ["schedule", "Schedule"], ["stats", "Stats"], ["aia", "AIA"], ["fca", "FCA"]]).concat(climateLink(s.climate)),
+        links: links(s, [["niche", "Niche"], ["roster", "Roster"], ["schedule", "Schedule"], ["stats", "Stats"], ["aia", "AIA"], ["fca", "FCA"]]).concat(climateLink(s.climate), tourLink(D.teams[s.masseyName].name)),
         sub: sub
       };
   }
@@ -268,7 +270,7 @@
     rows = rows.concat(campusRows(rec.area, current), gearRows(rec.gear), climateRows(rec.climate), distRows(loc, current));
     var lk = [["Niche", t.niche || google("site:niche.com " + full)], ["Roster", google(full + " women's volleyball roster")]];
     if (current && rec.researched) lk = links(rec, [["niche", "Niche"], ["roster", "Roster"], ["schedule", "Schedule"], ["stats", "Stats"]]);
-    lk = lk.concat(climateLink(rec.climate));
+    lk = lk.concat(climateLink(rec.climate), tourLink(full));
     return {
       id: m.toLowerCase().replace(/[^a-z0-9]+/g, "-"), team: m, name: current ? BASE.name : full, current: current,
       badge: order ? String(order) : "", sort: order || 0,
