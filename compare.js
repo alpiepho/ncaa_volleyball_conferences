@@ -265,6 +265,8 @@
       links: r ? r.links : { niche: t.niche },
       // nearest NOAA stations (tools/build_site.py build_climate); null without a location
       climate: t.climate || null,
+      // campus land area (CAMPUS_SIZE_PLAN.md): {sqmi, [source]}; null if unknown
+      area: t.area || null,
       // school spirit from home attendance (SPIRIT_PLAN.md); null if not researched or not pulled yet
       spirit: r ? spiritOf(r.id) : null,
       // athletic gear brand (SPONSOR_PLAN.md); null if not researched or not looked up yet
@@ -593,7 +595,7 @@
       confRank: isMember ? s.confRank : "—",
       ipeds: s.ipeds, programs: programLines(offered, act), offeredMajors: offeredMajors,
       offenseNote: s.offenseNote, coachStaff: s.coachStaff,
-      flags: flags, flagDetail: detail, beach: s.beach, links: s.links, climate: s.climate,
+      flags: flags, flagDetail: detail, beach: s.beach, links: s.links, climate: s.climate, area: s.area,
       spirit: s.spirit, undergrads: s.undergrads, gear: s.gear, calsys: s.calsys, calendar: s.calendar
     };
     if (s.setter) row.setter = s.setter;
@@ -865,6 +867,38 @@
   function calendarText(cal, calsys) {
     var p = calendarParts(cal, calsys);
     return p ? [p.system, p.finals, p.janTerm, p.next].filter(Boolean).join(" · ") : null;
+  }
+
+  // ------------------------------------------------------------ campus size (CAMPUS_SIZE_PLAN.md)
+  // square miles: 2 decimals under 10, 1 decimal above
+  function campusSqMi(x) { return x < 10 ? x.toFixed(2) : x.toFixed(1); }
+  // acres: 2 significant figures under 1,000, then to the nearest 10
+  function campusAcres(x) {
+    var a = x * 640;
+    if (a < 1000) { var p = Math.pow(10, Math.floor(Math.log10(Math.max(a, 1))) - 1); a = Math.round(a / p) * p; }
+    else a = Math.round(a / 10) * 10;
+    return (a < 10 ? +a.toFixed(1) : Math.round(a)).toLocaleString("en-US");
+  }
+  // ratio to the School to Compare, always as a multiplier: 1 decimal from 0.1 to 10, whole number from 10, 2 under 0.1
+  function campusRatio(r) {
+    if (r >= 10) return String(Math.round(r));
+    if (r >= 0.095) return r.toFixed(1);
+    return r.toFixed(2);
+  }
+  // {size: "0.61 sq mi (390 acres)", vs: "2.7× Creighton (0.23)" | null, source: the school's page for a
+  // school-stated figure | null}; null when the area is unknown. base: {name, area} of the School to Compare, or null
+  // (and no comparison for the School to Compare itself: pass null).
+  function campusParts(area, base) {
+    if (!area || area.sqmi == null) return null;
+    var out = { size: campusSqMi(area.sqmi) + " sq mi (" + campusAcres(area.sqmi) + " acres)", vs: null,
+                source: area.source || null };
+    if (base && base.area && base.area.sqmi > 0)
+      out.vs = campusRatio(area.sqmi / base.area.sqmi) + "× " + base.name + " (" + campusSqMi(base.area.sqmi) + ")";
+    return out;
+  }
+  function campusText(area, base) {
+    var p = campusParts(area, base);
+    return p ? [p.size, p.vs].filter(Boolean).join(" · ") : null;
   }
 
   // fall of next season: Oct 2026 -> 2027 (§3 target year)
@@ -1762,6 +1796,7 @@
     airlineUrl: airlineUrl, flightSearchUrl: flightSearchUrl,
     homeAirport: homeAirport, nonstopAirlines: nonstopAirlines, oneStopAirlines: oneStopAirlines,
     schoolFlights: schoolFlights, fareText: fareText, flightsText: flightsText,
-    gearParts: gearParts, gearText: gearText, calendarParts: calendarParts, calendarText: calendarText
+    gearParts: gearParts, gearText: gearText, calendarParts: calendarParts, calendarText: calendarText,
+    campusParts: campusParts, campusText: campusText
   };
 })(typeof window !== "undefined" ? window : globalThis);

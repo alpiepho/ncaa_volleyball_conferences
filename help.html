@@ -89,7 +89,7 @@
   <a class="home carry" href="index.html">← 00 Home</a>
   <!-- Site version: bump it with every change to the site that viewers will see (features, layout, help text),
        e.g. 2.3 -> 2.4; data-only weekly updates don't change it. -->
-  <p class="version">Version 4.11</p>
+  <p class="version">Version 4.12</p>
   <h1>How to use this site</h1>
   <p class="sub">A research tool for comparing NCAA women's volleyball programs (Division I, II, and III) for a
     player choosing where to play, out of high school or from another college: volleyball strength, setters and other positions, coaching staff, academics and majors,
@@ -191,6 +191,11 @@
       top players, beach, climate, flags, and every source link. <b>Climate</b> is the July high and January low at
       the NOAA weather station nearest campus (1991-2020 averages; its <b>Climate</b> link opens NOAA's monthly table),
       and sunny days a year (clear plus partly cloudy) for the nearest of about 250 NOAA cities, with its distance.
+      <b>Campus</b> is the land area of the main campus in square miles (acres in parentheses), from the Census Bureau's
+      map outline of the campus: one outline per school, so farms, research stations, and separate campuses aren't
+      counted, and a school's own figure may be larger. Where the Census has no outline, the school's own figure is
+      used and linked. With a school to compare set, it adds how many times that school's campus it is
+      (<b>2.5× Creighton</b>, or <b>0.4×</b> for a smaller one). Every school has it, in map popups too.
       <b>Gear</b> is the brand that outfits the school's teams this year (Nike, Adidas, Under Armour, …), linked to where it
       was found (the athletics site's partner logos or the deal's announcement). An announced switch for next year is
       highlighted (deals change on July 1), a switch only reported in the press says "(reported)", and "not found" means
@@ -229,7 +234,8 @@
       numbered by conference rank (or Massey rank on conferences without a report).</li>
     <li>★ is your comparison school; ⌂ is your home town.</li>
     <li>The list beside the map flies to a school when tapped. <b>Show all</b> zooms back out. The layers button
-      (top right) switches to terrain or satellite. Each popup also has the school's climate and a <b>Climate</b> link.</li>
+      (top right) switches to terrain or satellite. Each popup also has the school's campus size (compared with your comparison school), climate, and a
+      <b>Climate</b> link.</li>
     <li>The <b>Saved school</b> box in a popup saves or unsaves that school.</li>
   </ul>
 
@@ -301,7 +307,7 @@
   <p class="foot">Questions or a school you'd like added: send your saved list (Edit settings → Saved schools →
     Edit list… → Copy) to whoever shared this site with you.</p>
 </div>
-<script src="compare.js?v=9429ab66"></script>
+<script src="compare.js?v=cee9be0f"></script>
 <script>
 // links back carry the viewer's settings, as on every other page
 (function(){

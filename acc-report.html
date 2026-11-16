@@ -623,10 +623,10 @@
 
 <div class="tt" id="tooltip" role="tooltip"></div>
 
-<script src="data/schools.js?v=d30e73ef"></script>
+<script src="data/schools.js?v=1931a698"></script>
 <script src="data/history.js"></script>
 <script src="data/flights.js?v=1d72d17c"></script>
-<script src="compare.js?v=9429ab66"></script>
+<script src="compare.js?v=cee9be0f"></script>
 <script>
 (function(){
   "use strict";
@@ -1046,6 +1046,11 @@
       " at the weather station nearest campus (each card's Climate link opens it). Sunny days are clear plus partly cloudy days a year from NOAA's " +
       '<a class="srclink" href="https://www.ncei.noaa.gov/products/land-based-station/comparative-climatic-data" target="_blank" rel="noopener noreferrer">Comparative Climatic Data</a>' +
       " (daytime sky cover, long-term record through 2023) for the nearest of about 250 cities, which can be a different town; its distance is shown.");
+    notes.push("Campus (profile cards): land area of the main campus outline in the Census Bureau's " +
+      '<a class="srclink" href="https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html" target="_blank" rel="noopener noreferrer">TIGER/Line</a>' +
+      " area landmarks (University or College), water excluded: one outline per school, so outlying farms, ranches, research stations, and" +
+      " separate campuses are left out. Schools' own figures are often larger because they count that land. Where the Census has no outline," +
+      " the school's own main-campus figure is used and linked. The multiplier compares it with the school to compare.");
     var fn = document.getElementById("flagsNotes");
     notes.forEach(function(h){ fn.appendChild(li(h)); });
   })();
@@ -1579,6 +1584,18 @@
       var cWhere = document.createElement("div"); cWhere.className = "climate-where"; cWhere.textContent = C.climateWhere(s.climate);
       cRow.lastChild.appendChild(cWhere);
       side.appendChild(cRow);
+    }
+
+    // Campus land area, with a multiplier to the School to Compare (CAMPUS_SIZE_PLAN.md); a school-stated figure is linked
+    var ap = C.campusParts(s.area, BASE && !s.current ? BASE : null);
+    if (ap){
+      var aRow = kv("Campus", ""), aV = aRow.lastChild;
+      if (ap.source){ var aa = document.createElement("a"); aa.className = "srclink"; aa.href = ap.source;
+        aa.target = "_blank"; aa.rel = "noopener noreferrer"; aa.textContent = ap.size; aa.title = "The school's own figure (no Census outline)";
+        aV.appendChild(aa); }
+      else aV.textContent = ap.size;
+      if (ap.vs) aV.appendChild(document.createTextNode(" · " + ap.vs));
+      side.appendChild(aRow);
     }
 
     // School spirit from home attendance (08, SPIRIT_PLAN.md)
