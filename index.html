@@ -1019,6 +1019,8 @@
       <span class="pos-links" id="outgoing-positions"></span></li>
     <li><a id="help-list-link" href="help.html">How to use this site</a>
       <span class="what">settings, reports, maps, saving schools</span></li>
+    <li><a id="sitemap-link" href="sitemap.html">Site map</a>
+      <span class="what">every page on the site</span></li>
   </ul>
 
   <section class="block" id="d1-other">
@@ -2174,6 +2176,7 @@ C.onSavedChange(function(list){ saved = list; refreshSaved(); measureHeader(); }
 $("researched-link").href = carry("researched.html");
 $("help-link").href = carry("help.html");
 $("help-list-link").href = carry("help.html");
+$("sitemap-link").href = carry("sitemap.html");
 // every position's outgoing page, on the "Outgoing starters" line (OUTGOING_POSITIONS.md)
 ["S", "OH", "OPP", "MB", "L"].forEach(function(code){
   var a = document.createElement("a");
