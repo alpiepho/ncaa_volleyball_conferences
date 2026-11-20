@@ -272,6 +272,7 @@
     display:flex; flex-direction:column; gap:8px;
   }
   .setcard.current{border-style:dashed;}
+  .setcard:target{outline:2px solid var(--series-1); outline-offset:2px;}
   .setcard .school{font-size:13px; font-weight:700; color:var(--text-primary);}
   .setcard .school .region{font-weight:500; color:var(--text-muted); font-size:11px; display:block; margin-top:1px;}
   .setcard .setter{display:flex; align-items:baseline; gap:6px; margin-top:2px;}
@@ -627,7 +628,7 @@
 <script src="data/schools.js?v=703385f0"></script>
 <script src="data/history.js"></script>
 <script src="data/flights.js?v=1d72d17c"></script>
-<script src="compare.js?v=cee9be0f"></script>
+<script src="compare.js?v=2bea56dd"></script>
 <script>
 (function(){
   "use strict";
@@ -645,6 +646,19 @@
   function beachHref(s){ return SAVED ? (s && s.confSlug ? s.confSlug + "-beach.html" : "") : CONFIG.beachHref; }
   var CONF = SAVED ? { division: null, short: "saved", memberName: "saved schools", schools: [] } : D.conferences[SLUG];
   var settings = C.load();
+  // a #setters-<id> link (outgoing-setters.html): land on that school's card once the page has its final layout
+  window.addEventListener("load", function(){
+    var t = /^#(setters-[A-Za-z0-9_-]+)$/.exec(location.hash);
+    var card = t && document.getElementById(t[1]);
+    if (card) card.scrollIntoView({block: "center"});
+  });
+  // links carry the stored settings, never a one-visit position override
+  var STORED = settings;
+  // ?pos=S (outgoing-setters.html, OUTGOING_SETTERS.md §6): panel 05 shows that position for this
+  // visit only; the stored settings keep their own
+  var POS_VISIT = (/[?&]pos=(S|OH|OPP|MB|L)(?:&|$)/.exec(location.search) || [])[1] || null;
+  if (POS_VISIT && POS_VISIT !== settings.position) settings = Object.assign({}, settings, {position: POS_VISIT});
+  else POS_VISIT = null;
   // a settings link pasted into an open report changes only the hash
   window.addEventListener("hashchange", function(){ if (C.fromHash()){ C.load(); location.reload(); } });
   var MAJORS = C.matchMajors(settings.majors);
@@ -668,7 +682,7 @@
   var HOME = CONFIG.home;
   var milesBetween = C.milesBetween;
   function masseyUrl(s){ return "https://masseyratings.com/cvol/ncaa-" + (s.division || CONF.division).toLowerCase() + "/ratings"; }
-  function carry(href){ return C.withSettings(href, settings); }
+  function carry(href){ return C.withSettings(href, STORED); }
   function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
   // cost basis plus the WUE footnotes (D9)
   // living-cost lines for the hover and profile card: where a part came from when it isn't the
@@ -882,7 +896,7 @@
     var baseConf = BASE ? (BASE.confSlug ? D.conferences[BASE.confSlug].memberName : BASE.masseyConf) : null;
 
     document.title = document.title;  // set by the build
-    document.getElementById("summary").textContent = C.summary(settings) + " · ";
+    document.getElementById("summary").textContent = C.summary(settings) + (POS_VISIT ? " (this page only)" : "") + " · ";
     ["edit-settings", "home-link"].forEach(function(id){ document.getElementById(id).href = carry("index.html"); });
     document.getElementById("map-link").href = carry(document.getElementById("map-link").getAttribute("href"));
     if (CONFIG.beachHref) document.getElementById("beach-link").href = carry(CONFIG.beachHref);
@@ -1267,12 +1281,13 @@
       // NCAA eligibility is a flat 5 years to use 5 seasons — no redshirt
       // exemption to account for. Only a listed 5th-year/graduate season
       // means eligibility is actually used up.
-      if(cls === "Gr" || cls === "5th-Yr" || cls === "5th") return "Final season of eligibility — likely done after " + (TARGET - 1);
+      if(C.finalSeason(cls)) return "Final season of eligibility — likely done after " + (TARGET - 1);
       return "5-in-5 eligibility — likely returning in " + TARGET;
     }
     byComposite.forEach(function(s){
       var card = document.createElement("div");
       card.className = "setcard" + (s.current ? " current" : "");
+      card.id = "setters-" + s.id;   // outgoing-setters.html links here
 
       var school = document.createElement("div"); school.className = "school";
       school.appendChild(profileLink(s));
@@ -1334,7 +1349,7 @@
   }
   function positionCards(host){
     function retTag(cls){
-      if(cls === "Gr" || cls === "5th-Yr" || cls === "5th") return "Final season of eligibility — likely done after " + (TARGET - 1);
+      if(C.finalSeason(cls)) return "Final season of eligibility — likely done after " + (TARGET - 1);
       if(/Sr$/.test(cls || "")) return "Senior — may use a 5th year, or be done after " + (TARGET - 1);
       return "Likely returning in " + TARGET;
     }
@@ -1347,6 +1362,7 @@
     byComposite.forEach(function(s){
       var card = document.createElement("div");
       card.className = "setcard" + (s.current ? " current" : "");
+      card.id = "setters-" + s.id;   // outgoing-setters.html links here
       var school = document.createElement("div"); school.className = "school";
       school.appendChild(profileLink(s));
       if (s.current) school.appendChild(document.createTextNode(" · comparing to"));

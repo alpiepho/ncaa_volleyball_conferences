@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head><script src="theme.js?v=6e63a942"></script>
+<meta charset="UTF-8">
+<title>Outgoing Setters</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- D1 programs whose main setter is leaving (OUTGOING_SETTERS.md). Source: tools/site/outgoing_setters.html,
+     copied as is by tools/build_site.py; the lists come from Compare.outgoingSetters (compare.js) over
+     data/schools.js, so they follow each weekly update. tools/outgoing_setters.py prints the same lists.
+     Linked from the index intro and help.html. -->
+<style>
+  :root{
+    color-scheme: light;
+    --page-bg:#f9f9f7; --surface:#fcfcfb; --surface-raised:#ffffff;
+    --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#898781;
+    --grid:#e1e0d9; --border:rgba(11,11,11,0.10);
+    --accent:#2a78d6; --accent-soft:rgba(42,120,214,0.10);
+    --track:#ebeae4;
+    --final:#c2410c; --final-soft:rgba(194,65,12,0.10);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --page-bg:#0d0d0d; --surface:#1a1a19; --surface-raised:#232322;
+      --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#8a8984;
+      --grid:#333331; --border:rgba(255,255,255,0.12);
+      --accent:#5a9ce8; --accent-soft:rgba(90,156,232,0.16);
+      --track:#2c2c2a;
+      --final:#fb923c; --final-soft:rgba(251,146,60,0.16);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --page-bg:#0d0d0d; --surface:#1a1a19; --surface-raised:#232322;
+    --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#8a8984;
+    --grid:#333331; --border:rgba(255,255,255,0.12);
+    --accent:#5a9ce8; --accent-soft:rgba(90,156,232,0.16);
+    --track:#2c2c2a;
+    --final:#fb923c; --final-soft:rgba(251,146,60,0.16);
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--page-bg); color:var(--text-primary);
+        font:15px/1.5 "Work Sans",-apple-system,BlinkMacSystemFont,sans-serif; }
+  .wrap{ max-width:1080px; margin:0 auto; padding:20px 20px 60px; }
+  @media (max-width:520px){ .wrap{ padding-inline:16px; } }
+  a{ color:var(--accent); }
+  .home{ font:600 12px/1 "Work Sans",sans-serif; text-decoration:none; color:var(--text-secondary);
+         border:1px solid var(--border); border-radius:999px; padding:6px 12px; background:var(--surface-raised); }
+  .home:hover{ color:var(--accent); border-color:var(--accent); }
+  h1{ font:600 26px/1.2 "Oswald",sans-serif; margin:18px 0 6px; }
+  h2{ font:600 18px/1.3 "Oswald",sans-serif; margin:34px 0 4px; }
+  h2 .n{ color:var(--text-muted); font-weight:500; }
+  .sub{ color:var(--text-secondary); margin:0 0 6px; max-width:760px; }
+  .note{ color:var(--text-secondary); font-size:13.5px; margin:0 0 10px; max-width:760px; }
+  .updated{ color:var(--text-muted); font-size:13px; margin:0 0 18px; }
+  .updated b{ color:var(--text-secondary); font-weight:600; }
+
+  .tiles{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; }
+  .tile{ background:var(--surface-raised); border:1px solid var(--border); border-radius:10px; padding:14px 16px;
+         text-decoration:none; color:inherit; display:block; }
+  .tile:hover{ border-color:var(--accent); }
+  .tile .label{ font:600 11px/1 "Work Sans",sans-serif; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); }
+  .tile .big{ font:600 34px/1.1 "Oswald",sans-serif; margin:8px 0 2px; }
+  .tile .of{ color:var(--text-secondary); font-size:13px; }
+
+  .filters{ display:flex; flex-wrap:wrap; gap:10px 16px; align-items:end; margin:22px 0 4px;
+            background:var(--surface-raised); border:1px solid var(--border); border-radius:10px; padding:12px 16px; }
+  .filters label{ display:flex; flex-direction:column; gap:4px; font:600 11px/1 "Work Sans",sans-serif;
+                  text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); }
+  .filters select, .filters input{ font:14px "Work Sans",sans-serif; color:var(--text-primary); background:var(--surface);
+                  border:1px solid var(--border); border-radius:6px; padding:6px 8px; }
+  .filters input{ width:80px; }
+  .filters select{ max-width:260px; }
+  .filters button{ font:600 13px "Work Sans",sans-serif; color:var(--text-secondary); background:none; border:1px solid var(--border);
+                   border-radius:999px; padding:6px 12px; cursor:pointer; }
+  .filters button:hover{ color:var(--accent); border-color:var(--accent); }
+  .shown{ color:var(--text-muted); font-size:13px; }
+
+  .table-scroll{ overflow-x:auto; }
+  table{ width:100%; border-collapse:collapse; background:var(--surface-raised); border:1px solid var(--border); border-radius:10px; overflow:hidden; font-size:14px; }
+  th, td{ text-align:left; padding:9px 12px; border-top:1px solid var(--grid); vertical-align:top; }
+  th{ font:600 11px/1.2 "Work Sans",sans-serif; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); border-top:none; background:var(--surface); }
+  td.num{ font-variant-numeric:tabular-nums; white-space:nowrap; }
+  td .conf{ display:block; color:var(--text-muted); font-size:12px; margin-top:2px; }
+  td .off{ display:block; color:var(--text-secondary); font-size:12px; margin-top:2px; }
+  tr.current td{ background:var(--accent-soft); }
+  .tag{ display:inline-block; font:600 10.5px/1.4 "Work Sans",sans-serif; text-transform:uppercase; letter-spacing:.04em;
+        border-radius:4px; padding:0 5px; margin-left:4px; vertical-align:1px; }
+  .tag.final{ color:var(--final); background:var(--final-soft); }
+  .tag.cmp{ color:var(--accent); background:var(--accent-soft); }
+  .setter{ white-space:nowrap; }
+  .setter b{ font-weight:600; }
+  .setter .m{ color:var(--text-muted); font-size:12.5px; }
+  .others{ font-size:13px; color:var(--text-secondary); }
+  .others div{ white-space:nowrap; }
+  .others .m{ color:var(--text-muted); }
+  .go{ font-weight:600; font-size:13px; text-decoration:none; white-space:nowrap; }
+  .go:hover{ text-decoration:underline; }
+  .empty{ color:var(--text-muted); font-size:14px; }
+  .foot{ margin-top:30px; color:var(--text-muted); font-size:13px; max-width:760px; }
+  /* phone: each school becomes a card */
+  @media (max-width:640px){
+    table, tbody, tr, td{ display:block; width:100%; }
+    table{ border:none; background:none; }
+    tr.head{ display:none; }
+    tr{ background:var(--surface-raised); border:1px solid var(--border); border-radius:10px; margin-bottom:10px; padding:6px 0; }
+    td{ border-top:none; padding:4px 14px; }
+    td.num{ font:600 12px "Work Sans",sans-serif; color:var(--text-muted); }
+    td.num::before{ content:"Massey #"; }
+    .setter, .others div{ white-space:normal; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="home carry" href="index.html">← 00 Home</a>
+  <h1>Outgoing Setters</h1>
+  <p class="sub">Division I programs whose main setter, the one with the most assists, is in her last season, so
+    the starting setter job opens next season. Seniors who may return and two-setter teams losing one half are
+    listed apart.</p>
+  <p class="updated" id="updated"></p>
+
+  <div class="tiles" id="tiles"></div>
+
+  <div class="filters" role="group" aria-label="Filters">
+    <label>Conference <select id="f-conf"><option value="">All D1 conferences</option></select></label>
+    <label>Massey rank from <input id="f-from" type="number" min="1" inputmode="numeric" placeholder="1"></label>
+    <label>to <input id="f-to" type="number" min="1" inputmode="numeric" placeholder="any"></label>
+    <button type="button" id="f-clear">Clear</button>
+    <span class="shown" id="shown"></span>
+  </div>
+
+  <div id="groups"></div>
+
+  <p class="foot" id="foot"></p>
+</div>
+
+<script src="data/schools.js?v=703385f0"></script>
+<script src="compare.js?v=2bea56dd"></script>
+<script>
+(function(){
+"use strict";
+var D = window.SITE_DATA, C = window.Compare, settings = C.load();
+var DIV = "D1", O = C.outgoingSetters(DIV), TARGET = C.targetYear();
+function el(tag, cls, text){ var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function niceDate(iso){
+  var p = (iso || "").split("-");
+  return p.length === 3 ? ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+p[1] - 1] + " " + (+p[2]) + ", " + p[0] : iso;
+}
+function carry(href){ return C.withSettings(href, settings); }
+Array.prototype.forEach.call(document.querySelectorAll("a.carry"), function(a){ a.href = carry(a.getAttribute("href")); });
+// the report's panel 05 showing setters for this visit, landing on the school's card (OUTGOING_SETTERS.md §6)
+function settersHref(r){ return carry(r.confSlug + "-report.html?pos=S").replace("#", "#setters-" + r.id + "&"); }
+var BASE = settings.school || null;   // the School to Compare (Massey name)
+
+var GROUPS = [
+  {key: "final", title: "Last season", tile: "Main setter in her last season",
+   note: "Graduate students, redshirt seniors, and 5th-year players: eligibility is used up after this season."},
+  {key: "senior", title: "Seniors, may return", tile: "Main setter a senior",
+   note: "A senior who hasn't played five seasons can come back as a graduate student; rosters don't say which will. Worth asking the coaches."},
+  {key: "partner", title: "6-2 partner leaving", tile: "6-2 partner in her last season",
+   note: "The main setter stays, but the other half of a 6-2 (at least " + Math.round(C.PARTNER_SHARE * 100) +
+         "% of the main setter's assists) is in her last season: one of two setting spots opens."}
+];
+var withData = O.schools - O.noData.length;
+
+// dates: stats per conference, Massey snapshot
+var confs = {};
+GROUPS.forEach(function(g){ O[g.key].forEach(function(x){ confs[x.school.confSlug] = D.conferences[x.school.confSlug]; }); });
+var stats = Object.keys(D.conferences).filter(function(k){ return D.conferences[k].division === DIV; })
+  .map(function(k){ return D.conferences[k].statsDate; }).filter(Boolean).sort();
+var u = document.getElementById("updated");
+u.appendChild(document.createTextNode("Classes and assists from the rosters and stats of "));
+u.appendChild(el("b", null, niceDate(stats[stats.length - 1])));
+if (stats.length && stats[0] !== stats[stats.length - 1]) u.appendChild(document.createTextNode(" (some conferences " + niceDate(stats[0]) + ")"));
+u.appendChild(document.createTextNode(" · Massey ranks from " + niceDate(D.meta.masseyPulled) + "."));
+
+// tiles: jump to each group
+var tiles = document.getElementById("tiles");
+GROUPS.forEach(function(g){
+  var t = el("a", "tile"); t.href = "#" + g.key;
+  t.appendChild(el("div", "label", g.tile));
+  t.appendChild(el("div", "big", String(O[g.key].length)));
+  t.appendChild(el("div", "of", "of " + withData + " " + DIV + " programs with setter stats"));
+  tiles.appendChild(t);
+});
+
+// conference filter: the D1 conferences that appear in any group
+var sel = document.getElementById("f-conf");
+Object.keys(confs).sort(function(a, b){ return (confs[a].indexTitle || confs[a].title).localeCompare(confs[b].indexTitle || confs[b].title); })
+  .forEach(function(k){ var o = el("option", null, confs[k].indexTitle || confs[k].title); o.value = k; sel.appendChild(o); });
+
+function setterLine(x, final){
+  var d = el("div", "setter");
+  d.appendChild(el("b", null, x.name || "(name not stored)"));
+  d.appendChild(el("span", "m", " #" + x.jersey + " · " + x.cls + (x.height ? " · " + x.height : "")));
+  if (final) d.appendChild(el("span", "tag final", "last season"));
+  return d;
+}
+
+var host = document.getElementById("groups");
+var rowsBy = {};
+GROUPS.forEach(function(g){
+  var h = el("h2"); h.id = g.key; h.appendChild(document.createTextNode(g.title + " "));
+  var n = el("span", "n"); h.appendChild(n); g.count = n;
+  host.appendChild(h);
+  host.appendChild(el("p", "note", g.note));
+  var list = O[g.key];
+  if (!list.length){ host.appendChild(el("p", "empty", "None.")); rowsBy[g.key] = []; return; }
+  var wrap = el("div", "table-scroll"), tb = el("table"), body = el("tbody");
+  var head = el("tr", "head");
+  ["Massey", "School", "Main setter", "Other setters", "Report"].forEach(function(t){ head.appendChild(el("th", null, t)); });
+  body.appendChild(head);
+  rowsBy[g.key] = list.map(function(x){
+    var r = x.school, tr = el("tr", r.masseyName === BASE ? "current" : null);
+    tr.appendChild(el("td", "num", r.natRank == null ? "—" : String(r.natRank)));
+    var sc = el("td"); sc.appendChild(el("b", null, r.name));
+    if (r.masseyName === BASE) sc.appendChild(el("span", "tag cmp", "comparing to"));
+    var c = D.conferences[r.confSlug];
+    sc.appendChild(el("span", "conf", (c.indexTitle || c.title) + (r.confRank ? " · conf. rank " + r.confRank : "")));
+    if (r.offenseNote) sc.appendChild(el("span", "off", r.offenseNote));
+    tr.appendChild(sc);
+    var ms = el("td"); ms.appendChild(setterLine(x.main, C.finalSeason(x.main.cls)));
+    ms.appendChild(el("div", "m others", x.main.assists + " assists" + (x.share != null ? " · " + Math.round(100 * x.share) + "% of the setters' total" : "")));
+    tr.appendChild(ms);
+    var ot = el("td", "others");
+    if (!x.others.length) ot.appendChild(el("div", "m", "none on the roster"));
+    x.others.forEach(function(o){
+      var d = el("div");
+      d.appendChild(document.createTextNode((o.name || "(name not stored)") + " #" + o.jersey + " "));
+      d.appendChild(el("span", "m", o.cls + " · " + (o.assists == null ? "—" : o.assists) + " a" + (o.setter ? "" : " · " + o.pos)));
+      if (C.finalSeason(o.cls)) d.appendChild(el("span", "tag final", "last season"));
+      ot.appendChild(d);
+    });
+    tr.appendChild(ot);
+    var lk = el("td"), a = el("a", "go", "05 Setters ↗");
+    a.href = settersHref(r); a.target = "_blank"; a.rel = "noopener";
+    a.title = r.name + "'s setters in the " + (c.short || c.title) + " report";
+    lk.appendChild(a); tr.appendChild(lk);
+    body.appendChild(tr);
+    return {tr: tr, r: r};
+  });
+  tb.appendChild(body); wrap.appendChild(tb); host.appendChild(wrap);
+});
+
+// filters: nothing stored
+var fFrom = document.getElementById("f-from"), fTo = document.getElementById("f-to");
+function apply(){
+  var conf = sel.value, from = parseInt(fFrom.value, 10) || 1, to = parseInt(fTo.value, 10) || Infinity, shown = 0, all = 0;
+  GROUPS.forEach(function(g){
+    var n = 0;
+    rowsBy[g.key].forEach(function(x){
+      var rank = x.r.natRank == null ? Infinity : x.r.natRank;
+      var ok = (!conf || x.r.confSlug === conf) && rank >= from && rank <= to;
+      x.tr.style.display = ok ? "" : "none";
+      if (ok) n++;
+    });
+    g.count.textContent = "(" + (n === O[g.key].length ? n : n + " of " + O[g.key].length) + ")";
+    shown += n; all += O[g.key].length;
+  });
+  document.getElementById("shown").textContent = shown === all ? all + " programs" : "Showing " + shown + " of " + all;
+}
+[sel, fFrom, fTo].forEach(function(e){ e.addEventListener("input", apply); e.addEventListener("change", apply); });
+document.getElementById("f-clear").addEventListener("click", function(){ sel.value = ""; fFrom.value = ""; fTo.value = ""; apply(); });
+apply();
+
+var foot = document.getElementById("foot");
+foot.textContent = "The main setter is the roster setter with the most assists this season, the same one the reports' " +
+  "5-1 / 6-2 note names. Classes are as each roster lists them. " + O.schools + " researched " + DIV + " programs; " +
+  (O.noData.length ? O.noData.map(function(id){ return D.researched[id].name; }).join(", ") + " publish" + (O.noData.length === 1 ? "es" : "") +
+   " no stats scripts can read. " : "") + "The 05 Setters link opens the conference report showing setters for that visit; your " +
+  "position setting doesn't change. Rosters for " + TARGET + " aren't out yet: a transfer or recruit may already be lined up.";
+})();
+</script>
+</body>
+</html>

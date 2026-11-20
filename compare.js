@@ -904,6 +904,43 @@
   // fall of next season: Oct 2026 -> 2027 (§3 target year)
   function targetYear(now) { return (now || new Date()).getFullYear() + 1; }
 
+  // ------------------------------------------------------------ outgoing setters (OUTGOING_SETTERS.md)
+  // a class that means this is her last season: graduate, 5th year, redshirt senior
+  var FINAL_SEASON = ["Gr", "R-Sr", "5th", "5th-Yr", "R-Gr"];
+  function finalSeason(cls) { return FINAL_SEASON.indexOf(cls) >= 0; }
+  // the setter the 5-1 / 6-2 note opens with (setter_history.offense_note): roster setters with
+  // assists, most first; anyone with assists if no roster setter has any. null: no assist data
+  function setterPool(setters) {
+    var real = (setters || []).filter(function (x) { return x && x.setter && x.assists; });
+    return real.length ? real : (setters || []).filter(function (x) { return x && x.assists; });
+  }
+  function mainSetter(setters) { return setterPool(setters)[0] || null; }
+  // a 6-2 half: another setter with at least this share of the main setter's assists
+  var PARTNER_SHARE = 0.6;
+  // every researched school of a division, sorted by Massey rank, into
+  // final (main setter in her last season), senior (main setter a senior, may return),
+  // partner (main setter staying, a 6-2 partner in her last season), noData
+  function outgoingSetters(division) {
+    var data = D(), out = {final: [], senior: [], partner: [], noData: [], schools: 0};
+    Object.keys(data.researched).forEach(function (id) {
+      var r = data.researched[id];
+      if (data.conferences[r.confSlug].division !== division) return;
+      out.schools++;
+      var all = settersOf(r), pool = setterPool(all), main = pool[0];
+      if (!main) { out.noData.push(id); return; }
+      var total = pool.reduce(function (n, x) { return n + x.assists; }, 0);
+      var row = {id: id, school: r, main: main, share: total ? main.assists / total : null,
+                 others: all.filter(function (x) { return x !== main; }), partner: null};
+      var partner = pool.filter(function (x) { return x !== main && finalSeason(x.cls) && x.assists >= PARTNER_SHARE * main.assists; })[0];
+      if (finalSeason(main.cls)) out.final.push(row);
+      else if (main.cls === "Sr") out.senior.push(row);
+      else if (partner) { row.partner = partner; out.partner.push(row); }
+    });
+    var byRank = function (a, b) { return (a.school.natRank || 9999) - (b.school.natRank || 9999) || a.school.name.localeCompare(b.school.name); };
+    out.final.sort(byRank); out.senior.sort(byRank); out.partner.sort(byRank);
+    return out;
+  }
+
   function setterOpenings(rows) {
     return rows.filter(function (r) { return !r.current && r.setter && SENIOR.indexOf(r.setter.cls) >= 0; });
   }
@@ -1769,6 +1806,8 @@
     flagCols: flagCols, factYes: factYes, faithText: faithText, beachLabel: beachLabel, beachFlag: beachFlag,
     buildSchool: buildSchool, reportRows: reportRows,
     milesBetween: milesBetween, targetYear: targetYear, setterOpenings: setterOpenings,
+    FINAL_SEASON: FINAL_SEASON, finalSeason: finalSeason, mainSetter: mainSetter, PARTNER_SHARE: PARTNER_SHARE,
+    outgoingSetters: outgoingSetters,
     POSITION_SPEC: POSITION_SPEC, positionSpec: positionSpec, positionPlayers: positionPlayers,
     positionOpenings: positionOpenings, playerStat: playerStat, totalBlocks: totalBlocks, hitPct: hitPct, perSet: perSet,
     positionName: positionName, summary: summary, join: join,
