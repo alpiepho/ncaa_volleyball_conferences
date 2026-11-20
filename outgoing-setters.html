@@ -10,10 +10,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<!-- D1 programs whose main setter is leaving (OUTGOING_SETTERS.md). Source: tools/site/outgoing_setters.html,
-     copied as is by tools/build_site.py; the lists come from Compare.outgoingSetters (compare.js) over
-     data/schools.js, so they follow each weekly update. tools/outgoing_setters.py prints the same lists.
-     Linked from the index intro and help.html. -->
+<!-- D1 programs losing a starter at one position (OUTGOING_POSITIONS.md). Source: tools/site/outgoing.html;
+     tools/build_site.py writes one page per position (Compare.OUTGOING_PAGES), filling S and Outgoing Setters.
+     The lists come from Compare.outgoingPlayers (compare.js) over data/schools.js, so they follow each weekly
+     update; tools/outgoing_positions.py prints the same lists. Linked from the index intro and help.html. -->
 <style>
   :root{
     color-scheme: light;
@@ -23,6 +23,7 @@
     --accent:#2a78d6; --accent-soft:rgba(42,120,214,0.10);
     --track:#ebeae4;
     --final:#c2410c; --final-soft:rgba(194,65,12,0.10);
+    --ok:#15803d; --ok-soft:rgba(21,128,61,0.10);
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
@@ -33,6 +34,7 @@
       --accent:#5a9ce8; --accent-soft:rgba(90,156,232,0.16);
       --track:#2c2c2a;
       --final:#fb923c; --final-soft:rgba(251,146,60,0.16);
+      --ok:#4ade80; --ok-soft:rgba(74,222,128,0.14);
     }
   }
   :root[data-theme="dark"]{
@@ -43,6 +45,7 @@
     --accent:#5a9ce8; --accent-soft:rgba(90,156,232,0.16);
     --track:#2c2c2a;
     --final:#fb923c; --final-soft:rgba(251,146,60,0.16);
+    --ok:#4ade80; --ok-soft:rgba(74,222,128,0.14);
   }
   *{box-sizing:border-box;}
   body{ margin:0; background:var(--page-bg); color:var(--text-primary);
@@ -64,7 +67,7 @@
   .tiles{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; }
   .tile{ background:var(--surface-raised); border:1px solid var(--border); border-radius:10px; padding:14px 16px;
          text-decoration:none; color:inherit; display:block; }
-  .tile:hover{ border-color:var(--accent); }
+  a.tile:hover{ border-color:var(--accent); }
   .tile .label{ font:600 11px/1 "Work Sans",sans-serif; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); }
   .tile .big{ font:600 34px/1.1 "Oswald",sans-serif; margin:8px 0 2px; }
   .tile .of{ color:var(--text-secondary); font-size:13px; }
@@ -99,10 +102,53 @@
   .setter .m{ color:var(--text-muted); font-size:12.5px; }
   .others{ font-size:13px; color:var(--text-secondary); }
   .others div{ white-space:nowrap; }
+  td.school{ min-width:150px; }
+  .wide .others div{ white-space:normal; }
+  .wide .others .m{ white-space:nowrap; }
   .others .m{ color:var(--text-muted); }
   .go{ font-weight:600; font-size:13px; text-decoration:none; white-space:nowrap; }
   .go:hover{ text-decoration:underline; }
   .empty{ color:var(--text-muted); font-size:14px; }
+  .posnav{ display:flex; flex-wrap:wrap; gap:6px; margin:14px 0 0; }
+  .posnav a{ font:600 12px/1 "Work Sans",sans-serif; text-decoration:none; color:var(--text-secondary);
+             border:1px solid var(--border); border-radius:999px; padding:6px 11px; background:var(--surface-raised); }
+  .posnav a:hover{ color:var(--accent); border-color:var(--accent); }
+  .posnav a[aria-current="page"]{ color:var(--accent); border-color:var(--accent); background:var(--accent-soft); }
+  .tag.sr{ color:var(--text-secondary); background:var(--track); }
+  .filters .check{ flex-direction:row; align-items:center; gap:6px; text-transform:none; letter-spacing:0; font:500 14px "Work Sans",sans-serif; color:var(--text-secondary); }
+  .filters .check input{ width:auto; }
+  .filters [hidden]{ display:none; }
+  /* Last season evidence (OUTGOING_POSITIONS.md Part D) */
+  .tag.v{ text-decoration:none; }
+  .tag.v-Confirmed{ color:var(--ok); background:var(--ok-soft); }
+  .tag.v-Likely{ color:var(--accent); background:var(--accent-soft); }
+  .tag.v-Unclear{ color:var(--text-secondary); background:var(--track); }
+  .tag.v-Doubtful{ color:var(--final); background:var(--final-soft); outline:1px solid var(--final); }
+  /* seniors (Part E): does she have a 5th year left? done = the spot opens (green), a year left = it may not (orange) */
+  .tag.v-Probably-done{ color:var(--ok); background:var(--ok-soft); }
+  .tag.v-Likely-year-left{ color:var(--final); background:var(--final-soft); }
+  .tag.v-Year-left{ color:var(--final); background:var(--final-soft); outline:1px solid var(--final); }
+  .refs h2 + .note{ margin-top:0; }
+  .refs ol + h2{ margin-top:30px; }
+  .refs{ margin-top:40px; border-top:1px solid var(--grid); }
+  /* key to the markers (under the filters) */
+  .key{ margin:10px 0 0; background:var(--surface-raised); border:1px solid var(--border); border-radius:10px; padding:10px 16px; max-width:100%; }
+  .key summary{ cursor:pointer; font:600 13px "Work Sans",sans-serif; color:var(--text-secondary); }
+  .key summary:hover{ color:var(--accent); }
+  .key h3{ font:600 11px/1.2 "Work Sans",sans-serif; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); margin:14px 0 6px; }
+  .key dl{ display:grid; grid-template-columns:max-content 1fr; gap:6px 12px; margin:0; font-size:13.5px; color:var(--text-secondary); }
+  .key dt{ margin:0; text-align:right; }
+  .key dt .tag{ margin-left:0; }
+  .key dd{ margin:0; }
+  @media (max-width:640px){ .key dl{ grid-template-columns:1fr; gap:2px; } .key dt{ text-align:left; margin-top:6px; } }
+  .refs ol{ padding-left:22px; margin:10px 0 0; }
+  .refs li{ margin:0 0 14px; font-size:13.5px; color:var(--text-secondary); max-width:820px; }
+  .refs li:target{ background:var(--accent-soft); border-radius:6px; }
+  .refs li b{ color:var(--text-primary); }
+  .refs .ln{ display:block; }
+  .refs .q{ display:block; font-style:italic; }
+  .refs a{ overflow-wrap:anywhere; }
+  .nodata{ color:var(--text-secondary); font-size:13.5px; max-width:760px; margin-top:26px; }
   .foot{ margin-top:30px; color:var(--text-muted); font-size:13px; max-width:760px; }
   /* phone: each school becomes a card */
   @media (max-width:640px){
@@ -120,10 +166,9 @@
 <body>
 <div class="wrap">
   <a class="home carry" href="index.html">← 00 Home</a>
-  <h1>Outgoing Setters</h1>
-  <p class="sub">Division I programs whose main setter, the one with the most assists, is in her last season, so
-    the starting setter job opens next season. Seniors who may return and two-setter teams losing one half are
-    listed apart.</p>
+  <nav class="posnav" id="posnav" aria-label="Positions"></nav>
+  <h1 id="h1">Outgoing Setters</h1>
+  <p class="sub" id="sub"></p>
   <p class="updated" id="updated"></p>
 
   <div class="tiles" id="tiles"></div>
@@ -136,18 +181,28 @@
     <span class="shown" id="shown"></span>
   </div>
 
+  <details class="key" id="key"><summary>Key to the markers</summary></details>
+
   <div id="groups"></div>
 
+  <p class="nodata" id="nodata" hidden></p>
+  <section class="refs" id="refs" hidden></section>
   <p class="foot" id="foot"></p>
 </div>
 
 <script src="data/schools.js?v=703385f0"></script>
-<script src="compare.js?v=2bea56dd"></script>
+<script src="data/eligibility.js?v=666a9e52"></script>
+<script src="compare.js?v=5facfb09"></script>
 <script>
 (function(){
 "use strict";
+var CODE = "S";
 var D = window.SITE_DATA, C = window.Compare, settings = C.load();
-var DIV = "D1", O = C.outgoingSetters(DIV), TARGET = C.targetYear();
+var DIV = "D1", O = C.outgoingPlayers(DIV, CODE), TARGET = C.targetYear();
+var SETTER = CODE === "S", SPEC = SETTER ? null : C.positionSpec(CODE);
+var PLURAL = SETTER ? "Setters" : SPEC.plural, ONE = SETTER ? "setter" : SPEC.one;
+var TWO = !SETTER && SPEC.starters > 1;
+var SHORT = {OH: "OH", OPP: "OPP", MB: "MB", L: "L/DS"};   // the report link's label
 function el(tag, cls, text){ var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
 function niceDate(iso){
   var p = (iso || "").split("-");
@@ -155,11 +210,30 @@ function niceDate(iso){
 }
 function carry(href){ return C.withSettings(href, settings); }
 Array.prototype.forEach.call(document.querySelectorAll("a.carry"), function(a){ a.href = carry(a.getAttribute("href")); });
-// the report's panel 05 showing setters for this visit, landing on the school's card (OUTGOING_SETTERS.md §6)
-function settersHref(r){ return carry(r.confSlug + "-report.html?pos=S").replace("#", "#setters-" + r.id + "&"); }
+// the report's panel 05 showing this position for this visit, landing on the school's card (OUTGOING_POSITIONS.md §A6)
+function reportHref(r){ return carry(r.confSlug + "-report.html?pos=" + CODE).replace("#", "#setters-" + r.id + "&"); }
 var BASE = settings.school || null;   // the School to Compare (Massey name)
+function fmtNum(v){ return v == null ? "—" : (v % 1 ? v.toFixed(1) : String(v)); }
 
-var GROUPS = [
+// the other positions' pages
+var nav = document.getElementById("posnav");
+["S", "OH", "OPP", "MB", "L"].forEach(function(c){
+  var a = el("a", null, c === "S" ? "Setters" : C.positionSpec(c).plural);
+  a.href = carry(C.OUTGOING_PAGES[c]);
+  if (c === CODE) a.setAttribute("aria-current", "page");
+  nav.appendChild(a);
+});
+
+var sub = document.getElementById("sub");
+sub.textContent = SETTER
+  ? "Division I programs whose main setter, the one with the most assists, is in her last season, so the starting " +
+    "setter job opens next season. Seniors who may return and two-setter teams losing one half are listed apart."
+  : "Division I programs where a starting " + ONE + " is in her last season, so a spot opens next season. Starters " +
+    "are the top " + (TWO ? SPEC.starters + " " + PLURAL.toLowerCase() : ONE) + " by " +
+    (C.OUTGOING_STARTER_SORT[CODE] === "sp" ? "sets played" : SPEC.statLabel.toLowerCase()) +
+    ". Programs whose starter is a senior who may return are listed apart.";
+
+var GROUPS = SETTER ? [
   {key: "final", title: "Last season", tile: "Main setter in her last season",
    note: "Graduate students, redshirt seniors, and 5th-year players: eligibility is used up after this season."},
   {key: "senior", title: "Seniors, may return", tile: "Main setter a senior",
@@ -167,44 +241,88 @@ var GROUPS = [
   {key: "partner", title: "6-2 partner leaving", tile: "6-2 partner in her last season",
    note: "The main setter stays, but the other half of a 6-2 (at least " + Math.round(C.PARTNER_SHARE * 100) +
          "% of the main setter's assists) is in her last season: one of two setting spots opens."}
+] : [
+  {key: "final", title: "Last season", tile: "A starter in her last season",
+   note: "Graduate students, redshirt seniors, and 5th-year players: eligibility is used up after this season." +
+         ""},
+  {key: "senior", title: "Seniors, may return", tile: "A starter a senior",
+   note: "No starter in her last season, but " + (TWO ? "a starter is" : "the starter is") + " a senior. A senior who hasn't " +
+         "played five seasons can come back as a graduate student; rosters don't say which will. Worth asking the coaches."}
 ];
 var withData = O.schools - O.noData.length;
 
 // dates: stats per conference, Massey snapshot
-var confs = {};
-GROUPS.forEach(function(g){ O[g.key].forEach(function(x){ confs[x.school.confSlug] = D.conferences[x.school.confSlug]; }); });
 var stats = Object.keys(D.conferences).filter(function(k){ return D.conferences[k].division === DIV; })
   .map(function(k){ return D.conferences[k].statsDate; }).filter(Boolean).sort();
 var u = document.getElementById("updated");
-u.appendChild(document.createTextNode("Classes and assists from the rosters and stats of "));
+u.appendChild(document.createTextNode("Classes and stats from the rosters and stats pages of "));
 u.appendChild(el("b", null, niceDate(stats[stats.length - 1])));
 if (stats.length && stats[0] !== stats[stats.length - 1]) u.appendChild(document.createTextNode(" (some conferences " + niceDate(stats[0]) + ")"));
 u.appendChild(document.createTextNode(" · Massey ranks from " + niceDate(D.meta.masseyPulled) + "."));
 
 // tiles: jump to each group
 var tiles = document.getElementById("tiles");
-GROUPS.forEach(function(g){
-  var t = el("a", "tile"); t.href = "#" + g.key;
-  t.appendChild(el("div", "label", g.tile));
-  t.appendChild(el("div", "big", String(O[g.key].length)));
-  t.appendChild(el("div", "of", "of " + withData + " " + DIV + " programs with setter stats"));
+var tileList = GROUPS.map(function(g){ return [g.tile, O[g.key].length, "#" + g.key]; });
+tileList.forEach(function(x){
+  var t = el(x[2] ? "a" : "div", "tile"); if (x[2]) t.href = x[2];
+  t.appendChild(el("div", "label", x[0]));
+  t.appendChild(el("div", "big", String(x[1])));
+  t.appendChild(el("div", "of", "of " + withData + " " + DIV + " programs with " + (SETTER ? "setter stats" : PLURAL.toLowerCase() + " on the roster")));
   tiles.appendChild(t);
 });
 
 // conference filter: the D1 conferences that appear in any group
+var confs = {};
+GROUPS.forEach(function(g){ O[g.key].forEach(function(x){ confs[x.school.confSlug] = D.conferences[x.school.confSlug]; }); });
 var sel = document.getElementById("f-conf");
 Object.keys(confs).sort(function(a, b){ return (confs[a].indexTitle || confs[a].title).localeCompare(confs[b].indexTitle || confs[b].title); })
   .forEach(function(k){ var o = el("option", null, confs[k].indexTitle || confs[k].title); o.value = k; sel.appendChild(o); });
 
+function nameOf(x){ return x.name || "(name not stored)"; }
+// Last season evidence: data/eligibility.js (tools/eligibility.py), keyed "<school id>#<jersey>"
+var EL = window.SITE_ELIGIBILITY || {}, REFS = [];
+function vClass(v){ return "tag v v-" + String(v).replace(/ /g, "-"); }
+function refId(sid, p){ return "ref-" + sid + "-" + String(p.jersey).replace(/[^A-Za-z0-9]/g, ""); }
+// the verdict tag, linking to her entry in the references; noted for the list at the bottom
+// quiet: no "not checked" tag when there's no entry (seniors at positions not checked yet)
+function evidenceTag(r, p, quiet){
+  var e = EL[r.id + "#" + p.jersey];
+  if (!e){
+    if (quiet) return document.createTextNode("");
+    var u = el("span", "tag v v-Unclear", "not checked"); u.title = "No evidence gathered yet"; return u;
+  }
+  if (REFS.indexOf(e) < 0) REFS.push(e);
+  var a = el("a", vClass(e.verdict), e.verdict + " ↓");
+  a.href = "#" + refId(r.id, p); a.title = e.why + " (evidence below)";
+  return a;
+}
 function setterLine(x, final){
   var d = el("div", "setter");
-  d.appendChild(el("b", null, x.name || "(name not stored)"));
+  d.appendChild(el("b", null, nameOf(x)));
   d.appendChild(el("span", "m", " #" + x.jersey + " · " + x.cls + (x.height ? " · " + x.height : "")));
   if (final) d.appendChild(el("span", "tag final", "last season"));
   return d;
 }
+function leaveTag(cls){
+  if (C.finalSeason(cls)) return el("span", "tag final", "last season");
+  if (cls === "Sr") return el("span", "tag sr", "senior");
+  return null;
+}
+// a starter at the other positions: name, class, height, then the position's numbers (panel 05's)
+function starterBlock(p){
+  var box = el("div");
+  var d = el("div", "setter");
+  d.appendChild(el("b", null, nameOf(p)));
+  d.appendChild(el("span", "m", " #" + p.jersey + " · " + [p.pos, p.cls, p.height].filter(Boolean).join(" · ")));
+  var t = leaveTag(p.cls); if (t) d.appendChild(t);
+  box.appendChild(d);
+  box.appendChild(el("div", "m others", fmtNum(C.playerStat(p, SPEC.sort)) + " " + SPEC.statLabel.toLowerCase() + " · " + p.sp + " sets · " +
+    C.positionLine(p, CODE).join(" · ")));
+  return box;
+}
 
 var host = document.getElementById("groups");
+if (!SETTER) host.className = "wide";
 var rowsBy = {};
 GROUPS.forEach(function(g){
   var h = el("h2"); h.id = g.key; h.appendChild(document.createTextNode(g.title + " "));
@@ -215,33 +333,52 @@ GROUPS.forEach(function(g){
   if (!list.length){ host.appendChild(el("p", "empty", "None.")); rowsBy[g.key] = []; return; }
   var wrap = el("div", "table-scroll"), tb = el("table"), body = el("tbody");
   var head = el("tr", "head");
-  ["Massey", "School", "Main setter", "Other setters", "Report"].forEach(function(t){ head.appendChild(el("th", null, t)); });
+  ["Massey", "School", SETTER ? "Main setter" : (TWO ? "Starters" : "Starter"), "Other " + PLURAL.toLowerCase(), "Report"]
+    .forEach(function(t){ head.appendChild(el("th", null, t)); });
   body.appendChild(head);
   rowsBy[g.key] = list.map(function(x){
     var r = x.school, tr = el("tr", r.masseyName === BASE ? "current" : null);
+    tr.id = "row-" + r.id;
     tr.appendChild(el("td", "num", r.natRank == null ? "—" : String(r.natRank)));
-    var sc = el("td"); sc.appendChild(el("b", null, r.name));
+    var sc = el("td", "school"); sc.appendChild(el("b", null, r.name));
     if (r.masseyName === BASE) sc.appendChild(el("span", "tag cmp", "comparing to"));
     var c = D.conferences[r.confSlug];
     sc.appendChild(el("span", "conf", (c.indexTitle || c.title) + (r.confRank ? " · conf. rank " + r.confRank : "")));
-    if (r.offenseNote) sc.appendChild(el("span", "off", r.offenseNote));
+    if (SETTER && r.offenseNote) sc.appendChild(el("span", "off", r.offenseNote));
     tr.appendChild(sc);
-    var ms = el("td"); ms.appendChild(setterLine(x.main, C.finalSeason(x.main.cls)));
-    ms.appendChild(el("div", "m others", x.main.assists + " assists" + (x.share != null ? " · " + Math.round(100 * x.share) + "% of the setters' total" : "")));
+    var ms = el("td");
+    if (SETTER){
+      var sl = setterLine(x.main, C.finalSeason(x.main.cls));
+      if (g.key === "final") sl.appendChild(evidenceTag(r, x.main));
+      if (g.key === "senior") sl.appendChild(evidenceTag(r, x.main, true));
+      ms.appendChild(sl);
+      ms.appendChild(el("div", "m others", x.main.assists + " assists" + (x.share != null ? " · " + Math.round(100 * x.share) + "% of the setters' total" : "")));
+    } else {
+      x.starters.forEach(function(p){
+        var b = starterBlock(p);
+        if (g.key === "final" && C.finalSeason(p.cls)) b.firstChild.appendChild(evidenceTag(r, p));
+        if (g.key === "senior" && p.cls === "Sr") b.firstChild.appendChild(evidenceTag(r, p, true));
+        ms.appendChild(b);
+      });
+    }
     tr.appendChild(ms);
     var ot = el("td", "others");
-    if (!x.others.length) ot.appendChild(el("div", "m", "none on the roster"));
-    x.others.forEach(function(o){
+    var others = x.others;
+    if (!others.length) ot.appendChild(el("div", "m", "none on the roster"));
+    others.forEach(function(o){
       var d = el("div");
-      d.appendChild(document.createTextNode((o.name || "(name not stored)") + " #" + o.jersey + " "));
-      d.appendChild(el("span", "m", o.cls + " · " + (o.assists == null ? "—" : o.assists) + " a" + (o.setter ? "" : " · " + o.pos)));
+      d.appendChild(document.createTextNode(nameOf(o) + " #" + o.jersey + " "));
+      if (SETTER) d.appendChild(el("span", "m", o.cls + " · " + (o.assists == null ? "—" : o.assists) + " a" + (o.setter ? "" : " · " + o.pos)));
+      else d.appendChild(el("span", "m", o.cls + " · " + (o.sp == null ? "no stats yet" : fmtNum(C.playerStat(o, SPEC.sort)) + " " +
+        SPEC.statLabel.toLowerCase() + ", " + o.sp + " sets")));
       if (C.finalSeason(o.cls)) d.appendChild(el("span", "tag final", "last season"));
+      if (SETTER && g.key === "partner" && o === x.partner) d.appendChild(evidenceTag(r, o));
       ot.appendChild(d);
     });
     tr.appendChild(ot);
-    var lk = el("td"), a = el("a", "go", "05 Setters ↗");
-    a.href = settersHref(r); a.target = "_blank"; a.rel = "noopener";
-    a.title = r.name + "'s setters in the " + (c.short || c.title) + " report";
+    var lk = el("td"), a = el("a", "go", "05 " + (SETTER ? "Setters" : SHORT[CODE]) + " ↗");
+    a.href = reportHref(r); a.target = "_blank"; a.rel = "noopener";
+    a.title = r.name + "'s " + PLURAL.toLowerCase() + " in the " + (c.short || c.title) + " report";
     lk.appendChild(a); tr.appendChild(lk);
     body.appendChild(tr);
     return {tr: tr, r: r};
@@ -252,7 +389,8 @@ GROUPS.forEach(function(g){
 // filters: nothing stored
 var fFrom = document.getElementById("f-from"), fTo = document.getElementById("f-to");
 function apply(){
-  var conf = sel.value, from = parseInt(fFrom.value, 10) || 1, to = parseInt(fTo.value, 10) || Infinity, shown = 0, all = 0;
+  var conf = sel.value, from = parseInt(fFrom.value, 10) || 1, to = parseInt(fTo.value, 10) || Infinity;
+  var shown = 0, all = 0;
   GROUPS.forEach(function(g){
     var n = 0;
     rowsBy[g.key].forEach(function(x){
@@ -270,12 +408,133 @@ function apply(){
 document.getElementById("f-clear").addEventListener("click", function(){ sel.value = ""; fFrom.value = ""; fTo.value = ""; apply(); });
 apply();
 
-var foot = document.getElementById("foot");
-foot.textContent = "The main setter is the roster setter with the most assists this season, the same one the reports' " +
-  "5-1 / 6-2 note names. Classes are as each roster lists them. " + O.schools + " researched " + DIV + " programs; " +
-  (O.noData.length ? O.noData.map(function(id){ return D.researched[id].name; }).join(", ") + " publish" + (O.noData.length === 1 ? "es" : "") +
-   " no stats scripts can read. " : "") + "The 05 Setters link opens the conference report showing setters for that visit; your " +
-  "position setting doesn't change. Rosters for " + TARGET + " aren't out yet: a transfer or recruit may already be lined up.";
+// key to the markers: only the ones this page can show
+(function(){
+  var key = document.getElementById("key");
+  function section(title, rows){
+    rows = rows.filter(Boolean);
+    if (!rows.length) return;
+    key.appendChild(el("h3", null, title));
+    var dl = el("dl");
+    rows.forEach(function(r){
+      var dt = el("dt"); dt.appendChild(el("span", r[0], r[1])); dl.appendChild(dt);
+      dl.appendChild(el("dd", null, r[2]));
+    });
+    key.appendChild(dl);
+  }
+  var shown = {};
+  REFS.forEach(function(e){ shown[e.verdict + "|" + (e.group || "final")] = true; });
+  function has(v, g){ return shown[v + "|" + g]; }
+  section("Class", [
+    ["tag final", "last season", "Listed as a graduate student, redshirt senior, or 5th-year player: by the class alone, this is her last season."],
+    !SETTER && ["tag sr", "senior", "Listed as a senior: she may be done, or may come back for a 5th year."],
+    document.querySelector("#groups tr.current") && ["tag cmp", "comparing to", "Your School to Compare (Edit settings), shaded in the list."]
+  ]);
+  var anyFinal = REFS.some(function(e){ return (e.group || "final") === "final"; });
+  section("Last season: is she really done? (5-in-5: five seasons in five years, every year on a college roster counts)", anyFinal ? [
+    ["tag v v-Confirmed", "Confirmed", "Four earlier college seasons found, or her school's own page says fifth year / final year of eligibility."],
+    has("Likely", "final") && ["tag v v-Likely", "Likely", "Her high-school class or a transfer points to a 5th season, but not every year was found online."],
+    ["tag v v-Unclear", "Unclear", "Not enough online to say (no bio, earlier rosters missing, or a site the reader can't read)."],
+    has("Doubtful", "final") && ["tag v v-Doubtful", "Doubtful", "Something says she has a season left: her rosters or bio show only three earlier seasons, or her bio says so."]
+  ] : []);
+  var anySenior = REFS.some(function(e){ return e.group === "senior"; });
+  section("Seniors who may return: does she have a 5th year left?", anySenior ? [
+    ["tag v v-Year-left", "Year left", "The record is complete and this is at most her 4th college season: on every roster here since her freshman year with no earlier school, a high-school class of 2023 or later, a bio that counts every earlier season, or a bio that says eligibility remains."],
+    ["tag v v-Likely-year-left", "Likely year left", "Three earlier seasons found and no fourth, but the record has a gap where one could hide (a roster not online, a previous school's seasons not listed)."],
+    ["tag v v-Unclear", "Unclear", "Not enough online to say."],
+    has("Probably done", "senior") && ["tag v v-Probably-done", "Probably done", "This is already her 5th season (a redshirt year or an earlier school counts), or her own page says fifth year, redshirt senior, or graduate student."]
+  ] : []);
+  if (REFS.length) section("Links", [
+    ["tag v v-Unclear", "verdict ↓", "Each verdict links to her entry in the References at the bottom: years on college rosters, bio quotes, and links to every roster and her bio. “↑ table” goes back."],
+    Array.prototype.some.call(document.querySelectorAll("#groups .tag.v"), function(t){ return t.textContent === "not checked"; }) &&
+      ["tag v v-Unclear", "not checked", "No evidence gathered yet for this player."]
+  ]);
+  if (!key.querySelector("h3")) key.hidden = true;
+})();
+
+// references: every checked player on this page, Last season first, then seniors, in table order (Parts D and E)
+var REF_GROUPS = [
+  {group: "final", title: "References: Last season players", verdicts: ["Confirmed", "Likely", "Unclear", "Doubtful"],
+   note: "Is she really in her last season? Confirmed: four earlier college seasons, or her school says fifth year. " +
+         "Likely: her high-school class or a transfer points that way. Unclear: not enough online. Doubtful: something " +
+         "says she has a season left."},
+  {group: "senior", title: "References: Seniors who may return", verdicts: ["Year left", "Likely year left", "Unclear", "Probably done"],
+   note: "Does she have a 5th year left? Year left: her record shows this is at most her 4th college season, or her " +
+         "school says eligibility remains. Likely year left: three earlier seasons found and no 4th, with a gap in the " +
+         "record. Unclear: not enough online. Probably done: this is already her 5th season (a redshirt year or an " +
+         "earlier school), or her school says fifth year, redshirt senior, or graduate student."}
+];
+(function(){
+  if (!REFS.length) return;
+  var box = document.getElementById("refs"); box.hidden = false;
+  REF_GROUPS.forEach(function(G){
+    var list = REFS.filter(function(e){ return (e.group || "final") === G.group; });
+    if (!list.length) return;
+    var h = el("h2", null, G.title + " "); h.appendChild(el("span", "n", "(" + list.length + ")")); box.appendChild(h);
+    var counts = {};
+    list.forEach(function(e){ counts[e.verdict] = (counts[e.verdict] || 0) + 1; });
+    box.appendChild(el("p", "note", G.verdicts.map(function(v){ return (counts[v] || 0) + " " + v.toLowerCase(); }).join(", ") +
+      ". " + G.note + " Assumes the 5-in-5 rule (five seasons in five years; every year on a college roster counts, " +
+      "played or not), from her school's roster pages and her bio. Waivers (medical, junior college) don't show " +
+      "online: worth asking the coaches."));
+    var ol = el("ol");
+    list.forEach(function(e){ ol.appendChild(refItem(e)); });
+    box.appendChild(ol);
+  });
+  box.appendChild(el("p", "note", "Checked " + REFS.map(function(e){ return e.checked; }).sort().pop() + " by tools/eligibility.py; hand-checked entries say so."));
+})();
+function refItem(e){
+    var li = el("li"); li.id = refId(e.schoolId, e);
+    var top = el("span", "ln");
+    top.appendChild(el("b", null, (e.name || "(name not stored)") + " #" + e.jersey + ", " + e.school));
+    top.appendChild(document.createTextNode(" · " + e.cls + " "));
+    top.appendChild(el("span", vClass(e.verdict), e.verdict));
+    var back = el("a", null, " ↑ table"); back.href = "#row-" + e.schoolId; top.appendChild(back);
+    li.appendChild(top);
+    li.appendChild(el("span", "ln", e.why));
+    li.appendChild(el("span", "ln", "Years: " + yearsLine(e)));
+    var b = e.bio || {};
+    var facts = [];
+    if (e.previousSchool) facts.push("Previous school " + e.previousSchool.replace(/^Previous:\s*/i, ""));
+    if (b.classLong) facts.push((facts.length ? "b" : "B") + "io page class " + b.classLong);
+    if (b.hsYear) facts.push("high-school class " + b.hsYear);
+    if (facts.length) li.appendChild(el("span", "ln", facts.join(" · ")));
+    (b.final || []).concat(b.left || [], b.notes || []).slice(0, 4).forEach(function(q){ li.appendChild(el("span", "q", "“" + q + "”")); });
+    if (e.note) li.appendChild(el("span", "ln", "Note: " + e.note));
+    var links = el("span", "ln");
+    links.appendChild(document.createTextNode("Sources: "));
+    var ls = (e.rosters || []).map(function(s){ return [s.season + " roster", s.url]; });
+    if (b.url) ls.push(["bio", b.url]);
+    if (e.source) ls.push(["source", e.source]);
+    if (!ls.length) links.appendChild(document.createTextNode("none found online"));
+    ls.forEach(function(x, i){
+      if (i) links.appendChild(document.createTextNode(" · "));
+      var a = el("a", null, x[0]); a.href = x[1]; a.target = "_blank"; a.rel = "noopener"; links.appendChild(a);
+    });
+    li.appendChild(links);
+    return li;
+}
+// '2022 (Utah, per bio) · 2023 So · … · 2026 Gr': the earlier seasons the verdict counted, then her rosters here
+function yearsLine(e){
+  var parts = (e.elsewhere || []).map(function(x){ return x.season + " (" + (x.school ? x.school + ", " : "") + "per bio)"; });
+  (e.rosters || []).forEach(function(s){ parts.push(s.season + " " + s.cls); });
+  return parts.join(" · ") || "—";
+}
+
+// programs with no player at this position, worded as panel 05 words them
+var names = O.noData.map(function(id){ return D.researched[id].name; }).sort(function(a, b){ return a.localeCompare(b); });
+if (names.length){
+  var nd = document.getElementById("nodata"); nd.hidden = false;
+  nd.appendChild(el("b", null, (SETTER ? "No assist data" : "No " + PLURAL.toLowerCase() + " on the current roster") + " (" + names.length + "): "));
+  nd.appendChild(document.createTextNode(names.join(", ") + (SETTER ? "." : ". Not listed above; their rosters may list the position under another name.")));
+}
+
+document.getElementById("foot").textContent = (SETTER
+  ? "The main setter is the roster setter with the most assists this season, the same one the reports' 5-1 / 6-2 note names. "
+  : "Players listed under two positions on a roster count at each, as in the reports' panel 05. ") +
+  "Classes are as each roster lists them. " + O.schools + " researched " + DIV + " programs. The 05 link opens the " +
+  "conference report showing " + PLURAL.toLowerCase() + " for that visit; your position setting doesn't change. Rosters for " +
+  TARGET + " aren't out yet: a transfer or recruit may already be lined up.";
 })();
 </script>
 </body>

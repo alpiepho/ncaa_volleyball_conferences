@@ -624,7 +624,7 @@
 <script src="data/schools.js?v=703385f0"></script>
 <script src="data/history.js"></script>
 <script src="data/flights.js?v=1d72d17c"></script>
-<script src="compare.js?v=2bea56dd"></script>
+<script src="compare.js?v=5facfb09"></script>
 <script>
 (function(){
   "use strict";
@@ -650,7 +650,7 @@
   });
   // links carry the stored settings, never a one-visit position override
   var STORED = settings;
-  // ?pos=S (outgoing-setters.html, OUTGOING_SETTERS.md §6): panel 05 shows that position for this
+  // ?pos=S (outgoing-setters.html, OUTGOING_POSITIONS.md §6): panel 05 shows that position for this
   // visit only; the stored settings keep their own
   var POS_VISIT = (/[?&]pos=(S|OH|OPP|MB|L)(?:&|$)/.exec(location.search) || [])[1] || null;
   if (POS_VISIT && POS_VISIT !== settings.position) settings = Object.assign({}, settings, {position: POS_VISIT});
@@ -1349,12 +1349,7 @@
       if(/Sr$/.test(cls || "")) return "Senior — may use a 5th year, or be done after " + (TARGET - 1);
       return "Likely returning in " + TARGET;
     }
-    function second(p){
-      var ps = function(v){ return v == null ? "—" : v.toFixed(2); };
-      if (POS.sort === "k") return [fmtStat(C.hitPct(p), "pct") + " hitting", p.ta + " attempts", ps(C.perSet(p, "k")) + " kills/set"];
-      if (POS.sort === "blk") return [p.bs + " solo · " + p.ba + " assisted", ps(C.perSet(p, "blk")) + " blocks/set", p.k + " kills · " + fmtStat(C.hitPct(p), "pct")];
-      return [ps(C.perSet(p, "dig")) + " digs/set", p.re + " reception errors", p.sa + " aces"];
-    }
+    function second(p){ return C.positionLine(p, settings.position); }   // shared with outgoing-*.html
     byComposite.forEach(function(s){
       var card = document.createElement("div");
       card.className = "setcard" + (s.current ? " current" : "");

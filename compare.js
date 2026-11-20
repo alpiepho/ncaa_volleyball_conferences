@@ -904,7 +904,7 @@
   // fall of next season: Oct 2026 -> 2027 (§3 target year)
   function targetYear(now) { return (now || new Date()).getFullYear() + 1; }
 
-  // ------------------------------------------------------------ outgoing setters (OUTGOING_SETTERS.md)
+  // ------------------------------------------------------------ outgoing setters (OUTGOING_POSITIONS.md)
   // a class that means this is her last season: graduate, 5th year, redshirt senior
   var FINAL_SEASON = ["Gr", "R-Sr", "5th", "5th-Yr", "R-Gr"];
   function finalSeason(cls) { return FINAL_SEASON.indexOf(cls) >= 0; }
@@ -939,6 +939,53 @@
     var byRank = function (a, b) { return (a.school.natRank || 9999) - (b.school.natRank || 9999) || a.school.name.localeCompare(b.school.name); };
     out.final.sort(byRank); out.senior.sort(byRank); out.partner.sort(byRank);
     return out;
+  }
+
+  // the other positions (OUTGOING_POSITIONS.md Part B): starters are the first POSITION_SPEC.starters players at the
+  // position who have played a set, in panel 05's order, except middle blockers, whose starters are the most sets
+  // played (§B8 Q2). Players listed in two groups count at each, as in panel 05.
+  var OUTGOING_STARTER_SORT = { MB: "sp" };
+  // one page per position (§B8 Q1); tools/build_site.py writes these names from tools/site/outgoing.html
+  var OUTGOING_PAGES = { S: "outgoing-setters.html", OH: "outgoing-outside-hitters.html", OPP: "outgoing-opposites.html",
+                         MB: "outgoing-middle-blockers.html", L: "outgoing-liberos.html" };
+  function positionStarters(row, code) {
+    var spec = positionSpec(code), list = positionPlayers(row, code).filter(function (p) { return p.sp; });
+    if (OUTGOING_STARTER_SORT[code] === "sp")
+      list = list.map(function (p, i) { return { p: p, i: i }; })
+        .sort(function (a, b) { return (b.p.sp - a.p.sp) || (a.i - b.i); }).map(function (x) { return x.p; });
+    return list.slice(0, spec.starters);
+  }
+  // S: outgoingSetters. Others: {final, senior, noData, schools}; final = a starter in her last season, senior = no
+  // last-season starter but a senior starter. Rows {id, school, starters, others}; noData = no player at the
+  // position with a set played (panel 05: "No <position> on the current roster")
+  function outgoingPlayers(division, code) {
+    if (code === "S") return outgoingSetters(division);
+    var data = D(), out = {final: [], senior: [], noData: [], schools: 0};
+    Object.keys(data.researched).forEach(function (id) {
+      var r = data.researched[id];
+      if (data.conferences[r.confSlug].division !== division) return;
+      out.schools++;
+      var starters = positionStarters(r, code);
+      if (!starters.length) { out.noData.push(id); return; }
+      var leaving = starters.filter(function (p) { return finalSeason(p.cls) || p.cls === "Sr"; });
+      var row = {id: id, school: r, starters: starters,
+                 others: positionPlayers(r, code).filter(function (p) { return starters.indexOf(p) < 0; })};
+      if (starters.some(function (p) { return finalSeason(p.cls); })) out.final.push(row);
+      else if (leaving.length) out.senior.push(row);
+    });
+    var byRank = function (a, b) { return (a.school.natRank || 9999) - (b.school.natRank || 9999) || a.school.name.localeCompare(b.school.name); };
+    out.final.sort(byRank); out.senior.sort(byRank);
+    return out;
+  }
+  // a player's line under her main number, as panel 05 shows it (hitting, per set)
+  function positionLine(p, code) {
+    var spec = positionSpec(code);
+    if (!spec || p.sp == null) return [];
+    var ps = function (v) { return v == null ? "—" : v.toFixed(2); };
+    var pct = function (v) { return v == null ? "—" : (v < 0 ? "−" : "") + Math.abs(v).toFixed(3).replace(/^0/, ""); };
+    if (spec.sort === "k") return [pct(hitPct(p)) + " hitting", p.ta + " attempts", ps(perSet(p, "k")) + " kills/set"];
+    if (spec.sort === "blk") return [p.bs + " solo · " + p.ba + " assisted", ps(perSet(p, "blk")) + " blocks/set", p.k + " kills · " + pct(hitPct(p))];
+    return [ps(perSet(p, "dig")) + " digs/set", p.re + " reception errors", p.sa + " aces"];
   }
 
   function setterOpenings(rows) {
@@ -1807,7 +1854,8 @@
     buildSchool: buildSchool, reportRows: reportRows,
     milesBetween: milesBetween, targetYear: targetYear, setterOpenings: setterOpenings,
     FINAL_SEASON: FINAL_SEASON, finalSeason: finalSeason, mainSetter: mainSetter, PARTNER_SHARE: PARTNER_SHARE,
-    outgoingSetters: outgoingSetters,
+    outgoingSetters: outgoingSetters, outgoingPlayers: outgoingPlayers, positionStarters: positionStarters,
+    OUTGOING_STARTER_SORT: OUTGOING_STARTER_SORT, OUTGOING_PAGES: OUTGOING_PAGES, positionLine: positionLine,
     POSITION_SPEC: POSITION_SPEC, positionSpec: positionSpec, positionPlayers: positionPlayers,
     positionOpenings: positionOpenings, playerStat: playerStat, totalBlocks: totalBlocks, hitPct: hitPct, perSet: perSet,
     positionName: positionName, summary: summary, join: join,

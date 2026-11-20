@@ -122,6 +122,16 @@
     margin:0 0 22px;
     max-width:700px;
   }
+  /* the intro's page links, one per line under the paragraph (OUTGOING_POSITIONS.md Part C) */
+  .sub.intro{ margin-bottom:10px; }
+  .site-links{ list-style:none; margin:0 0 22px; padding:0; max-width:700px; display:flex; flex-direction:column; gap:5px; font-size:14px; }
+  .site-links li{ color:var(--text-muted); }
+  .site-links a{ font-weight:600; text-decoration:none; color:var(--accent); }
+  .site-links .label{ font-weight:600; color:var(--text-secondary); }
+  .site-links a:hover{ text-decoration:underline; }
+  .site-links .what::before{ content:"— "; }
+  .site-links .pos-links{ display:inline-flex; flex-wrap:wrap; gap:2px 8px; margin-left:6px; font-size:12.5px; }
+  .site-links .pos-links a{ font-weight:500; }
   /* find a school (under the chips): a compact search; the suggestion list drops over the page */
   .find{ position:relative; max-width:420px; margin:10px 0 0; }
   .find-icon{ position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--text-muted); pointer-events:none; }
@@ -994,13 +1004,22 @@
 <main>
 <div class="wrap">
   <p class="updated" id="updated"></p>
-  <p class="sub">Every NCAA women's volleyball conference, with a map per conference and full comparison
-    reports for the conferences <a id="researched-link" href="researched.html">researched</a> so far
-    (and a list of D1 programs with <a id="outgoing-link" href="outgoing-setters.html">outgoing setters</a>). Use <b>Edit settings</b> to pick a school to compare against,
+  <p class="sub intro">Every NCAA women's volleyball conference, with a map per conference and full comparison
+    reports for the conferences researched so far. Use <b>Edit settings</b> to pick a school to compare against,
     a position, majors, and a home town; the reports and maps use them for cost, majors, and distances.
     Tick the box next to any school to save it to a shortlist, then copy the list from <b>Edit settings</b>
     to send it on. Settings and the list stay in this browser only. Conference and team groupings come from
     Massey Ratings.</p>
+  <!-- site-wide pages: add a new page here as a line, not in the paragraph above (OUTGOING_POSITIONS.md Part C) -->
+  <ul class="site-links" aria-label="More pages">
+    <li><a id="researched-link" href="researched.html">Researched schools</a>
+      <span class="what">how many schools and conferences have a full report</span></li>
+    <li><span class="label">Outgoing starters</span>
+      <span class="what">D1 programs losing a starter next season, by position:</span>
+      <span class="pos-links" id="outgoing-positions"></span></li>
+    <li><a id="help-list-link" href="help.html">How to use this site</a>
+      <span class="what">settings, reports, maps, saving schools</span></li>
+  </ul>
 
   <section class="block" id="d1-other">
     <div class="block-head"><h2>Conferences</h2><span class="tag">Division I</span></div>
@@ -1043,7 +1062,7 @@
 </main>
 
 <script src="data/schools.js?v=703385f0"></script>
-<script src="compare.js?v=2bea56dd"></script>
+<script src="compare.js?v=5facfb09"></script>
 <script src="data/places.js?v=9f2e48c7"></script>
 <script>
 (function(){
@@ -2153,8 +2172,16 @@ function showTeamAfterLoad(){
 C.onSavedChange(function(list){ saved = list; refreshSaved(); measureHeader(); });
 
 $("researched-link").href = carry("researched.html");
-$("outgoing-link").href = carry("outgoing-setters.html");
 $("help-link").href = carry("help.html");
+$("help-list-link").href = carry("help.html");
+// every position's outgoing page, on the "Outgoing starters" line (OUTGOING_POSITIONS.md)
+["S", "OH", "OPP", "MB", "L"].forEach(function(code){
+  var a = document.createElement("a");
+  a.textContent = code === "S" ? "Setters" : code === "L" ? "L/DS" : code;
+  a.title = "Outgoing " + (code === "S" ? "setters" : C.positionSpec(code).plural.toLowerCase());
+  a.href = carry(C.OUTGOING_PAGES[code]);
+  $("outgoing-positions").appendChild(a);
+});
 // saved report/map links carry the current settings (set again whenever the settings line redraws)
 function carrySaved(){
   Array.prototype.forEach.call(document.querySelectorAll("a.carry-saved"), function(a){ a.href = carry(a.getAttribute("data-href")); });
