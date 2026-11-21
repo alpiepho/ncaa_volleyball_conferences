@@ -147,6 +147,7 @@
   .refs li b{ color:var(--text-primary); }
   .refs .ln{ display:block; }
   .refs .q{ display:block; font-style:italic; }
+  .refs .credit{ margin-top:14px; }
   .refs a{ overflow-wrap:anywhere; }
   .nodata{ color:var(--text-secondary); font-size:13.5px; max-width:760px; margin-top:26px; }
   .foot{ margin-top:30px; color:var(--text-muted); font-size:13px; max-width:760px; }
@@ -191,7 +192,7 @@
 </div>
 
 <script src="data/schools.js?v=703385f0"></script>
-<script src="data/eligibility.js?v=666a9e52"></script>
+<script src="data/eligibility.js?v=385768e6"></script>
 <script src="compare.js?v=5facfb09"></script>
 <script>
 (function(){
@@ -281,6 +282,17 @@ Object.keys(confs).sort(function(a, b){ return (confs[a].indexTitle || confs[a].
 function nameOf(x){ return x.name || "(name not stored)"; }
 // Last season evidence: data/eligibility.js (tools/eligibility.py), keyed "<school id>#<jersey>"
 var EL = window.SITE_ELIGIBILITY || {}, REFS = [];
+// the D1 WVB 5 For 5 Tracker (a public Google Sheet; tools/five_for_five.py, OUTGOING_POSITIONS.md Part F): where it's
+// definite, its word already set the tag in the build (e.by === "sheet"; our own verdict kept in e.own)
+var TRACKER = EL._tracker || null;
+function niceDate(iso){
+  var p = String(iso).split("-");
+  return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+p[1] - 1] + " " + (+p[2]) + ", " + p[0];
+}
+function titleCase(s){ return String(s).toLowerCase().replace(/\b[a-z]/g, function(c){ return c.toUpperCase(); }).replace(/\bTba\b/g, "TBA"); }
+function trackerLink(text){
+  var a = el("a", null, text); a.href = TRACKER.source; a.target = "_blank"; a.rel = "noopener"; return a;
+}
 function vClass(v){ return "tag v v-" + String(v).replace(/ /g, "-"); }
 function refId(sid, p){ return "ref-" + sid + "-" + String(p.jersey).replace(/[^A-Za-z0-9]/g, ""); }
 // the verdict tag, linking to her entry in the references; noted for the list at the bottom
@@ -444,6 +456,9 @@ apply();
     ["tag v v-Unclear", "Unclear", "Not enough online to say."],
     has("Probably done", "senior") && ["tag v v-Probably-done", "Probably done", "This is already her 5th season (a redshirt year or an earlier school counts), or her own page says fifth year, redshirt senior, or graduate student."]
   ] : []);
+  if (TRACKER && REFS.some(function(e){ return e.by === "sheet"; })) section("Source", [
+    ["tag v v-Confirmed", "tag", "Where the " + TRACKER.title + " (a public Google Sheet, updated daily) says a player has no eligibility remaining, is returning, is retiring, or redshirted earlier, its word sets the tag; her school's rosters and bio decide only when the sheet says TBA or doesn't list her. Both are in her References entry."]
+  ]);
   if (REFS.length) section("Links", [
     ["tag v v-Unclear", "verdict ↓", "Each verdict links to her entry in the References at the bottom: years on college rosters, bio quotes, and links to every roster and her bio. “↑ table” goes back."],
     Array.prototype.some.call(document.querySelectorAll("#groups .tag.v"), function(t){ return t.textContent === "not checked"; }) &&
@@ -467,6 +482,14 @@ var REF_GROUPS = [
 (function(){
   if (!REFS.length) return;
   var box = document.getElementById("refs"); box.hidden = false;
+  if (TRACKER){
+    var cr = el("p", "note credit");
+    cr.appendChild(document.createTextNode("Eligibility status from the "));
+    cr.appendChild(trackerLink(TRACKER.title));
+    cr.appendChild(document.createTextNode(" (a public Google Sheet kept by volleyball followers, tracking every D1 senior and grad for senior-night and 5th-year-returning news), pulled " +
+      niceDate(TRACKER.pulled) + ". Where it's definite, its word sets the tag. The roster years, bio quotes, and links under each player are our own reading of her school's pages."));
+    box.appendChild(cr);
+  }
   REF_GROUPS.forEach(function(G){
     var list = REFS.filter(function(e){ return (e.group || "final") === G.group; });
     if (!list.length) return;
@@ -474,14 +497,16 @@ var REF_GROUPS = [
     var counts = {};
     list.forEach(function(e){ counts[e.verdict] = (counts[e.verdict] || 0) + 1; });
     box.appendChild(el("p", "note", G.verdicts.map(function(v){ return (counts[v] || 0) + " " + v.toLowerCase(); }).join(", ") +
-      ". " + G.note + " Assumes the 5-in-5 rule (five seasons in five years; every year on a college roster counts, " +
+      ". " + G.note + (TRACKER ? " The 5 For 5 Tracker's word comes first where it has one; otherwise the tag" :
+      " The tag") + " assumes the 5-in-5 rule (five seasons in five years; every year on a college roster counts, " +
       "played or not), from her school's roster pages and her bio. Waivers (medical, junior college) don't show " +
       "online: worth asking the coaches."));
     var ol = el("ol");
     list.forEach(function(e){ ol.appendChild(refItem(e)); });
     box.appendChild(ol);
   });
-  box.appendChild(el("p", "note", "Checked " + REFS.map(function(e){ return e.checked; }).sort().pop() + " by tools/eligibility.py; hand-checked entries say so."));
+  box.appendChild(el("p", "note", "Rosters and bios checked " + REFS.filter(function(e){ return !e.sheetOnly; }).map(function(e){ return e.checked; }).sort().pop() +
+    " by tools/eligibility.py; hand-checked entries say so." + (TRACKER ? " 5 For 5 Tracker pulled " + niceDate(TRACKER.pulled) + "." : "")));
 })();
 function refItem(e){
     var li = el("li"); li.id = refId(e.schoolId, e);
@@ -491,7 +516,11 @@ function refItem(e){
     top.appendChild(el("span", vClass(e.verdict), e.verdict));
     var back = el("a", null, " ↑ table"); back.href = "#row-" + e.schoolId; top.appendChild(back);
     li.appendChild(top);
-    li.appendChild(el("span", "ln", e.why));
+    if (e.sheet && TRACKER) li.appendChild(sheetLine(e.sheet));
+    else if (TRACKER) li.appendChild(el("span", "ln", "Not on the 5 For 5 Tracker as of " + niceDate(TRACKER.pulled) + "."));
+    if (e.own) li.appendChild(el("span", "ln", "Our evidence alone: " + e.own.verdict + ". " + e.own.why));
+    else if (!e.sheetOnly || !e.sheet) li.appendChild(el("span", "ln", e.why));
+    if (e.sheetOnly){ li.appendChild(el("span", "ln", "Her rosters and bio haven't been read yet.")); return li; }
     li.appendChild(el("span", "ln", "Years: " + yearsLine(e)));
     var b = e.bio || {};
     var facts = [];
@@ -513,6 +542,17 @@ function refItem(e){
     });
     li.appendChild(links);
     return li;
+}
+// "5 For 5 Tracker (Nov 21, 2026): 2027 status Returning · senior night Not Honored · ^ played 5 seasons", linked
+function sheetLine(x){
+  var d = el("span", "ln sheet");
+  d.appendChild(trackerLink("5 For 5 Tracker"));
+  var bits = ["2027 status " + (x.status ? titleCase(x.status) : "—"), "senior night " + (x.seniorNight ? titleCase(x.seniorNight) : "—")];
+  if (x.mark === "^") bits.push("^ already played 5 seasons");
+  if (x.mark === "*") bits.push("* redshirted earlier (2026 isn't her 5th season)");
+  if (x.pos) bits.push("listed " + x.pos);
+  d.appendChild(document.createTextNode(" (" + niceDate(TRACKER.pulled) + "): " + bits.join(" · ")));
+  return d;
 }
 // '2022 (Utah, per bio) · 2023 So · … · 2026 Gr': the earlier seasons the verdict counted, then her rosters here
 function yearsLine(e){
