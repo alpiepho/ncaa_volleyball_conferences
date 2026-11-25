@@ -191,9 +191,9 @@
   <p class="foot" id="foot"></p>
 </div>
 
-<script src="data/schools.js?v=b986c22d"></script>
-<script src="data/eligibility.js?v=59de8000"></script>
-<script src="compare.js?v=5facfb09"></script>
+<script src="data/schools.js?v=8eb637db"></script>
+<script src="data/eligibility.js?v=1c5f1525"></script>
+<script src="compare.js?v=6062dae9"></script>
 <script>
 (function(){
 "use strict";
@@ -236,19 +236,23 @@ sub.textContent = SETTER
 
 var GROUPS = SETTER ? [
   {key: "final", title: "Last season", tile: "Main setter in her last season",
-   note: "Graduate students, redshirt seniors, and 5th-year players: eligibility is used up after this season."},
+   note: "Graduate students, redshirt seniors, and 5th-year players: eligibility is used up after this season. " +
+         "Also anyone the 5 For 5 Tracker says has no eligibility remaining or isn't returning."},
   {key: "senior", title: "Seniors, may return", tile: "Main setter a senior",
-   note: "A senior who hasn't played five seasons can come back as a graduate student; rosters don't say which will. Worth asking the coaches."},
+   note: "A senior who hasn't played five seasons can come back as a graduate student; rosters don't say which will. Worth asking the coaches. " +
+         "A graduate student the 5 For 5 Tracker says is returning or transferring is listed here too."},
   {key: "partner", title: "6-2 partner leaving", tile: "6-2 partner in her last season",
    note: "The main setter stays, but the other half of a 6-2 (at least " + Math.round(C.PARTNER_SHARE * 100) +
          "% of the main setter's assists) is in her last season: one of two setting spots opens."}
 ] : [
   {key: "final", title: "Last season", tile: "A starter in her last season",
-   note: "Graduate students, redshirt seniors, and 5th-year players: eligibility is used up after this season." +
+   note: "Graduate students, redshirt seniors, and 5th-year players: eligibility is used up after this season. " +
+         "Also anyone the 5 For 5 Tracker says has no eligibility remaining or isn't returning." +
          ""},
   {key: "senior", title: "Seniors, may return", tile: "A starter a senior",
    note: "No starter in her last season, but " + (TWO ? "a starter is" : "the starter is") + " a senior. A senior who hasn't " +
-         "played five seasons can come back as a graduate student; rosters don't say which will. Worth asking the coaches."}
+         "played five seasons can come back as a graduate student; rosters don't say which will. Worth asking the coaches. " +
+         "A graduate student the 5 For 5 Tracker says is returning or transferring is listed here too."}
 ];
 var withData = O.schools - O.noData.length;
 
@@ -315,9 +319,10 @@ function setterLine(x, final){
   if (final) d.appendChild(el("span", "tag final", "last season"));
   return d;
 }
-function leaveTag(cls){
-  if (C.finalSeason(cls)) return el("span", "tag final", "last season");
-  if (cls === "Sr") return el("span", "tag sr", "senior");
+// her section's tag: the 5 For 5 Tracker's word decides over the class (Part G; compare.js lastSeason / mayReturn)
+function leaveTag(p){
+  if (C.lastSeason(p)) return el("span", "tag final", "last season");
+  if (C.mayReturn(p)) return el("span", "tag sr", p.cls === "Sr" ? "senior" : "may return");
   return null;
 }
 // a starter at the other positions: name, class, height, then the position's numbers (panel 05's)
@@ -326,7 +331,7 @@ function starterBlock(p){
   var d = el("div", "setter");
   d.appendChild(el("b", null, nameOf(p)));
   d.appendChild(el("span", "m", " #" + p.jersey + " · " + [p.pos, p.cls, p.height].filter(Boolean).join(" · ")));
-  var t = leaveTag(p.cls); if (t) d.appendChild(t);
+  var t = leaveTag(p); if (t) d.appendChild(t);
   box.appendChild(d);
   box.appendChild(el("div", "m others", fmtNum(C.playerStat(p, SPEC.sort)) + " " + SPEC.statLabel.toLowerCase() + " · " + p.sp + " sets · " +
     C.positionLine(p, CODE).join(" · ")));
@@ -360,7 +365,7 @@ GROUPS.forEach(function(g){
     tr.appendChild(sc);
     var ms = el("td");
     if (SETTER){
-      var sl = setterLine(x.main, C.finalSeason(x.main.cls));
+      var sl = setterLine(x.main, C.lastSeason(x.main));
       if (g.key === "final") sl.appendChild(evidenceTag(r, x.main));
       if (g.key === "senior") sl.appendChild(evidenceTag(r, x.main, true));
       ms.appendChild(sl);
@@ -368,8 +373,8 @@ GROUPS.forEach(function(g){
     } else {
       x.starters.forEach(function(p){
         var b = starterBlock(p);
-        if (g.key === "final" && C.finalSeason(p.cls)) b.firstChild.appendChild(evidenceTag(r, p));
-        if (g.key === "senior" && p.cls === "Sr") b.firstChild.appendChild(evidenceTag(r, p, true));
+        if (g.key === "final" && C.lastSeason(p)) b.firstChild.appendChild(evidenceTag(r, p));
+        if (g.key === "senior" && C.mayReturn(p)) b.firstChild.appendChild(evidenceTag(r, p, true));
         ms.appendChild(b);
       });
     }
@@ -383,7 +388,7 @@ GROUPS.forEach(function(g){
       if (SETTER) d.appendChild(el("span", "m", o.cls + " · " + (o.assists == null ? "—" : o.assists) + " a" + (o.setter ? "" : " · " + o.pos)));
       else d.appendChild(el("span", "m", o.cls + " · " + (o.sp == null ? "no stats yet" : fmtNum(C.playerStat(o, SPEC.sort)) + " " +
         SPEC.statLabel.toLowerCase() + ", " + o.sp + " sets")));
-      if (C.finalSeason(o.cls)) d.appendChild(el("span", "tag final", "last season"));
+      if (C.lastSeason(o)) d.appendChild(el("span", "tag final", "last season"));
       if (SETTER && g.key === "partner" && o === x.partner) d.appendChild(evidenceTag(r, o));
       ot.appendChild(d);
     });
@@ -438,8 +443,10 @@ apply();
   REFS.forEach(function(e){ shown[e.verdict + "|" + (e.group || "final")] = true; });
   function has(v, g){ return shown[v + "|" + g]; }
   section("Class", [
-    ["tag final", "last season", "Listed as a graduate student, redshirt senior, or 5th-year player: by the class alone, this is her last season."],
+    ["tag final", "last season", "Listed as a graduate student, redshirt senior, or 5th-year player, or the 5 For 5 Tracker says she has no eligibility remaining or isn't returning (its word decides over the class)."],
     !SETTER && ["tag sr", "senior", "Listed as a senior: she may be done, or may come back for a 5th year."],
+    !SETTER && document.querySelector("#groups .tag.sr") && Array.prototype.some.call(document.querySelectorAll("#groups .tag.sr"), function(t){ return t.textContent === "may return"; }) &&
+      ["tag sr", "may return", "Listed as a graduate student or 5th-year player, but the 5 For 5 Tracker says she's returning, transferring, or redshirted earlier: she has a season left."],
     document.querySelector("#groups tr.current") && ["tag cmp", "comparing to", "Your School to Compare (Edit settings), shaded in the list."]
   ]);
   var anyFinal = REFS.some(function(e){ return (e.group || "final") === "final"; });
@@ -518,7 +525,9 @@ function refItem(e){
     li.appendChild(top);
     if (e.sheet && TRACKER) li.appendChild(sheetLine(e.sheet));
     else if (TRACKER) li.appendChild(el("span", "ln", "Not on the 5 For 5 Tracker as of " + niceDate(TRACKER.pulled) + "."));
-    if (e.own) li.appendChild(el("span", "ln", "Our evidence alone: " + e.own.verdict + ". " + e.own.why));
+    if (e.own) li.appendChild(el("span", "ln", "Our evidence alone: " + e.own.verdict +
+      (e.own.group && e.own.group !== e.group ? (e.own.group === "senior" ? " (as a senior who may return)" : " (as a last-season player)") : "") +
+      ". " + e.own.why));
     else if (!e.sheetOnly || !e.sheet) li.appendChild(el("span", "ln", e.why));
     if (e.sheetOnly){ li.appendChild(el("span", "ln", "Her rosters and bio haven't been read yet.")); return li; }
     li.appendChild(el("span", "ln", "Years: " + yearsLine(e)));

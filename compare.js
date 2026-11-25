@@ -908,6 +908,12 @@
   // a class that means this is her last season: graduate, 5th year, redshirt senior
   var FINAL_SEASON = ["Gr", "R-Sr", "5th", "5th-Yr", "R-Gr"];
   function finalSeason(cls) { return FINAL_SEASON.indexOf(cls) >= 0; }
+  // the outgoing pages' sections (OUTGOING_POSITIONS.md Part G): the D1 WVB 5 For 5 Tracker's definite word (p.sheet,
+  // set by build_site.py load_tracker_words) decides over the class. "done" = no eligibility left, retiring, moving on:
+  // Last season whatever the class. "stay" = returning, transferring, or redshirted earlier: a Gr / 5th / R-Sr may
+  // return. Otherwise the class: Gr / 5th / R-Sr last season, Sr may return. five_for_five.group_of is the same rule.
+  function lastSeason(p) { return !!p && (p.sheet === "done" || (finalSeason(p.cls) && p.sheet !== "stay")); }
+  function mayReturn(p) { return !!p && !lastSeason(p) && (p.cls === "Sr" || finalSeason(p.cls)); }
   // the setter the 5-1 / 6-2 note opens with (setter_history.offense_note): roster setters with
   // assists, most first; anyone with assists if no roster setter has any. null: no assist data
   function setterPool(setters) {
@@ -931,9 +937,9 @@
       var total = pool.reduce(function (n, x) { return n + x.assists; }, 0);
       var row = {id: id, school: r, main: main, share: total ? main.assists / total : null,
                  others: all.filter(function (x) { return x !== main; }), partner: null};
-      var partner = pool.filter(function (x) { return x !== main && finalSeason(x.cls) && x.assists >= PARTNER_SHARE * main.assists; })[0];
-      if (finalSeason(main.cls)) out.final.push(row);
-      else if (main.cls === "Sr") out.senior.push(row);
+      var partner = pool.filter(function (x) { return x !== main && lastSeason(x) && x.assists >= PARTNER_SHARE * main.assists; })[0];
+      if (lastSeason(main)) out.final.push(row);
+      else if (mayReturn(main)) out.senior.push(row);
       else if (partner) { row.partner = partner; out.partner.push(row); }
     });
     var byRank = function (a, b) { return (a.school.natRank || 9999) - (b.school.natRank || 9999) || a.school.name.localeCompare(b.school.name); };
@@ -967,11 +973,10 @@
       out.schools++;
       var starters = positionStarters(r, code);
       if (!starters.length) { out.noData.push(id); return; }
-      var leaving = starters.filter(function (p) { return finalSeason(p.cls) || p.cls === "Sr"; });
       var row = {id: id, school: r, starters: starters,
                  others: positionPlayers(r, code).filter(function (p) { return starters.indexOf(p) < 0; })};
-      if (starters.some(function (p) { return finalSeason(p.cls); })) out.final.push(row);
-      else if (leaving.length) out.senior.push(row);
+      if (starters.some(lastSeason)) out.final.push(row);
+      else if (starters.some(mayReturn)) out.senior.push(row);
     });
     var byRank = function (a, b) { return (a.school.natRank || 9999) - (b.school.natRank || 9999) || a.school.name.localeCompare(b.school.name); };
     out.final.sort(byRank); out.senior.sort(byRank);
@@ -1853,7 +1858,7 @@
     flagCols: flagCols, factYes: factYes, faithText: faithText, beachLabel: beachLabel, beachFlag: beachFlag,
     buildSchool: buildSchool, reportRows: reportRows,
     milesBetween: milesBetween, targetYear: targetYear, setterOpenings: setterOpenings,
-    FINAL_SEASON: FINAL_SEASON, finalSeason: finalSeason, mainSetter: mainSetter, PARTNER_SHARE: PARTNER_SHARE,
+    FINAL_SEASON: FINAL_SEASON, finalSeason: finalSeason, lastSeason: lastSeason, mayReturn: mayReturn, mainSetter: mainSetter, PARTNER_SHARE: PARTNER_SHARE,
     outgoingSetters: outgoingSetters, outgoingPlayers: outgoingPlayers, positionStarters: positionStarters,
     OUTGOING_STARTER_SORT: OUTGOING_STARTER_SORT, OUTGOING_PAGES: OUTGOING_PAGES, positionLine: positionLine,
     POSITION_SPEC: POSITION_SPEC, positionSpec: positionSpec, positionPlayers: positionPlayers,
